@@ -69,8 +69,7 @@ def save_analysis_results(document, data):
     # Update document fields for RE2020 and RT2012 analysis
     update_document_fields(document, data, compliance)
 
-def fetch_requirements():
-    # Assuming these values might come from a settings or a configuration model
+def fetch_re2020_requirements():
     return {
         'energy_efficiency': 80.0,
         'thermal_comfort': 85.0,
@@ -78,6 +77,16 @@ def fetch_requirements():
         'water_management': 70.0,
         'indoor_air_quality': 75.0,
     }
+
+def fetch_rt2012_requirements():
+    return {
+        'energy_efficiency': 50.0,
+        'thermal_comfort': 22.0,
+        'carbon_emissions': 35.0,
+        'water_management': 120.0,
+        'indoor_air_quality': 800.0,
+    }
+
 
 def check_compliance(data, requirements):
     return {
