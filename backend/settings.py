@@ -8,7 +8,7 @@ SECRET_KEY = 'your-secret-key'  # Changez et gardez cela secret
 DEBUG = True
 
 # Hosts autorisés
-ALLOWED_HOSTS = ['192.168.1.21', 'localhost', '127.0.0.1']  # Ajouté localhost et 127.0.0.1 pour le développement
+ALLOWED_HOSTS = ["*"]
 
 # Applications installées
 INSTALLED_APPS = [
