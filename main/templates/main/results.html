@@ -20,17 +20,16 @@
             {% for document in documents %}
             <tr>
                 <td>{{ document.name }}</td>
-                <td>{{ document.re2020_energy_efficiency }} / {{ standards.energy_efficiency }}</td>
-                <td>{{ document.re2020_thermal_comfort }} / {{ standards.thermal_comfort }}</td>
-                <td>{{ document.re2020_carbon_emissions }} / {{ standards.carbon_emissions }}</td>
-                <td>{{ document.re2020_water_management }} / {{ standards.water_management }}</td>
-                <td>{{ document.re2020_indoor_air_quality }} / {{ standards.indoor_air_quality }}</td>
+                <td>{{ document.re2020_energy_efficiency }} / {{ requirements.energy_efficiency }}</td>
+                <td>{{ document.re2020_thermal_comfort }} / {{ requirements.thermal_comfort }}</td>
+                <td>{{ document.re2020_carbon_emissions }} / {{ requirements.carbon_emissions }}</td>
+                <td>{{ document.re2020_water_management }} / {{ requirements.water_management }}</td>
+                <td>{{ document.re2020_indoor_air_quality }} / {{ requirements.indoor_air_quality }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    
-    <!-- Espace entre les tableaux -->
+
     <div style="margin-bottom: 50px;"></div>
 
     <h2>Résultats de l'analyse RT 2012</h2>
@@ -49,11 +48,11 @@
             {% for document in documents %}
             <tr>
                 <td>{{ document.name }}</td>
-                <td>{{ document.rt2012_energy_efficiency }} / {{ standards.energy_efficiency }}</td>
-                <td>{{ document.rt2012_thermal_comfort }} / {{ standards.thermal_comfort }}</td>
-                <td>{{ document.rt2012_carbon_emissions }} / {{ standards.carbon_emissions }}</td>
-                <td>{{ document.rt2012_water_management }} / {{ standards.water_management }}</td>
-                <td>{{ document.rt2012_indoor_air_quality }} / {{ standards.indoor_air_quality }}</td>
+                <td>{{ document.rt2012_energy_efficiency }} / {{ requirements.energy_efficiency }}</td>
+                <td>{{ document.rt2012_thermal_comfort }} / {{ requirements.thermal_comfort }}</td>
+                <td>{{ document.rt2012_carbon_emissions }} / {{ requirements.carbon_emissions }}</td>
+                <td>{{ document.rt2012_water_management }} / {{ requirements.water_management }}</td>
+                <td>{{ document.rt2012_indoor_air_quality }} / {{ requirements.indoor_air_quality }}</td>
             </tr>
             {% endfor %}
         </tbody>
