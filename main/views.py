@@ -114,11 +114,14 @@ def results(request):
     re2020_requirements = fetch_re2020_requirements()
     rt2012_requirements = fetch_rt2012_requirements()
 
-    return render(request, 'main/results.html', {
+    context = {
         'documents': documents,
         're2020_requirements': re2020_requirements,
         'rt2012_requirements': rt2012_requirements,
-    })
+    }
+
+    return render(request, 'main/results.html', context)
+
 
 
 def read_document(upload_path):
