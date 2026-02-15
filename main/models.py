@@ -37,8 +37,19 @@ class Document(models.Model):
 
 
 class Analysis(models.Model):
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
-    standard = models.ForeignKey(Standard, on_delete=models.CASCADE)
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="analyses"
+    )
+
+    standard = models.ForeignKey(
+        Standard,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="analyses"
+    )
 
     criteria = models.CharField(max_length=255)
     value = models.FloatField()
