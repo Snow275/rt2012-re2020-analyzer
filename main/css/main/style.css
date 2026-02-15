@@ -1,0 +1,42 @@
+.card-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.card-text {
+    font-size: 1rem;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+    border-top: 1px solid #e7e7e7;
+}
+
+.footer .text-muted {
+    font-size: 1rem;
+}
+
+.footer .text-muted a {
+    color: #6c757d;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.footer .text-muted a:hover {
+    text-decoration: underline;
+}
+
+#criteriaChart {
+    max-width: 100%;
+    max-height: 400px;
+    margin: 0 auto;
+}
+
+#documentChart {
+    max-width: 100%;
+    height: auto;
+}
