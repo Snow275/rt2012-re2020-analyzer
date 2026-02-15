@@ -119,17 +119,10 @@ def update_document_fields(document, data, compliance):
 
 def results(request):
     documents = Document.objects.all()
-
-    re2020_requirements = fetch_re2020_requirements()
-    rt2012_requirements = fetch_rt2012_requirements()
-
-    context = {
+    return render(request, 'main/results.html', {
         'documents': documents,
-        're2020_requirements': re2020_requirements,
-        'rt2012_requirements': rt2012_requirements,
-    }
-
-    return render(request, 'main/results.html', context)
+        'requirements': fetch_requirements()
+    })
 
 
 
