@@ -54,14 +54,23 @@ def import_document(request):
 
 
 def analyze_document(document, data):
-    data = read_document(document.upload.path)
-    save_analysis_results(document, data)
-    document.name = data.get('energy_efficiency', 0.0)
-    document.name = data.get('thermal_comfort', 0.0)
-    document.name = data.get('carbon_emissions', 0.0)
-    document.name = data.get('water_management', 0.0)
-    document.name = data.get('indoor_air_quality', 0.0)
+
+    # RE2020
+    document.re2020_energy_efficiency = data.get('energy_efficiency', 0.0)
+    document.re2020_thermal_comfort = data.get('thermal_comfort', 0.0)
+    document.re2020_carbon_emissions = data.get('carbon_emissions', 0.0)
+    document.re2020_water_management = data.get('water_management', 0.0)
+    document.re2020_indoor_air_quality = data.get('indoor_air_quality', 0.0)
+
+    # RT2012
+    document.rt2012_energy_efficiency = data.get('energy_efficiency', 0.0)
+    document.rt2012_thermal_comfort = data.get('thermal_comfort', 0.0)
+    document.rt2012_carbon_emissions = data.get('carbon_emissions', 0.0)
+    document.rt2012_water_management = data.get('water_management', 0.0)
+    document.rt2012_indoor_air_quality = data.get('indoor_air_quality', 0.0)
+
     document.save()
+
 
 def save_analysis_results(document, data):
     re2020_requirements = fetch_re2020_requirements()
