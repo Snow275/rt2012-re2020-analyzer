@@ -64,10 +64,14 @@ def analyze_document(document, data):
     document.save()
 
 def save_analysis_results(document, data):
-    requirements = fetch_requirements()
-    compliance = check_compliance(data, requirements)
-    # Update document fields for RE2020 and RT2012 analysis
-    update_document_fields(document, data, compliance)
+    re2020_requirements = fetch_re2020_requirements()
+    rt2012_requirements = fetch_rt2012_requirements()
+
+    re2020_compliance = check_compliance(data, re2020_requirements)
+    rt2012_compliance = check_compliance(data, rt2012_requirements)
+
+    update_document_fields(document, data, re2020_compliance)
+
 
 def fetch_re2020_requirements():
     return {
