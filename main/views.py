@@ -105,23 +105,26 @@ def read_document(upload_path):
         with open(upload_path, 'rb') as file:
             raw_data = file.read()
             encoding = chardet.detect(raw_data)['encoding']
-        
+
         with open(upload_path, 'r', encoding=encoding) as file:
             reader = csv.DictReader(file)
-            data = {}
+
             for row in reader:
-                data = {
-                    'energy_efficiency': float(row['Efficacité énergétique']),
-                    'thermal_comfort': float(row['Confort thermique']),
-                    'carbon_emissions': float(row['Émissions de carbone']),
-                    'water_management': float(row['Gestion de l\'eau']),
-                    'indoor_air_quality': float(row['Qualité de l\'air intérieur']),
+                print("Colonnes détectées :", row.keys())  # DEBUG
+
+                return {
+                    'energy_efficiency': float(row.get('Efficacité énergétique', 0)),
+                    'thermal_comfort': float(row.get('Confort thermique', 0)),
+                    'carbon_emissions': float(row.get('Émissions de carbone', 0)),
+                    'water_management': float(row.get("Gestion de l'eau", 0)),
+                    'indoor_air_quality': float(row.get("Qualité de l'air intérieur", 0)),
                 }
-            return data
-    except (StopIteration, UnicodeDecodeError) as e:
-        # Gérer le cas où il n'y a pas de ligne de données ou problème de décodage
-        print(f"Erreur lors de la lecture du fichier: {e}")
-        return {}  # Retourner un dictionnaire vide si erreur
+
+        return {}
+
+    except Exception as e:
+        print("Erreur lecture fichier:", e)
+        return {}
 
 def update_re2020(request):
     if request.method == 'POST':
