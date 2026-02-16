@@ -1,0 +1,71 @@
+from django.db import models
+
+
+class Standard(models.Model):
+    TYPE_CHOICES = (
+        ("RE2020", "RE2020"),
+        ("RT2012", "RT2012"),
+    )
+
+    name = models.CharField(max_length=100)
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+
+    energy_efficiency = models.FloatField()
+    thermal_comfort = models.FloatField()
+    carbon_emissions = models.FloatField()
+    water_management = models.FloatField()
+    indoor_air_quality = models.FloatField()
+
+    def __str__(self):
+        return f"{self.name} ({self.type})"
+
+
+class Document(models.Model):
+    name = models.CharField(max_length=255)
+    upload = models.FileField(upload_to="documents/")
+    upload_date = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    # Champs pour la RE2020
+    re2020_energy_efficiency = models.FloatField(null=True, blank=True)
+    re2020_thermal_comfort = models.FloatField(null=True, blank=True)
+    re2020_carbon_emissions = models.FloatField(null=True, blank=True)
+    re2020_water_management = models.FloatField(null=True, blank=True)
+    re2020_indoor_air_quality = models.FloatField(null=True, blank=True)
+
+    # Champs pour la RT 2012
+    rt2012_energy_efficiency = models.FloatField(null=True, blank=True)
+    rt2012_thermal_comfort = models.FloatField(null=True, blank=True)
+    rt2012_carbon_emissions = models.FloatField(null=True, blank=True)
+    rt2012_water_management = models.FloatField(null=True, blank=True)
+    rt2012_indoor_air_quality = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.nameTrue)
+
+    def __str__(self):
+        return self.name
+
+
+class Analysis(models.Model):
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="analyses"
+    )
+
+    standard = models.ForeignKey(
+        Standard,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="analyses"
+    )
+
+    criteria = models.CharField(max_length=255)
+    value = models.FloatField()
+    requirement = models.FloatField()
+    compliance = models.BooleanField()
+
+    def __str__(self):
+        return f"{self.document.name} - {self.criteria}"
