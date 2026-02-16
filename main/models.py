@@ -26,11 +26,22 @@ class Document(models.Model):
     upload_date = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
-    energy_efficiency = models.FloatField(null=True, blank=True)
-    thermal_comfort = models.FloatField(null=True, blank=True)
-    carbon_emissions = models.FloatField(null=True, blank=True)
-    water_management = models.FloatField(null=True, blank=True)
-    indoor_air_quality = models.FloatField(null=True, blank=True)
+    # Champs pour la RE2020
+    re2020_energy_efficiency = models.FloatField(null=True, blank=True)
+    re2020_thermal_comfort = models.FloatField(null=True, blank=True)
+    re2020_carbon_emissions = models.FloatField(null=True, blank=True)
+    re2020_water_management = models.FloatField(null=True, blank=True)
+    re2020_indoor_air_quality = models.FloatField(null=True, blank=True)
+
+    # Champs pour la RT 2012
+    rt2012_energy_efficiency = models.FloatField(null=True, blank=True)
+    rt2012_thermal_comfort = models.FloatField(null=True, blank=True)
+    rt2012_carbon_emissions = models.FloatField(null=True, blank=True)
+    rt2012_water_management = models.FloatField(null=True, blank=True)
+    rt2012_indoor_air_quality = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.nameTrue)
 
     def __str__(self):
         return self.name
