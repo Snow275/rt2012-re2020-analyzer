@@ -206,7 +206,12 @@ def results(request):
 
 
 def read_document(upload_path):
-    # ... (ouverture du fichier)
+    try:
+        with open(upload_path, 'rb') as file:
+            raw_data = file.read()
+            encoding = chardet.detect(raw_data)['encoding']
+        
+        with open(upload_path, 'r', encoding=encoding) as file:
     reader = csv.DictReader(file)
     for row in reader:
         return {
