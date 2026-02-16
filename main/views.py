@@ -206,26 +206,17 @@ def results(request):
 
 
 def read_document(upload_path):
-    try:
-        with open(upload_path, 'rb') as file:
-            raw_data = file.read()
-            encoding = chardet.detect(raw_data)['encoding']
-        
-        with open(upload_path, 'r', encoding=encoding) as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                # On mappe les colonnes du CSV vers les clés attendues par analyze_document
-                return {
-                    'energy_efficiency': float(row.get('Efficacité énergétique', 0).replace(',', '.')),
-                    'thermal_comfort': float(row.get('Confort thermique', 0).replace(',', '.')),
-                    'carbon_emissions': float(row.get('Émissions de carbone', 0).replace(',', '.')),
-                    'water_management': float(row.get("Gestion de l'eau", 0).replace(',', '.')),
-                    'indoor_air_quality': float(row.get("Qualité de l'air intérieur", 0).replace(',', '.')),
-                }
-        return {}
-    except Exception as e:
-        print("Erreur lecture fichier:", e)
-        return {}
+    # ... (ouverture du fichier)
+    reader = csv.DictReader(file)
+    for row in reader:
+        return {
+            # On prend la colonne FR et on l'assigne à la clé utilisée par ton analyseur
+            'energy_efficiency': float(row.get('Efficacité énergétique', 0).replace(',', '.')),
+            'thermal_comfort': float(row.get('Confort thermique', 0).replace(',', '.')),
+            'carbon_emissions': float(row.get('Émissions de carbone', 0).replace(',', '.')),
+            'water_management': float(row.get("Gestion de l'eau", 0).replace(',', '.')),
+            'indoor_air_quality': float(row.get("Qualité de l'air intérieur", 0).replace(',', '.')),
+        }
 
 
 def update_re2020(request):
