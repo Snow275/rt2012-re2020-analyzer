@@ -1,83 +1,42 @@
-{% extends 'main/base.html' %}
+<!-- Section RE2020 -->
+<h3>Résultats de l'analyse RE2020</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Document</th>
+            <th>Efficacité énergétique (RE2020)</th>
+            <th>Confort thermique (RE2020)</th>
+            <th>Émissions de carbone (RE2020)</th>
+            <th>Gestion de l'eau (RE2020)</th>
+            <th>Qualité de l'air intérieur (RE2020)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for doc in documents %}
+        <tr>
+            <td>{{ doc.name }}</td>
+            <!-- On affiche la valeur du doc / la valeur de référence -->
+            <td>{{ doc.re2020_energy_efficiency|floatformat:1 }} / {{ re2020_requirements.energy_efficiency }}</td>
+            <td>{{ doc.re2020_thermal_comfort|floatformat:1 }} / {{ re2020_requirements.thermal_comfort }}</td>
+            <td>{{ doc.re2020_carbon_emissions|floatformat:1 }} / {{ re2020_requirements.carbon_emissions }}</td>
+            <td>{{ doc.re2020_water_management|floatformat:1 }} / {{ re2020_requirements.water_management }}</td>
+            <td>{{ doc.re2020_indoor_air_quality|floatformat:1 }} / {{ re2020_requirements.indoor_air_quality }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-{% block title %}Résultats{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-    <h2>Résultats de l'analyse RE2020</h2>
-    <table class="table table-bordered">
-        <thead class="thead-light">
-            <tr>
-                <th>Document</th>
-                <th>Efficacité énergétique (RE2020)</th>
-                <th>Confort thermique (RE2020)</th>
-                <th>Émissions de carbone (RE2020)</th>
-                <th>Gestion de l'eau (RE2020)</th>
-                <th>Qualité de l'air intérieur (RE2020)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for document in documents %}
-            <tr>
-                <td>{{ document.name }}</td>
-                <td>{{ document.re2020_energy_efficiency }} / {{ re2020_requirements.energy_efficiency }}</td>
-                <td>{{ document.re2020_thermal_comfort }} / {{ re2020_requirements.thermal_comfort }}</td>
-                <td>{{ document.re2020_carbon_emissions }} / {{ re2020_requirements.carbon_emissions }}</td>
-                <td>{{ document.re2020_water_management }} / {{ re2020_requirements.water_management }}</td>
-                <td>{{ document.re2020_indoor_air_quality }} / {{ re2020_requirements.indoor_air_quality }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div style="margin-bottom: 50px;"></div>
-
-    <h2>Résultats de l'analyse RT 2012</h2>
-    <table class="table table-bordered">
-        <thead class="thead-light">
-            <tr>
-                <th>Document</th>
-                <th>Efficacité énergétique (RT 2012)</th>
-                <th>Confort thermique (RT 2012)</th>
-                <th>Émissions de carbone (RT 2012)</th>
-                <th>Gestion de l'eau (RT 2012)</th>
-                <th>Qualité de l'air intérieur (RT 2012)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for document in documents %}
-            <tr>
-                <td>{{ document.name }}</td>
-                <td>{{ document.rt2012_energy_efficiency }} / {{ rt2012_requirements.energy_efficiency }}</td>
-                <td>{{ document.rt2012_thermal_comfort }} / {{ rt2012_requirements.thermal_comfort }}</td>
-                <td>{{ document.rt2012_carbon_emissions }} / {{ rt2012_requirements.carbon_emissions }}</td>
-                <td>{{ document.rt2012_water_management }} / {{ rt2012_requirements.water_management }}</td>
-                <td>{{ document.rt2012_indoor_air_quality }} / {{ rt2012_requirements.indoor_air_quality }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div class="container">
-    <h1>Actions</h1>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Document</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for document in documents %}
-            <tr>
-                <td>{{ document.name }}</td>
-                <td>
-                    <a href="{% url 'download_report' document.id %}">Télécharger le Rapport</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endblock %}
+<!-- Section RT 2012 -->
+<h3>Résultats de l'analyse RT 2012</h3>
+<table class="table">
+    <!-- ... Structure similaire pour RT 2012 ... -->
+    <tbody>
+        {% for doc in documents %}
+        <tr>
+            <td>{{ doc.name }}</td>
+            <td>{{ doc.rt2012_energy_efficiency|floatformat:1 }} / {{ rt2012_requirements.energy_efficiency }}</td>
+            <!-- Répétez pour les autres champs RT 2012 -->
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
