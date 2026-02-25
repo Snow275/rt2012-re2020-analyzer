@@ -40,6 +40,73 @@ def generate_report(document):
 
     elements.append(PageBreak())
 
+
+    elements.append(PageBreak())
+
+    # =========================
+    # CALCUL SCORES GLOBAUX
+    # =========================
+
+    re2020_values = [
+        document.re2020_energy_efficiency or 0,
+        document.re2020_thermal_comfort or 0,
+        document.re2020_carbon_emissions or 0,
+        document.re2020_water_management or 0,
+        document.re2020_indoor_air_quality or 0,
+    ]
+
+    rt2012_values = [
+        document.rt2012_energy_efficiency or 0,
+        document.rt2012_thermal_comfort or 0,
+        document.rt2012_carbon_emissions or 0,
+        document.rt2012_water_management or 0,
+        document.rt2012_indoor_air_quality or 0,
+    ]
+
+    re2020_score = round(sum(re2020_values) / len(re2020_values), 1)
+    rt2012_score = round(sum(rt2012_values) / len(rt2012_values), 1)
+
+    def global_status(score):
+        if score >= 75:
+            return "Conforme"
+        elif score >= 50:
+            return "Partiellement conforme"
+        else:
+            return "Non conforme"
+
+    re2020_status = global_status(re2020_score)
+    rt2012_status = global_status(rt2012_score)
+
+    def risk_level(status):
+        if status == "Conforme":
+            return "Faible"
+        elif status == "Partiellement conforme":
+            return "Modéré"
+        else:
+            return "Élevé"
+
+    re2020_risk = risk_level(re2020_status)
+    rt2012_risk = risk_level(rt2012_status)
+
+    # =========================
+    # EXECUTIVE SUMMARY
+    # =========================
+
+    elements.append(Paragraph("Executive Summary", styles['Heading1']))
+    elements.append(Spacer(1, 20))
+
+    elements.append(Paragraph(f"Score global RE2020 : {re2020_score} %", styles['Normal']))
+    elements.append(Paragraph(f"Statut RE2020 : {re2020_status}", styles['Normal']))
+    elements.append(Paragraph(f"Niveau de risque RE2020 : {re2020_risk}", styles['Normal']))
+
+    elements.append(Spacer(1, 20))
+
+    elements.append(Paragraph(f"Score global RT2012 : {rt2012_score} %", styles['Normal']))
+    elements.append(Paragraph(f"Statut RT2012 : {rt2012_status}", styles['Normal']))
+    elements.append(Paragraph(f"Niveau de risque RT2012 : {rt2012_risk}", styles['Normal']))
+
+    elements.append(PageBreak())
+
     # =========================
     # EXIGENCES
     # =========================
