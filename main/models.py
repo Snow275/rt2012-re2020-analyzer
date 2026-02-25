@@ -41,7 +41,7 @@ class Document(models.Model):
     rt2012_indoor_air_quality = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return self.nameTrue)
+        return self.nameTrue
 
     def __str__(self):
         return self.name
