@@ -140,7 +140,7 @@ def delete_document(request, doc_id):
 def download_report(request, document_id):
     document = get_object_or_404(Document, id=document_id)
     file_path = generate_report(document)
-return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{document.name}.pdf")
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{document.name}.pdf")
 
 
 @csrf_exempt
