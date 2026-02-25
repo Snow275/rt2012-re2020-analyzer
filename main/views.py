@@ -8,7 +8,6 @@ from rest_framework import status
 from .serializers import DocumentSerializer, AnalysisSerializer
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-import io
 import csv
 import chardet
 from .pdf_utils import generate_report
