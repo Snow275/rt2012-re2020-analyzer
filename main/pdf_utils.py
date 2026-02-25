@@ -13,35 +13,32 @@ def generate_report(document):
     styles = getSampleStyleSheet()
 
     # =========================
-    # PAGE DE GARDE
+    # PAGE DE GARDE PREMIUM
     # =========================
-    # =========================
-# PAGE DE GARDE PREMIUM
-# =========================
 
-elements.append(Spacer(1, 120))
+    elements.append(Spacer(1, 120))
 
-elements.append(Paragraph("SaaS", styles['Title']))
-elements.append(Spacer(1, 10))
-elements.append(Paragraph("Regulatory Decision Intelligence", styles['Heading3']))
+    elements.append(Paragraph("SaaS", styles['Title']))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph("Regulatory Decision Intelligence", styles['Heading3']))
 
-elements.append(Spacer(1, 40))
+    elements.append(Spacer(1, 40))
 
-elements.append(Paragraph("RAPPORT D’ANALYSE RÉGLEMENTAIRE", styles['Heading1']))
-elements.append(Spacer(1, 10))
-elements.append(Paragraph("Comparatif RE2020 / RT2012", styles['Heading2']))
+    elements.append(Paragraph("RAPPORT D’ANALYSE RÉGLEMENTAIRE", styles['Heading1']))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph("Comparatif RE2020 / RT2012", styles['Heading2']))
 
-elements.append(Spacer(1, 40))
+    elements.append(Spacer(1, 40))
 
-elements.append(Paragraph(f"Document analysé : {document.name}", styles['Normal']))
-elements.append(Paragraph(f"Date d’analyse : {document.upload_date.strftime('%d %b %Y')}", styles['Normal']))
+    elements.append(Paragraph(f"Document analysé : {document.name}", styles['Normal']))
+    elements.append(Paragraph(f"Date d’analyse : {document.upload_date.strftime('%d %b %Y')}", styles['Normal']))
 
-elements.append(Spacer(1, 80))
+    elements.append(Spacer(1, 80))
 
-elements.append(Paragraph("Document confidentiel – Diffusion restreinte", styles['Normal']))
-elements.append(Paragraph("Powered by SaaS", styles['Normal']))
+    elements.append(Paragraph("Document confidentiel – Diffusion restreinte", styles['Normal']))
+    elements.append(Paragraph("Powered by SaaS", styles['Normal']))
 
-elements.append(PageBreak())
+    elements.append(PageBreak())
 
     # =========================
     # EXIGENCES
