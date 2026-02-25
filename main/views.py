@@ -11,9 +11,7 @@ from django.contrib import messages
 import io
 import csv
 import chardet
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-
+from .pdf_utils import generate_report
 
 def home(request):
     documents = Document.objects.all()
