@@ -144,33 +144,6 @@ def download_report(request, document_id):
     return FileResponse(buffer, as_attachment=True, filename=f"report_{document.name}.pdf")
 
 
-def generate_report(document):
-    buffer = io.BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
-    p.setFont("Helvetica", 12)
-
-    p.drawString(100, 800, f"Rapport d'analyse pour {document.name}")
-    p.drawString(100, 780, f"Date de l'analyse: {document.upload_date.strftime('%d %b %Y')}")
-
-    y = 760
-    details = [
-        ("Efficacité énergétique (RE2020)", document.re2020_energy_efficiency),
-        ("Confort thermique (RE2020)", document.re2020_thermal_comfort),
-        ("Émissions de carbone (RE2020)", document.re2020_carbon_emissions),
-        ("Gestion de l'eau (RE2020)", document.re2020_water_management),
-        ("Qualité de l'air intérieur (RE2020)", document.re2020_indoor_air_quality),
-    ]
-
-    for label, value in details:
-        p.drawString(100, y, f"{label}: {value}")
-        y -= 20
-
-    p.showPage()
-    p.save()
-    buffer.seek(0)
-    return buffer
-
-
 @csrf_exempt
 @api_view(['GET'])
 def api_report(request, pk):
