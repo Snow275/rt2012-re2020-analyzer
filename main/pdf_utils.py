@@ -1,5 +1,5 @@
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 
@@ -12,37 +12,35 @@ def generate_report(document):
 
     styles = getSampleStyleSheet()
 
+    big_score = ParagraphStyle(
+        name='BigScore',
+        parent=styles['Heading1'],
+        fontSize=36,
+        alignment=1
+    )
+
     # =========================
-    # PAGE DE GARDE PREMIUM
+    # PAGE DE GARDE
     # =========================
 
     elements.append(Spacer(1, 120))
-
     elements.append(Paragraph("SaaS", styles['Title']))
     elements.append(Spacer(1, 10))
     elements.append(Paragraph("Regulatory Decision Intelligence", styles['Heading3']))
-
     elements.append(Spacer(1, 40))
-
     elements.append(Paragraph("RAPPORT D’ANALYSE RÉGLEMENTAIRE", styles['Heading1']))
     elements.append(Spacer(1, 10))
     elements.append(Paragraph("Comparatif RE2020 / RT2012", styles['Heading2']))
-
     elements.append(Spacer(1, 40))
-
     elements.append(Paragraph(f"Document analysé : {document.name}", styles['Normal']))
     elements.append(Paragraph(f"Date d’analyse : {document.upload_date.strftime('%d %b %Y')}", styles['Normal']))
-
     elements.append(Spacer(1, 80))
-
     elements.append(Paragraph("Document confidentiel – Diffusion restreinte", styles['Normal']))
     elements.append(Paragraph("Powered by SaaS", styles['Normal']))
-
     elements.append(PageBreak())
 
-
     # =========================
-    # CALCUL SCORES GLOBAUX
+    # CALCUL SCORES
     # =========================
 
     re2020_values = [
@@ -69,22 +67,10 @@ def generate_report(document):
             return "Conforme"
         elif score >= 50:
             return "Partiellement conforme"
-        else:
-            return "Non conforme"
+        return "Non conforme"
 
     re2020_status = global_status(re2020_score)
     rt2012_status = global_status(rt2012_score)
-
-    def risk_level(status):
-        if status == "Conforme":
-            return "Faible"
-        elif status == "Partiellement conforme":
-            return "Modéré"
-        else:
-            return "Élevé"
-
-    re2020_risk = risk_level(re2020_status)
-    rt2012_risk = risk_level(rt2012_status)
 
     # =========================
     # EXECUTIVE SUMMARY
@@ -93,16 +79,18 @@ def generate_report(document):
     elements.append(Paragraph("Executive Summary", styles['Heading1']))
     elements.append(Spacer(1, 20))
 
-    elements.append(Paragraph(f"Score global RE2020 : {re2020_score} %", styles['Normal']))
-    elements.append(Paragraph(f"Statut RE2020 : {re2020_status}", styles['Normal']))
-    elements.append(Paragraph(f"Niveau de risque RE2020 : {re2020_risk}", styles['Normal']))
+    elements.append(Paragraph("RE2020", styles['Heading2']))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"{re2020_score} %", big_score))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"Statut : {re2020_status}", styles['Normal']))
+    elements.append(Spacer(1, 30))
 
-    elements.append(Spacer(1, 20))
-
-    elements.append(Paragraph(f"Score global RT2012 : {rt2012_score} %", styles['Normal']))
-    elements.append(Paragraph(f"Statut RT2012 : {rt2012_status}", styles['Normal']))
-    elements.append(Paragraph(f"Niveau de risque RT2012 : {rt2012_risk}", styles['Normal']))
-
+    elements.append(Paragraph("RT2012", styles['Heading2']))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"{rt2012_score} %", big_score))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"Statut : {rt2012_status}", styles['Normal']))
     elements.append(PageBreak())
 
     # =========================
