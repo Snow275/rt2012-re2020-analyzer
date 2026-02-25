@@ -41,8 +41,6 @@ def generate_report(document):
     elements.append(PageBreak())
 
 
-    elements.append(PageBreak())
-
     # =========================
     # CALCUL SCORES GLOBAUX
     # =========================
