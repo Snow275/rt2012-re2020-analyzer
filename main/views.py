@@ -10,7 +10,22 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 import csv
 import chardet
+import PyPDF2
 from .pdf_utils import generate_report
+
+
+def extract_text_from_pdf(upload_path):
+
+    text = ""
+
+    with open(upload_path, "rb") as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted
+
+    return text
 
 def home(request):
     documents = Document.objects.all()
@@ -38,19 +53,14 @@ def import_document(request):
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
             document = form.save()
-            data = read_document(document.upload.path)
-            if data:
-                analyze_document(document, data)
-                document.save()
-                messages.success(request, 'Document successfully analyzed.')
+            if document.upload.name.endswith('.pdf'):
+                text = extract_text_from_pdf(document.upload.path)
+                print("====== TEXTE EXTRAIT ======")
+                print(text)
                 return redirect('results')
             else:
-                messages.error(request, "No valid data found in file.")
-        else:
-            messages.error(request, "Form is not valid.")
-    else:
-        form = DocumentForm()
-    return render(request, 'main/import.html', {'form': form})
+                data = read_document(document.upload.path)
+                return render(request, 'main/import.html', {'form': form})
 
 
 def analyze_document(document, data):
