@@ -139,8 +139,8 @@ def delete_document(request, doc_id):
 
 def download_report(request, document_id):
     document = get_object_or_404(Document, id=document_id)
-    buffer = generate_report(document)
-    return FileResponse(buffer, as_attachment=True, filename=f"report_{document.name}.pdf")
+    file_path = generate_report(document)
+return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{document.name}.pdf")
 
 
 @csrf_exempt
@@ -148,8 +148,8 @@ def download_report(request, document_id):
 def api_report(request, pk):
     try:
         document = Document.objects.get(pk=pk)
-        buffer = generate_report(document)
-        response = HttpResponse(buffer, content_type='application/pdf')
+        file_path = generate_report(document)
+        response = HttpResponse(open(file_path, 'rb'), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="report_{document.name}.pdf"'
         return response
     except Document.DoesNotExist:
