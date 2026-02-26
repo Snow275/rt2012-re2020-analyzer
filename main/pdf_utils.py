@@ -52,11 +52,11 @@ def generate_report(document):
     ]
 
     rt2012_values = [
-        document.rt2012_energy_efficiency or 0,
-        document.rt2012_thermal_comfort or 0,
-        document.rt2012_carbon_emissions or 0,
-        document.rt2012_water_management or 0,
-        document.rt2012_indoor_air_quality or 0,
+        document.rt2012_bbio or 0,
+        document.rt2012_cep or 0,
+        document.rt2012_tic or 0,
+        document.rt2012_airtightness or 0,
+        document.rt2012_enr or 0,
     ]
 
     re2020_score = round(sum(re2020_values) / len(re2020_values), 1)
