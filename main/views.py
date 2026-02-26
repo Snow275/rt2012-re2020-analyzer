@@ -72,17 +72,31 @@ def import_document(request):
 def parse_pdf_text(text):
     data = {}
 
+    # --- RE2020 ---
     cep = re.search(r'Cep\s*=\s*(\d+)', text)
     if cep:
-        data['energy_efficiency'] = float(cep.group(1))
+        data['re2020_energy_efficiency'] = float(cep.group(1))
 
     dh = re.search(r'DH\s*=\s*(\d+)', text)
     if dh:
-        data['thermal_comfort'] = float(dh.group(1))
+        data['re2020_thermal_comfort'] = float(dh.group(1))
 
     ic = re.search(r'Ic energie\s*=\s*(\d+)', text)
     if ic:
-        data['carbon_emissions'] = float(ic.group(1))
+        data['re2020_carbon_emissions'] = float(ic.group(1))
+
+    # --- RT2012 ---
+    bbio = re.search(r'Bbio\s*=\s*(\d+)', text)
+    if bbio:
+        data['rt2012_bbio'] = float(bbio.group(1))
+
+    tic = re.search(r'Tic\s*(conforme|non conforme)', text, re.IGNORECASE)
+    if tic:
+        data['rt2012_tic'] = 27.0 if tic.group(1).lower() == "conforme" else 35.0
+
+    ventilation = re.search(r'Ventilation\s*(simple flux|double flux)', text, re.IGNORECASE)
+    if ventilation:
+        data['rt2012_airtightness'] = 0.6 if ventilation.group(1).lower() == "double flux" else 1.2
 
     return data
     
@@ -95,11 +109,9 @@ def analyze_document(document, data):
     document.re2020_water_management = data.get('water_management', 0.0)
     document.re2020_indoor_air_quality = data.get('indoor_air_quality', 0.0)
 
-    document.rt2012_energy_efficiency = data.get('energy_efficiency', 0.0)
-    document.rt2012_thermal_comfort = data.get('thermal_comfort', 0.0)
-    document.rt2012_carbon_emissions = data.get('carbon_emissions', 0.0)
-    document.rt2012_water_management = data.get('water_management', 0.0)
-    document.rt2012_indoor_air_quality = data.get('indoor_air_quality', 0.0)
+    document.rt2012_bbio = data.get('rt2012_bbio', 0.0)
+    document.rt2012_tic = data.get('rt2012_tic', 0.0)
+    document.rt2012_airtightness = data.get('rt2012_airtightness', 0.0)
 
     document.save()
 
