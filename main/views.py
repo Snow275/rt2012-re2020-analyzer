@@ -116,11 +116,11 @@ def fetch_re2020_requirements():
 
 def fetch_rt2012_requirements():
     return {
-        'energy_efficiency': 50.0,
-        'thermal_comfort': 22.0,
-        'carbon_emissions': 35.0,
-        'water_management': 120.0,
-        'indoor_air_quality': 800.0,
+        'bbio': 50.0,
+        'cep': 50.0,
+        'tic': 27.0,
+        'airtightness': 0.6,
+        'enr': 1.0,
     }
 
 
