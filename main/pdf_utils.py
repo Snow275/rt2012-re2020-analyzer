@@ -39,38 +39,40 @@ def generate_report(document):
     elements.append(Paragraph("Powered by SaaS", styles['Normal']))
     elements.append(PageBreak())
 
-    # =========================
-    # CALCUL SCORES
-    # =========================
+# =========================
+# CALCUL SCORES
+# =========================
 
-    re2020_values = [
-        document.re2020_energy_efficiency or 0,
-        document.re2020_thermal_comfort or 0,
-        document.re2020_carbon_emissions or 0,
-        document.re2020_water_management or 0,
-        document.re2020_indoor_air_quality or 0,
+re2020_values = [
+    document.re2020_energy_efficiency or 0,
+    document.re2020_thermal_comfort or 0,
+    document.re2020_carbon_emissions or 0,
+    document.re2020_water_management or 0,
+    document.re2020_indoor_air_quality or 0,
+]
+
+re2020_score = round(sum(re2020_values) / len(re2020_values), 1)
+
+def compliance_score_rt2012(document):
+    checks = [
+        (document.rt2012_bbio or 0) <= 50,
+        (document.rt2012_cep or 0) <= 50,
+        (document.rt2012_tic or 0) <= 27,
+        (document.rt2012_airtightness or 0) <= 0.6,
+        (document.rt2012_enr or 0) >= 1,
     ]
+    return round((sum(checks) / len(checks)) * 100, 1)
 
-    rt2012_values = [
-        document.rt2012_bbio or 0,
-        document.rt2012_cep or 0,
-        document.rt2012_tic or 0,
-        document.rt2012_airtightness or 0,
-        document.rt2012_enr or 0,
-    ]
+rt2012_score = compliance_score_rt2012(document)
 
-    re2020_score = round(sum(re2020_values) / len(re2020_values), 1)
-    rt2012_score = round(sum(rt2012_values) / len(rt2012_values), 1)
+def global_status(score):
+    if score >= 75:
+        return "Conforme"
+    elif score >= 50:
+        return "Partiellement conforme"
+    return "Non conforme"
 
-    def global_status(score):
-        if score >= 75:
-            return "Conforme"
-        elif score >= 50:
-            return "Partiellement conforme"
-        return "Non conforme"
-
-    re2020_status = global_status(re2020_score)
-    rt2012_status = global_status(rt2012_score)
+re2020_status = global_status(re2020_score)
 
     def executive_interpretation(score):
         if score >= 75:
@@ -139,7 +141,6 @@ def generate_report(document):
         ("Émissions carbone", document.re2020_carbon_emissions or 0, document.rt2012_tic or 0),
         ("Gestion de l’eau", document.re2020_water_management or 0, document.rt2012_airtightness or 0),
         ("Qualité air intérieur", document.re2020_indoor_air_quality or 0, document.rt2012_enr or 0),
-]
     ]
 
     for label, re_val, rt_val in criteria:
@@ -307,7 +308,6 @@ def generate_report(document):
         ("Tic", document.rt2012_tic, 27),
         ("Étanchéité à l’air", document.rt2012_airtightness, 0.6),
         ("ENR", document.rt2012_enr, 1),
-]
     ]
 
     for label, value, requirement in rows_rt:
