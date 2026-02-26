@@ -134,11 +134,12 @@ def generate_report(document):
     ]
 
     criteria = [
-        ("Efficacité énergétique", document.re2020_energy_efficiency or 0, document.rt2012_energy_efficiency or 0),
-        ("Confort thermique", document.re2020_thermal_comfort or 0, document.rt2012_thermal_comfort or 0),
-        ("Émissions carbone", document.re2020_carbon_emissions or 0, document.rt2012_carbon_emissions or 0),
-        ("Gestion de l’eau", document.re2020_water_management or 0, document.rt2012_water_management or 0),
-        ("Qualité air intérieur", document.re2020_indoor_air_quality or 0, document.rt2012_indoor_air_quality or 0),
+        ("Efficacité énergétique", document.re2020_energy_efficiency or 0, document.rt2012_bbio or 0),
+        ("Confort thermique", document.re2020_thermal_comfort or 0, document.rt2012_cep or 0),
+        ("Émissions carbone", document.re2020_carbon_emissions or 0, document.rt2012_tic or 0),
+        ("Gestion de l’eau", document.re2020_water_management or 0, document.rt2012_airtightness or 0),
+        ("Qualité air intérieur", document.re2020_indoor_air_quality or 0, document.rt2012_enr or 0),
+]
     ]
 
     for label, re_val, rt_val in criteria:
@@ -257,14 +258,6 @@ def generate_report(document):
         "air": 75,
     }
 
-    rt2012_req = {
-        "energy": 50,
-        "thermal": 22,
-        "carbon": 35,
-        "water": 120,
-        "air": 800,
-    }
-
     # =========================
     # TABLEAU RE2020
     # =========================
@@ -309,11 +302,12 @@ def generate_report(document):
     ]
 
     rows_rt = [
-        ("Efficacité énergétique", document.rt2012_energy_efficiency, rt2012_req["energy"]),
-        ("Confort thermique", document.rt2012_thermal_comfort, rt2012_req["thermal"]),
-        ("Émissions carbone", document.rt2012_carbon_emissions, rt2012_req["carbon"]),
-        ("Gestion de l’eau", document.rt2012_water_management, rt2012_req["water"]),
-        ("Qualité air intérieur", document.rt2012_indoor_air_quality, rt2012_req["air"]),
+        ("Bbio", document.rt2012_bbio, 50),
+        ("Cep", document.rt2012_cep, 50),
+        ("Tic", document.rt2012_tic, 27),
+        ("Étanchéité à l’air", document.rt2012_airtightness, 0.6),
+        ("ENR", document.rt2012_enr, 1),
+]
     ]
 
     for label, value, requirement in rows_rt:
