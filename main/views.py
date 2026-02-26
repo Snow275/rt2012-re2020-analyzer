@@ -72,10 +72,13 @@ def import_document(request):
 def parse_pdf_text(text):
     data = {}
 
-    # --- RE2020 ---
-    cep = re.search(r'Cep\s*=\s*(\d+)', text)
-    if cep:
-        data['re2020_energy_efficiency'] = float(cep.group(1))
+    # =========================
+    # RE2020
+    # =========================
+
+    re2020_cep = re.search(r'Cep\s*=\s*(\d+)', text)
+    if re2020_cep:
+        data['re2020_energy_efficiency'] = float(re2020_cep.group(1))
 
     dh = re.search(r'DH\s*=\s*(\d+)', text)
     if dh:
@@ -85,10 +88,17 @@ def parse_pdf_text(text):
     if ic:
         data['re2020_carbon_emissions'] = float(ic.group(1))
 
-    # --- RT2012 ---
+    # =========================
+    # RT2012
+    # =========================
+
     bbio = re.search(r'Bbio\s*=\s*(\d+)', text)
     if bbio:
         data['rt2012_bbio'] = float(bbio.group(1))
+
+    cep_rt = re.search(r'Cep\s*=\s*(\d+)', text)
+    if cep_rt:
+        data['rt2012_cep'] = float(cep_rt.group(1))
 
     tic = re.search(r'Tic\s*(conforme|non conforme)', text, re.IGNORECASE)
     if tic:
@@ -97,6 +107,12 @@ def parse_pdf_text(text):
     ventilation = re.search(r'Ventilation\s*(simple flux|double flux)', text, re.IGNORECASE)
     if ventilation:
         data['rt2012_airtightness'] = 0.6 if ventilation.group(1).lower() == "double flux" else 1.2
+
+    enr = re.search(r'ENR\s*=\s*(\d+)', text)
+    if enr:
+        data['rt2012_enr'] = float(enr.group(1))
+    else:
+        data['rt2012_enr'] = 0.0
 
     return data
     
@@ -110,8 +126,10 @@ def analyze_document(document, data):
     document.re2020_indoor_air_quality = data.get('indoor_air_quality', 0.0)
 
     document.rt2012_bbio = data.get('rt2012_bbio', 0.0)
+    document.rt2012_cep = data.get('rt2012_cep', 0.0)
     document.rt2012_tic = data.get('rt2012_tic', 0.0)
     document.rt2012_airtightness = data.get('rt2012_airtightness', 0.0)
+    document.rt2012_enr = data.get('rt2012_enr', 0.0)
 
     document.save()
 
