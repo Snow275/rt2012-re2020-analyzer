@@ -52,7 +52,17 @@ def import_document(request):
     if request.method == "POST":
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            document = form.save()
+
+            # 🔥 Chemin du fichier uploadé
+            upload_path = document.upload.path
+
+            # 🔥 Lecture du fichier
+            data = read_document(upload_path)
+
+            # 🔥 Analyse et remplissage des champs
+            analyze_document(document, data)
+
             return redirect("results")
     else:
         form = DocumentForm()
