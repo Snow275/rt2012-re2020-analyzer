@@ -73,6 +73,7 @@ def global_status(score):
     return "Non conforme"
 
 re2020_status = global_status(re2020_score)
+rt2012_status = global_status(rt2012_score)
 
     def executive_interpretation(score):
         if score >= 75:
