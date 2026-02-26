@@ -133,11 +133,11 @@ def analyze_document(document, data):
     document.re2020_water_management = data.get('water_management', 0.0)
     document.re2020_indoor_air_quality = data.get('indoor_air_quality', 0.0)
 
-    document.rt2012_energy_efficiency = data.get('bbio', 0.0)
-    document.rt2012_thermal_comfort = data.get('cep_rt', 0.0)
-    document.rt2012_carbon_emissions = data.get('tic', 0.0)
-    document.rt2012_water_management = data.get('airtightness', 0.0)
-    document.rt2012_indoor_air_quality = data.get('enr', 0.0)
+    document.rt2012_bbio = data.get('bbio', 0.0)
+    document.rt2012_cep = data.get('cep_rt', 0.0)
+    document.rt2012_tic = data.get('tic', 0.0)
+    document.rt2012_airtightness = data.get('airtightness', 0.0)
+    document.rt2012_enr = data.get('enr', 0.0)
 
     document.save()
 
