@@ -48,11 +48,11 @@
             {% for document in documents %}
             <tr>
                 <td><strong>{{ document.name }}</strong></td>
-                <td>{{ document.rt2012_energy_efficiency|floatformat:1 }} / {{ rt2012_requirements.energy_efficiency }}</td>
-                <td>{{ document.rt2012_thermal_comfort|floatformat:1 }} / {{ rt2012_requirements.thermal_comfort }}</td>
-                <td>{{ document.rt2012_carbon_emissions|floatformat:1 }} / {{ rt2012_requirements.carbon_emissions }}</td>
-                <td>{{ document.rt2012_water_management|floatformat:1 }} / {{ rt2012_requirements.water_management }}</td>
-                <td>{{ document.rt2012_indoor_air_quality|floatformat:1 }} / {{ rt2012_requirements.indoor_air_quality }}</td>
+                <td>{{ document.rt2012_bbio }} / {{ rt2012_requirements.bbio }}</td>
+                <td>{{ document.rt2012_cep }} / {{ rt2012_requirements.cep }}</td>
+                <td>{{ document.rt2012_tic }} / {{ rt2012_requirements.tic }}</td>
+                <td>{{ document.rt2012_airtightness }} / {{ rt2012_requirements.airtightness }}</td>
+                <td>{{ document.rt2012_enr }} / {{ rt2012_requirements.enr }}</td>
             </tr>
             {% endfor %}
         </tbody>
