@@ -11,6 +11,7 @@ from django.contrib import messages
 import csv
 import chardet
 import PyPDF2
+import re
 from .pdf_utils import generate_report
 
 
@@ -54,13 +55,11 @@ def import_document(request):
         if form.is_valid():
             document = form.save()
 
-            # 🔥 Chemin du fichier uploadé
             upload_path = document.upload.path
 
-            # 🔥 Lecture du fichier
-            data = read_document(upload_path)
+            text = extract_text_from_pdf(upload_path)
+            data = parse_pdf_text(text)
 
-            # 🔥 Analyse et remplissage des champs
             analyze_document(document, data)
 
             return redirect("results")
@@ -68,7 +67,25 @@ def import_document(request):
         form = DocumentForm()
 
     return render(request, "main/import.html", {"form": form})
+    
 
+def parse_pdf_text(text):
+    data = {}
+
+    cep = re.search(r'Cep\s*=\s*(\d+)', text)
+    if cep:
+        data['energy_efficiency'] = float(cep.group(1))
+
+    dh = re.search(r'DH\s*=\s*(\d+)', text)
+    if dh:
+        data['thermal_comfort'] = float(dh.group(1))
+
+    ic = re.search(r'Ic energie\s*=\s*(\d+)', text)
+    if ic:
+        data['carbon_emissions'] = float(ic.group(1))
+
+    return data
+    
 
 def analyze_document(document, data):
     
