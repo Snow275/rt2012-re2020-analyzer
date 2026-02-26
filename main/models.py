@@ -34,11 +34,11 @@ class Document(models.Model):
     re2020_indoor_air_quality = models.FloatField(null=True, blank=True)
 
     # Champs pour la RT 2012
-    rt2012_energy_efficiency = models.FloatField(null=True, blank=True)
-    rt2012_thermal_comfort = models.FloatField(null=True, blank=True)
-    rt2012_carbon_emissions = models.FloatField(null=True, blank=True)
-    rt2012_water_management = models.FloatField(null=True, blank=True)
-    rt2012_indoor_air_quality = models.FloatField(null=True, blank=True)
+    rt2012_bbio = models.FloatField(null=True, blank=True)
+    rt2012_cep = models.FloatField(null=True, blank=True)
+    rt2012_tic = models.FloatField(null=True, blank=True)
+    rt2012_airtightness = models.FloatField(null=True, blank=True)
+    rt2012_enr = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.nameTrue
