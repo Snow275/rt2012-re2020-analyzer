@@ -49,18 +49,12 @@ def faq(request):
 
 
 def import_document(request):
-    if request.method == 'POST':
-        form = DocumentForm(request.POST, request.FILES)
-        if form.is_valid():
-            document = form.save()
-            if document.upload.name.endswith('.pdf'):
-                text = extract_text_from_pdf(document.upload.path)
-                print("====== TEXTE EXTRAIT ======")
-                print(text)
-                return redirect('results')
-            else:
-                data = read_document(document.upload.path)
-                return render(request, 'main/import.html', {'form': form})
+    if request.method == "POST":
+        # ton traitement ici
+        return redirect("home")
+
+    # IMPORTANT : gérer le GET
+    return render(request, "main/import.html")
 
 
 def analyze_document(document, data):
