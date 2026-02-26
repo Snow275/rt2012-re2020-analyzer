@@ -72,45 +72,53 @@ def import_document(request):
 def parse_pdf_text(text):
     data = {}
 
-    # RE2020
-    cep = re.search(r'Cep\s*=\s*(\d+)', text, re.IGNORECASE)
+    # Séparer les sections
+    re2020_section = ""
+    rt2012_section = ""
+
+    if "RE2020" in text and "RT2012" in text:
+        re2020_section = text.split("RE2020")[1].split("RT2012")[0]
+        rt2012_section = text.split("RT2012")[1]
+
+    # ----- RE2020 -----
+    cep = re.search(r'Cep\s*=\s*(\d+)', re2020_section)
     if cep:
         data['energy_efficiency'] = float(cep.group(1))
 
-    dh = re.search(r'DH\s*=\s*(\d+)', text, re.IGNORECASE)
+    dh = re.search(r'DH\s*=\s*(\d+)', re2020_section)
     if dh:
         data['thermal_comfort'] = float(dh.group(1))
 
-    ic = re.search(r'Ic\s*é?nergie\s*=\s*(\d+)', text, re.IGNORECASE)
+    ic = re.search(r'Ic energie\s*=\s*(\d+)', re2020_section)
     if ic:
         data['carbon_emissions'] = float(ic.group(1))
 
-    eau = re.search(r'Eau\s*=\s*(\d+)', text, re.IGNORECASE)
+    eau = re.search(r'Eau\s*=\s*(\d+)', re2020_section)
     if eau:
         data['water_management'] = float(eau.group(1))
 
-    qai = re.search(r'Qai\s*=\s*(\d+)', text, re.IGNORECASE)
+    qai = re.search(r'Qai\s*=\s*(\d+)', re2020_section)
     if qai:
         data['indoor_air_quality'] = float(qai.group(1))
 
-    # RT2012
-    bbio = re.search(r'Bbio\s*=\s*(\d+)', text, re.IGNORECASE)
+    # ----- RT2012 -----
+    bbio = re.search(r'Bbio\s*=\s*(\d+)', rt2012_section)
     if bbio:
         data['bbio'] = float(bbio.group(1))
 
-    cep_rt = re.search(r'Cep\s*=\s*(\d+)', text, re.IGNORECASE)
+    cep_rt = re.search(r'Cep\s*=\s*(\d+)', rt2012_section)
     if cep_rt:
         data['cep_rt'] = float(cep_rt.group(1))
 
-    tic = re.search(r'Tic\s*=\s*(\d+)', text, re.IGNORECASE)
+    tic = re.search(r'Tic\s*=\s*(\d+)', rt2012_section)
     if tic:
         data['tic'] = float(tic.group(1))
 
-    airtightness = re.search(r'Etancheite\s*=\s*([\d\.]+)', text, re.IGNORECASE)
+    airtightness = re.search(r'Etancheite\s*=\s*([\d\.]+)', rt2012_section)
     if airtightness:
         data['airtightness'] = float(airtightness.group(1))
 
-    enr = re.search(r'Enr\s*=\s*([\d\.]+)', text, re.IGNORECASE)
+    enr = re.search(r'Enr\s*=\s*([\d\.]+)', rt2012_section)
     if enr:
         data['enr'] = float(enr.group(1))
 
