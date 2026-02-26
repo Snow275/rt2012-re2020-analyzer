@@ -50,11 +50,14 @@ def faq(request):
 
 def import_document(request):
     if request.method == "POST":
-        # ton traitement ici
-        return redirect("home")
+        form = DocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect("results")
+    else:
+        form = DocumentForm()
 
-    # IMPORTANT : gérer le GET
-    return render(request, "main/import.html")
+    return render(request, "main/import.html", {"form": form})
 
 
 def analyze_document(document, data):
