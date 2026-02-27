@@ -280,7 +280,7 @@ def generate_report(document):
 
     for label, value, requirement in rows:
         value = value if value is not None else 0
-        status = "Conforme" if value >= requirement else "Non conforme"
+        status = "Conforme" if value <= requirement else "Non conforme"
         data_re2020.append([label, value, requirement, status])
 
     table_re2020 = Table(data_re2020, colWidths=[170, 80, 80, 100])
@@ -311,9 +311,9 @@ def generate_report(document):
         ("ENR", document.rt2012_enr, 1),
     ]
 
-    for label, value, requirement in rows_rt:
+    for label, value, requirement in rows:
         value = value if value is not None else 0
-        status = "Conforme" if value >= requirement else "Non conforme"
+        status = "Conforme" if value <= requirement else "Non conforme"
         data_rt2012.append([label, value, requirement, status])
 
     table_rt2012 = Table(data_rt2012, colWidths=[170, 80, 80, 100])
