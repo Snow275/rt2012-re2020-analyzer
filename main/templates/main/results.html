@@ -102,19 +102,6 @@
                         Non conforme
                     {% endif %}
                 </td>
-                    ">
-                    {% if
-                        document.rt2012_bbio|is_conform:rt2012_requirements.bbio and
-                        document.rt2012_cep|is_conform:rt2012_requirements.cep and
-                        document.rt2012_tic|is_conform:rt2012_requirements.tic and
-                        document.rt2012_airtightness|is_conform:rt2012_requirements.airtightness and
-                        document.rt2012_enr|is_conform:rt2012_requirements.enr
-                    %}
-                        Conforme
-                    {% else %}
-                        Non conforme
-                    {% endif %}
-                </td>
             </tr>
             {% endfor %}
         </tbody>
