@@ -10,6 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.db.models import Avg, Count, Q
 from .models import Document, Analysis  # Analysis déjà peut-être importé
+from django.template.loader import render_to_string
+from weasyprint import HTML
 import csv
 import chardet
 import PyPDF2
@@ -263,8 +265,21 @@ def delete_document(request, doc_id):
 
 def download_report(request, document_id):
     document = get_object_or_404(Document, id=document_id)
-    file_path = generate_report(document)
-    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{document.name}.pdf")
+
+    context = {
+        'document': document,
+        're2020_limits': fetch_re2020_requirements(),
+        'rt2012_limits': fetch_rt2012_requirements(),
+    }
+
+    html_string = render_to_string('main/report_template.html', context)
+    html = HTML(string=html_string)
+    pdf = html.write_pdf()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="rapport_{document.name}.pdf"'
+
+    return response
 
 
 @csrf_exempt
