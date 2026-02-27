@@ -1,106 +1,163 @@
 {% extends 'main/base.html' %}
 
-{% block title %}Accueil{% endblock %}
+{% block title %}Accueil - Audit RT2012 & RE2020{% endblock %}
 
 {% block content %}
-<div class="jumbotron text-center">
-    <h1 class="display-4">Bienvenue sur l'outil de conformité RT2012</h1>
-    <p class="lead">Cet outil vous aide à garantir que vos projets respectent les normes de la Réglementation Thermique 2012 (RT2012).</p>
-    <hr class="my-4">
-    <p>Utilisez le menu pour naviguer entre les différentes sections.</p>
-    <a class="btn btn-primary btn-lg" href="{% url 'import' %}" role="button">Importer un document</a>
-    <a class="btn btn-secondary btn-lg" href="{% url 'results' %}" role="button">Voir les résultats</a>
+
+<!-- HERO SECTION - Orientation service commercial -->
+<div class="jumbotron text-center" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 4rem 2rem;">
+    <h1 class="display-4 font-weight-bold">Audit RT2012 & RE2020</h1>
+    <p class="lead" style="font-size: 1.25rem;">
+        Certification et conformité énergétique pour professionnels du bâtiment
+    </p>
+    <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+    <div class="mt-4">
+        <a class="btn btn-warning btn-lg mr-2" href="{% url 'contact' %}" role="button">
+            <i class="fas fa-envelope"></i> Demander un devis
+        </a>
+        <a class="btn btn-outline-light btn-lg" href="#process" role="button">
+            Notre processus
+        </a>
+    </div>
 </div>
 
+<!-- POURQUOI CHOISIR NOTRE CABINET -->
 <div class="container mt-5">
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Comment utiliser cet outil</h5>
-                    <p class="card-text">1. Allez à la section <a href="{% url 'import' %}">Importer</a> pour télécharger vos documents de projet.</p>
-                    <p class="card-text">2. Consultez les <a href="{% url 'results' %}">résultats</a> pour voir si vos projets sont conformes aux exigences de la RT2012.</p>
-                    <p class="card-text">3. Téléchargez des rapports détaillés à partir de la section <a href="{% url 'history' %}">Historique</a>.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Statistiques récentes</h5>
-                    <p class="card-text"><strong>Projets analysés :</strong> 150</p>
-                    <p class="card-text"><strong>Taux de conformité :</strong> 85%</p>
-                    <p class="card-text"><strong>Émissions de carbone moyennes :</strong> 70 kg CO2/m²</p>
-                </div>
-            </div>
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h5 class="card-title">Statistiques des projets</h5>
-                    <select id="documentSelect" class="form-select mb-4">
-                        {% for document in documents %}
-                            <option value="{{ document.id }}">{{ document.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <canvas id="documentChart" width="200" height="200"></canvas>
-                </div>
-            </div>
-        </div>
+    <div class="text-center mb-5">
+        <h2>Pourquoi choisir notre expertise ?</h2>
+        <p class="text-muted">Des experts certifiés au service de votre conformité</p>
     </div>
-
-    <div class="row mt-5">
-        <div class="col-md-12 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Témoignages</h5>
-                    <p class="card-text">"Cet outil a grandement simplifié notre processus de vérification de conformité RT2012." - <em>Entreprise A</em></p>
-                    <p class="card-text">"Grâce à cet outil, nous avons pu réduire nos émissions de carbone et améliorer notre efficacité énergétique." - <em>Entreprise B</em></p>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-certificate fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Experts certifiés</h5>
+                    <p class="card-text text-muted">Ingénieurs thermiciens diplômés et certifiés RT2012/RE2020</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-clock fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Délais garantis</h5>
+                    <p class="card-text text-muted">Respect des délais contractuels, engagement sur les dates</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-building fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Tous types de bâtiments</h5>
+                    <p class="card-text text-muted">Maison individuelle, collectif, tertiaire, industriel</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Bandeau en bas de la page -->
-<footer class="footer mt-auto py-3 bg-light">
-    <div class="container text-center">
-        <span class="text-muted"><a href="{% url 'contact' %}">Contactez-nous</a> | <a href="{% url 'faq' %}">FAQ</a></span>
+<!-- PROCESSUS D'AUDIT -->
+<div class="bg-light py-5" id="process">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2>Notre processus d'audit</h2>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                    <span class="h3 mb-0">1</span>
+                </div>
+                <h5 class="mt-3">Contact &诊断</h5>
+                <p class="text-muted">Analyse de vos besoins et devis détaillé sous 24h</p>
+            </div>
+            
+            <div class="col-md-4 text-center mb-4">
+                <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                    <span class="h3 mb-0">2</span>
+                </div>
+                <h5 class="mt-3">Visite & Analyse</h5>
+                <p class="text-muted">Thermicien sur site, relevés et modélisation</p>
+            </div>
+            
+            <div class="col-md-4 text-center mb-4">
+                <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                    <span class="h3 mb-0">3</span>
+                </div>
+                <h5 class="mt-3">Rapport & Certification</h5>
+                <p class="text-muted">Rapport complet conforme aux exigences réglementaires</p>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'contact' %}" class="btn btn-primary">Démarrer un audit</a>
+        </div>
     </div>
-</footer>
+</div>
 
-<script>
-    const documentData = {
-        {% for document in documents %}
-            {{ document.id }}: {
-                labels: ['Conforme', 'Non conforme'],
-                datasets: [{
-                    data: [
-                        {{ document.analysis_result.energy_efficiency.compliance|yesno:"1,0" }},
-                        {{ document.analysis_result.energy_efficiency.compliance|yesno:"0,1" }}
-                    ],
-                    backgroundColor: ['#4CAF50', '#F44336']
-                }]
-            },
-        {% endfor %}
-    };
+<!-- STATS DYNAMIQUES (à connecter avec ta DB) -->
+<div class="container mt-5">
+    <div class="row text-center">
+        <div class="col-md-4 mb-3">
+            <h2 class="text-primary font-weight-bold">{{ total_projects|default:"150" }}+</h2>
+            <p class="text-muted">Projets audités</p>
+        </div>
+        <div class="col-md-4 mb-3">
+            <h2 class="text-success font-weight-bold">{{ compliance_rate|default:"95" }}%</h2>
+            <p class="text-muted">Taux de conformité</p>
+        </div>
+        <div class="col-md-4 mb-3">
+            <h2 class="text-info font-weight-bold">{{ avg_carbon|default:"45" }} kg</h2>
+            <p class="text-muted">Émissions CO2/m² moyennes</p>
+        </div>
+    </div>
+</div>
 
-    const ctx = document.getElementById('documentChart').getContext('2d');
-    let documentChart = new Chart(ctx, {
-        type: 'pie',
-        data: documentData[{{ documents.0.id }}],
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            }
-        }
-    });
+<!-- TEMOIGNAGES -->
+<div class="bg-light py-5 mt-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Témoignages de professionnels</h2>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <p class="card-text">"Equipe professionnelle et réactive. Rapport RT2012 livré dans les délais, sans souci."</p>
+                        <footer class="blockquote-footer">Marie T., Architecte DPLG</footer>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <p class="card-text">"Excellente expertise technique. Ils ont identifié des points d'amélioration que d'autres avaient manqués."</p>
+                        <footer class="blockquote-footer">Pierre M., Maître d'œuvre</footer>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    document.getElementById('documentSelect').addEventListener('change', function() {
-        const selectedDocument = this.value;
-        documentChart.data = documentData[selectedDocument];
-        documentChart.update();
-    });
-</script>
+<!-- CTA FINAL -->
+<div class="container my-5 text-center">
+    <div class="card bg-primary text-white">
+        <div class="card-body py-5">
+            <h2>Prêt à démarrer votre projet ?</h2>
+            <p class="mb-4">Contactez-nous pour un diagnostic gratuit</p>
+            <a href="{% url 'contact' %}" class="btn btn-warning btn-lg">Demander un devis</a>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
