@@ -25,8 +25,11 @@
                 <td style="color: {% if document.re2020_energy_efficiency|is_conform:re2020_requirements.energy_efficiency %}green{% else %}red{% endif %};">
                     {{ document.re2020_energy_efficiency|floatformat:1 }} / {{ re2020_requirements.energy_efficiency }}
                 </td>
-
-                <td style="color: {% if document.re2020_thermal_comfort|is_conform:re2020_requirements.thermal_comfort %}green{% else %}red{% endif %};">
+                <td style="color: {% if document.re2020_energy_efficiency|is_conform_adapted:'re2020_energy_efficiency' %}green{% else %}red{% endif %};">
+                    {{ document.re2020_thermal_comfort|floatformat:1 }} / {{ re2020_requirements.energy_efficiency }}
+                </td>
+                
+                <td style="color: {% if document.re2020_thermal_comfort|is_conform_adapted:'re2020_thermal_comfort' %}green{% else %}red{% endif %};">
                     {{ document.re2020_thermal_comfort|floatformat:1 }} / {{ re2020_requirements.thermal_comfort }}
                 </td>
 
