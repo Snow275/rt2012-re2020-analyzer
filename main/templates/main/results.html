@@ -42,31 +42,14 @@
                     {{ document.re2020_indoor_air_quality|floatformat:1 }} / {{ re2020_requirements.indoor_air_quality }}
                 </td>
 
-                <td style="font-weight: bold; color:
-                    {% if
-                        document.re2020_energy_efficiency|is_conform:re2020_requirements.energy_efficiency and
-                        document.re2020_thermal_comfort|is_conform:re2020_requirements.thermal_comfort and
-                        document.re2020_carbon_emissions|is_conform:re2020_requirements.carbon_emissions and
-                        document.re2020_water_management|is_conform:re2020_requirements.water_management and
-                        document.re2020_indoor_air_quality|is_conform:re2020_requirements.indoor_air_quality
-                    %}
-                        green
-                    {% else %}
-                        red
-                    {% endif %}
-                    ">
-                    {% if
-                        document.re2020_energy_efficiency|is_conform:re2020_requirements.energy_efficiency and
-                        document.re2020_thermal_comfort|is_conform:re2020_requirements.thermal_comfort and
-                        document.re2020_carbon_emissions|is_conform:re2020_requirements.carbon_emissions and
-                        document.re2020_water_management|is_conform:re2020_requirements.water_management and
-                        document.re2020_indoor_air_quality|is_conform:re2020_requirements.indoor_air_quality
-                    %}
-                        Conforme
-                    {% else %}
-                        Non conforme
-                    {% endif %}
+                <td style="font-weight: bold; color: {% if document.re2020_is_conform %}green{% else %}red{% endif %};">
+                  {% if document.re2020_is_conform %}
+                    Conforme
+                  {% else %}
+                    Non conforme
+                  {% endif %}
                 </td>
+                    
             </tr>
             {% empty %}
             <tr><td colspan="7">Aucun document analysé.</td></tr>
