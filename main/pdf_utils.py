@@ -44,11 +44,11 @@ def generate_report(document):
     # =========================
 
     re2020_values = [
-    document.re2020_energy_efficiency or 0,
-    document.re2020_thermal_comfort or 0,
-    document.re2020_carbon_emissions or 0,
-    document.re2020_water_management or 0,
-    document.re2020_indoor_air_quality or 0,
+        document.re2020_energy_efficiency or 0,
+        document.re2020_thermal_comfort or 0,
+        document.re2020_carbon_emissions or 0,
+        document.re2020_water_management or 0,
+        document.re2020_indoor_air_quality or 0,
     ]
 
     re2020_score = round(sum(re2020_values) / len(re2020_values), 1)
