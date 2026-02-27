@@ -218,12 +218,30 @@ def fetch_rt2012_requirements():
 
 def results(request):
     documents = Document.objects.all()
+    re2020_requirements = fetch_re2020_requirements()
+    rt2012_requirements = fetch_rt2012_requirements()
+
+    for doc in documents:
+        doc.re2020_is_conform = (
+            doc.re2020_energy_efficiency <= re2020_requirements['energy_efficiency'] and
+            doc.re2020_thermal_comfort <= re2020_requirements['thermal_comfort'] and
+            doc.re2020_carbon_emissions <= re2020_requirements['carbon_emissions'] and
+            doc.re2020_water_management <= re2020_requirements['water_management'] and
+            doc.re2020_indoor_air_quality <= re2020_requirements['indoor_air_quality']
+        )
+        doc.rt2012_is_conform = (
+            doc.rt2012_bbio <= rt2012_requirements['bbio'] and
+            doc.rt2012_cep <= rt2012_requirements['cep'] and
+            doc.rt2012_tic <= rt2012_requirements['tic'] and
+            doc.rt2012_airtightness <= rt2012_requirements['airtightness'] and
+            doc.rt2012_enr <= rt2012_requirements['enr']
+        )
+
     return render(request, 'main/results.html', {
         'documents': documents,
-        're2020_requirements': fetch_re2020_requirements(),
-        'rt2012_requirements': fetch_rt2012_requirements(),
+        're2020_requirements': re2020_requirements,
+        'rt2012_requirements': rt2012_requirements,
     })
-
 
 def read_document(upload_path):
     try:
