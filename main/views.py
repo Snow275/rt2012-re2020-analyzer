@@ -8,6 +8,8 @@ from rest_framework import status
 from .serializers import DocumentSerializer, AnalysisSerializer
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
+from django.db.models import Avg, Count, Q
+from .models import Document, Analysis  # Analysis déjà peut-être importé
 import csv
 import chardet
 import PyPDF2
@@ -29,8 +31,58 @@ def extract_text_from_pdf(upload_path):
     return text
 
 def home(request):
-    documents = Document.objects.all()
-    return render(request, 'main/home.html', {'documents': documents})
+    # Récupérer tous les documents actifs
+    documents = Document.objects.filter(is_active=True)
+    
+    # 1. Total des projets
+    total_projects = documents.count()
+    
+    # 2. Taux de conformité (basé sur RT2012 et RE2020)
+    # On vérifie si les valeurs sont dans les normes
+    # RT2012: Bbio < 50, CEP < 50, TIC < 27
+    # RE2020: à adapter selon tes seuils
+    
+    total_analyses = 0
+    compliant_count = 0
+    
+    for doc in documents:
+        # Vérification RT2012
+        is_compliant = False
+        if doc.rt2012_bbio and doc.rt2012_bbio <= 50:
+            if doc.rt2012_cep and doc.rt2012_cep <= 50:
+                if doc.rt2012_tic and doc.rt2012_tic <= 27:
+                    is_compliant = True
+        
+        # Si RT2012 pas conforme, on vérifie RE2020 (seuils à adapter)
+        if not is_compliant:
+            if doc.re2020_energy_efficiency and doc.re2020_energy_efficiency <= 80:
+                if doc.re2020_carbon_emissions and doc.re2020_carbon_emissions <= 75:
+                    is_compliant = True
+        
+        total_analyses += 1
+        if is_compliant:
+            compliant_count += 1
+    
+    if total_analyses > 0:
+        compliance_rate = round((compliant_count / total_analyses) * 100, 1)
+    else:
+        compliance_rate = 0
+    
+    # 3. Moyenne des émissions CO2 (RE2020)
+    carbon_values = documents.exclude(re2020_carbon_emissions__isnull=True).values_list('re2020_carbon_emissions', flat=True)
+    if carbon_values:
+        avg_carbon = round(sum(carbon_values) / len(carbon_values), 1)
+    else:
+        avg_carbon = 0
+    
+    context = {
+        'documents': documents,
+        'total_projects': total_projects,
+        'compliance_rate': compliance_rate,
+        'avg_carbon': avg_carbon,
+    }
+    
+    return render(request, 'main/home.html', context)
 
 
 def contact(request):
