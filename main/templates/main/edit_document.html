@@ -63,10 +63,7 @@
               <span style="color:var(--gray-1)">Déposé le</span>
               <span style="color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;font-size:.82rem">
-              <span style="color:var(--gray-1)">Lien de suivi client</span>
-              <a href="{% url 'tracking' document.tracking_token %}" target="_blank" style="color:var(--gold);font-size:.75rem">Voir →</a>
-            </div>
+
           </div>
         </div>
 
@@ -163,9 +160,6 @@
           <div style="display:flex;gap:.8rem">
             <a href="{% url 'download_report' document.id %}" class="btn btn-outline" style="flex:1;text-align:center;font-size:.83rem">
               📄 Télécharger le rapport PDF
-            </a>
-            <a href="{% url 'tracking' document.tracking_token %}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;font-size:.83rem">
-              🔗 Page suivi client
             </a>
           </div>
         </div>
