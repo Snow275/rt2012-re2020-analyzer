@@ -159,7 +159,22 @@ def import_document(request):
             messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     else:
         form = DocumentForm()
-    return render(request, "main/import.html", {"form": form})
+    return render(request, "main/import.html", {
+        "form": form,
+        "doc_items": [
+            "Notice thermique / étude thermique",
+            "Attestation RT2012 ou RE2020",
+            "Plans architecturaux (PDF)",
+            "DPE si disponible",
+            "CCTP / descriptif technique",
+        ],
+        "steps": [
+            "Accusé de réception sous 24h",
+            "Confirmation de complétude du dossier",
+            "Analyse documentaire complète",
+            "Livraison du rapport PDF + lien de suivi",
+        ],
+    })
 
 
 def get_tracking_steps(document):
