@@ -2,16 +2,18 @@ from django import template
 
 register = template.Library()
 
+# Seul critère où une valeur HAUTE est bonne (plus d'ENR = mieux)
 CRITERIA_GREATER_EQUAL = {
-    're2020_thermal_comfort',
-    're2020_indoor_air_quality',
     'rt2012_enr',
 }
 
+# Tous les autres : valeur doit être INFÉRIEURE au seuil (moins = mieux)
 CRITERIA_LOWER_EQUAL = {
     're2020_energy_efficiency',
+    're2020_thermal_comfort',    # DH : degrés-heures, dépasser le seuil = non conforme
     're2020_carbon_emissions',
     're2020_water_management',
+    're2020_indoor_air_quality', # Qai : dépasser le seuil = non conforme
     'rt2012_bbio',
     'rt2012_cep',
     'rt2012_tic',
