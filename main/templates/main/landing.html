@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
-   VARIABLES & RESET
+   VARIABLES &amp; RESET
 ════════════════════════════════════════ */
 :root {
   --navy:       #0C1929;
@@ -1042,8 +1042,8 @@ footer {
     <li><a href="#tarifs">Tarifs</a></li>
     <li><a href="#suivi">Suivi</a></li>
     <li><a href="{% url 'import' %}" class="nav-cta">Déposer un dossier</a></li>
-    <li><a href="{% url 'home' %}" style="font-size:.8rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none">Dashboard</a></li>
-  </ul>
+    <li style="margin-left:.5rem"><a href="{% url 'home' %}" style="font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gray-2)'">Dashboard</a></li>
+</ul>
 </nav>
 
 <!-- ████ HERO ████ -->
@@ -1123,7 +1123,7 @@ footer {
       <div class="process-row">
         <div class="pr-num">4</div>
         <div class="pr-content">
-          <strong>Livraison & échanges</strong>
+          <strong>Livraison &amp; échanges</strong>
           <span>Rapport PDF + lien de suivi + disponibilité pour questions</span>
         </div>
       </div>
@@ -1141,7 +1141,7 @@ footer {
   <div class="tb-sep"></div>
   <div class="tb-item">🔍 Analyse <strong>100% indépendante</strong></div>
   <div class="tb-sep"></div>
-  <div class="tb-item">📎 RT2012 <strong>&</strong> RE2020</div>
+  <div class="tb-item">📎 RT2012 <strong>&amp;</strong> RE2020</div>
   <div class="tb-sep"></div>
   <div class="tb-item">🔗 Lien de <strong>suivi personnalisé</strong></div>
   <div class="tb-sep"></div>
@@ -1209,12 +1209,12 @@ footer {
 
       <div class="offre-side reveal">
         <div class="side-card">
-          <h4>🏘 Promoteurs & Maîtres d'ouvrage</h4>
+          <h4>🏘 Promoteurs &amp; Maîtres d'ouvrage</h4>
           <p>Sécurisez vos permis et levées de réserves. Notre rapport indépendant vous donne une lecture claire avant dépôt ou réception.</p>
           <a href="{% url 'import' %}">Soumettre un projet <span>→</span></a>
         </div>
         <div class="side-card">
-          <h4>📐 Architectes & BET</h4>
+          <h4>📐 Architectes &amp; BET</h4>
           <p>Identifiez les points de non-conformité en amont. Évitez les allers-retours en phase chantier grâce à une relecture externe rigoureuse.</p>
           <a href="{% url 'contact' %}">Prendre contact <span>→</span></a>
         </div>
@@ -1258,7 +1258,7 @@ footer {
       </div>
       <div class="pc-card reveal">
         <div class="pc-n">4</div>
-        <h4>Livraison & échanges</h4>
+        <h4>Livraison &amp; échanges</h4>
         <p>Rapport PDF livré sur votre lien de suivi. Disponibilité pour un échange de 30 min inclus dans chaque prestation.</p>
         <span class="pc-tag">J+15 maximum</span>
       </div>
@@ -1300,7 +1300,7 @@ footer {
             <li>Lien de suivi personnalisé</li>
             <li>Échange 30 min inclus</li>
           </ul>
-          <a href="#contact" class="tc-btn outline">Déposer un dossier</a>
+          <a href="{% url 'import' %}" class="tc-btn outline">Déposer un dossier</a>
         </div>
       </div>
 
@@ -1308,7 +1308,7 @@ footer {
         <div class="feat-label">Le plus demandé</div>
         <div class="tc-body">
           <div class="tc-type">Collectif / Tertiaire</div>
-          <h3>Immeuble & bâtiment</h3>
+          <h3>Immeuble &amp; bâtiment</h3>
           <div class="tc-price">
             <div class="tc-from">À partir de</div>
             <div class="tc-amount">890 €</div>
@@ -1323,13 +1323,13 @@ footer {
             <li>Échange 45 min inclus</li>
             <li>Visite site sur option</li>
           </ul>
-          <a href="#contact" class="tc-btn primary">Déposer un dossier</a>
+          <a href="{% url 'import' %}" class="tc-btn primary">Déposer un dossier</a>
         </div>
       </div>
 
       <div class="tarif-card">
         <div class="tc-body">
-          <div class="tc-type">Rénovation & ERP</div>
+          <div class="tc-type">Rénovation &amp; ERP</div>
           <h3>Projet sur mesure</h3>
           <div class="tc-price">
             <div class="tc-from">Sur devis</div>
@@ -1344,7 +1344,7 @@ footer {
             <li>Lien de suivi personnalisé</li>
             <li>Accompagnement renforcé</li>
           </ul>
-          <a href="#contact" class="tc-btn outline">Demander un devis</a>
+          <a href="{% url 'import' %}" class="tc-btn outline">Demander un devis</a>
         </div>
       </div>
     </div>
@@ -1397,7 +1397,7 @@ footer {
             </div>
             <div class="sm-step">
               <div class="sm-step-icon active">→</div>
-              Vérification systèmes & attestations
+              Vérification systèmes &amp; attestations
             </div>
             <div class="sm-step">
               <div class="sm-step-icon pending">○</div>
@@ -1575,7 +1575,7 @@ footer {
           <li><a href="#process">Notre processus</a></li>
           <li><a href="#suivi">Suivi dossier</a></li>
           <li><a href="#contact">Déposer un dossier</a></li>
-          <li><a href="/cdn-cgi/l/email-protection#dfbcb0b1abbebcab9fbcb0b1b9b0adb2baa7afbaadabf1b9ad">Contact</a></li>
+          <li><a href="/cdn-cgi/l/email-protection#8be8e4e5ffeae8ffcbe8e4e5ede4f9e6eef3fbeef9ffa5edf9">Contact</a></li>
         </ul>
       </div>
     </div>
@@ -1602,7 +1602,7 @@ const observer = new IntersectionObserver((entries) => {
 
 reveals.forEach(el => observer.observe(el));
 
-/* Upload drag & drop */
+/* Upload drag and drop */
 const uploadZone = document.querySelector('.upload-zone');
 const fileInput = document.getElementById('upload');
 
