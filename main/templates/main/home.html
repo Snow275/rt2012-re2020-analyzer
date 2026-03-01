@@ -1,122 +1,184 @@
 {% extends 'main/base.html' %}
-{% block title %}Tableau de bord{% endblock %}
+{% block title %}Dashboard Admin — ConformExpert{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div class="ph-inner">
-    <span class="s-label">Tableau de bord</span>
-    <h1>Vue d'ensemble des dossiers</h1>
-    <p>Analyse indépendante RT2012 / RE2020 — délai garanti 15 jours ouvrés</p>
+    <span class="s-label">Administration</span>
+    <h1>Tableau de bord</h1>
+    <p>Vue d'ensemble de l'activité — ConformExpert</p>
   </div>
 </div>
 
 <div class="container">
 
-  <!-- Stats -->
-  <div class="stats-grid fade-up">
+  <!-- STATS -->
+  <div class="stats-grid fade-up" style="grid-template-columns:repeat(4,1fr)">
     <div class="stat-card">
       <div class="stat-label">Dossiers actifs</div>
       <div class="stat-value">{{ total_projects }}</div>
-      <div class="stat-sub">projets en cours ou analysés</div>
+      <div class="stat-sub">au total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">En attente</div>
+      <div class="stat-value" style="{% if pending_count > 0 %}color:#E5A93A{% endif %}">{{ pending_count }}</div>
+      <div class="stat-sub">dossiers reçus non traités</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Taux de conformité</div>
       <div class="stat-value">{{ compliance_rate }}<span style="font-size:1.2rem">%</span></div>
-      <div class="stat-sub">dossiers conformes RT2012 ou RE2020</div>
+      <div class="stat-sub">RT2012 ou RE2020</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Émissions CO₂ moyennes</div>
-      <div class="stat-value">{{ avg_carbon }}<span style="font-size:1.2rem"> kg</span></div>
-      <div class="stat-sub">moyenne RE2020 sur les dossiers analysés</div>
+      <div class="stat-label">Devis en attente</div>
+      <div class="stat-value">{{ devis_en_attente }}</div>
+      <div class="stat-sub">à traiter</div>
     </div>
   </div>
 
-  <!-- CTA si pas de dossiers -->
-  {% if total_projects == 0 %}
-  <div class="card card-gold fade-up-2" style="padding:3rem;text-align:center">
-    <div style="font-size:2.5rem;margin-bottom:1rem">📂</div>
-    <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:.8rem">Aucun dossier pour l'instant</h2>
-    <p style="color:var(--gray-2);font-weight:300;margin-bottom:1.8rem;font-size:.95rem">Déposez votre premier document pour lancer une analyse RT2012 / RE2020.</p>
-    <a href="{% url 'import' %}" class="btn btn-gold">Déposer un dossier →</a>
-  </div>
-  {% else %}
-
-  <!-- Dossiers récents -->
-  <div class="fade-up-2">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
-      <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem">Dossiers récents</h2>
-      <a href="{% url 'history' %}" class="btn btn-outline btn-sm">Voir tout l'historique</a>
+  <!-- ALERTE dossiers anciens -->
+  {% if old_pending %}
+  <div style="background:rgba(229,169,58,.08);border:1px solid rgba(229,169,58,.25);border-radius:8px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem" class="fade-up">
+    <span style="font-size:1.3rem">⚠️</span>
+    <div>
+      <div style="font-size:.88rem;color:#E5A93A;font-weight:500">{{ old_pending }} dossier{{ old_pending|pluralize }} reçu{{ old_pending|pluralize }} depuis plus de 5 jours sans traitement</div>
+      <div style="font-size:.78rem;color:var(--gray-1);margin-top:.2rem">Pensez à mettre à jour leur statut.</div>
     </div>
-
-    <div class="card">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Projet</th>
-            <th>Client</th>
-            <th>Date</th>
-            <th>Statut</th>
-            <th>RT2012</th>
-            <th>RE2020</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for doc in documents|slice:":8" %}
-          <tr>
-            <td><strong style="color:var(--white)">{{ doc.name }}</strong></td>
-            <td>{{ doc.client_name|default:"—" }}</td>
-            <td>{{ doc.upload_date|date:"d/m/Y" }}</td>
-            <td>
-              {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
-              {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
-              {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if doc.rt2012_is_conform is None %}<span class="text-muted">—</span>
-              {% elif doc.rt2012_is_conform %}<span class="badge badge-success">✓ Conforme</span>
-              {% else %}<span class="badge badge-danger">✗ Non conforme</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if doc.re2020_is_conform is None %}<span class="text-muted">—</span>
-              {% elif doc.re2020_is_conform %}<span class="badge badge-success">✓ Conforme</span>
-              {% else %}<span class="badge badge-danger">✗ Non conforme</span>
-              {% endif %}
-            </td>
-            <td>
-              <div style="display:flex;gap:.5rem">
-                <a href="{% url 'download_report' doc.id %}" class="btn btn-outline btn-sm">📄 Rapport</a>
-                <a href="{% url 'tracking' doc.tracking_token %}" class="btn btn-outline btn-sm">🔗 Suivi</a>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <a href="{% url 'history' %}" class="btn btn-outline btn-sm" style="margin-left:auto">Voir →</a>
   </div>
   {% endif %}
 
-  <!-- Actions rapides -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem" class="fade-up-3">
-    <a href="{% url 'import' %}" class="card" style="padding:1.8rem;text-decoration:none;display:block;transition:all .3s;cursor:pointer" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
-      <div style="font-size:1.5rem;margin-bottom:.8rem">📤</div>
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.4rem;color:var(--white)">Déposer un dossier</h3>
-      <p style="font-size:.83rem;color:var(--gray-1);font-weight:300">Uploader un PDF pour analyse RT2012 / RE2020</p>
-    </a>
-    <a href="{% url 'results' %}" class="card" style="padding:1.8rem;text-decoration:none;display:block;transition:all .3s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
-      <div style="font-size:1.5rem;margin-bottom:.8rem">📊</div>
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.4rem;color:var(--white)">Voir les résultats</h3>
-      <p style="font-size:.83rem;color:var(--gray-1);font-weight:300">Détail des conformités par critère</p>
-    </a>
-    <a href="{% url 'contact' %}" class="card" style="padding:1.8rem;text-decoration:none;display:block;transition:all .3s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
-      <div style="font-size:1.5rem;margin-bottom:.8rem">💬</div>
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.4rem;color:var(--white)">Contacter l'expert</h3>
-      <p style="font-size:.83rem;color:var(--gray-1);font-weight:300">Question sur un dossier ou devis</p>
-    </a>
-  </div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:2rem;align-items:start">
 
+    <!-- DOSSIERS RÉCENTS -->
+    <div class="fade-up-2">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem">Dossiers récents</h2>
+        <a href="{% url 'history' %}" class="btn btn-outline btn-sm">Voir tout →</a>
+      </div>
+
+      {% if documents %}
+      <div class="card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Projet</th>
+              <th>Client</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>RT2012</th>
+              <th>RE2020</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for doc in documents|slice:":6" %}
+            <tr>
+              <td><strong style="color:var(--white);font-size:.88rem">{{ doc.name }}</strong></td>
+              <td style="font-size:.83rem;color:var(--gray-1)">{{ doc.client_name|default:"—" }}</td>
+              <td style="font-size:.8rem;color:var(--gray-1)">{{ doc.upload_date|date:"d/m/Y" }}</td>
+              <td>
+                {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
+                {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
+                {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if doc.rt2012_is_conform is None %}<span class="text-muted">—</span>
+                {% elif doc.rt2012_is_conform %}<span class="badge badge-success">✓</span>
+                {% else %}<span class="badge badge-danger">✗</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if doc.re2020_is_conform is None %}<span class="text-muted">—</span>
+                {% elif doc.re2020_is_conform %}<span class="badge badge-success">✓</span>
+                {% else %}<span class="badge badge-danger">✗</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'edit_document' doc.id %}" class="btn btn-outline btn-sm">Éditer</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card" style="padding:2.5rem;text-align:center">
+        <div style="font-size:2rem;margin-bottom:.8rem">📭</div>
+        <p style="color:var(--gray-1);font-size:.9rem">En attente de dossiers clients.</p>
+        <p style="color:var(--muted);font-size:.8rem;margin-top:.4rem">Les dossiers déposés via le formulaire apparaîtront ici.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div style="display:flex;flex-direction:column;gap:1.5rem" class="fade-up-3">
+
+      <!-- Actions rapides -->
+      <div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:1rem">Actions rapides</h2>
+        <div style="display:flex;flex-direction:column;gap:.7rem">
+          <a href="{% url 'results' %}" class="card" style="padding:1.1rem 1.3rem;text-decoration:none;display:flex;align-items:center;gap:1rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <span style="font-size:1.3rem">📊</span>
+            <div>
+              <div style="font-size:.88rem;color:var(--white);font-weight:500">Résultats des analyses</div>
+              <div style="font-size:.75rem;color:var(--gray-1)">Conformités RT2012 / RE2020</div>
+            </div>
+          </a>
+          <a href="{% url 'history' %}" class="card" style="padding:1.1rem 1.3rem;text-decoration:none;display:flex;align-items:center;gap:1rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <span style="font-size:1.3rem">📁</span>
+            <div>
+              <div style="font-size:.88rem;color:var(--white);font-weight:500">Historique des dossiers</div>
+              <div style="font-size:.75rem;color:var(--gray-1)">Tous les projets reçus</div>
+            </div>
+          </a>
+          <a href="{% url 'devis_list' %}" class="card" style="padding:1.1rem 1.3rem;text-decoration:none;display:flex;align-items:center;gap:1rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <span style="font-size:1.3rem">💰</span>
+            <div>
+              <div style="font-size:.88rem;color:var(--white);font-weight:500">Gérer les devis</div>
+              <div style="font-size:.75rem;color:var(--gray-1)">{{ devis_en_attente }} en attente</div>
+            </div>
+          </a>
+          <a href="{% url 'settings' %}" class="card" style="padding:1.1rem 1.3rem;text-decoration:none;display:flex;align-items:center;gap:1rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <span style="font-size:1.3rem">⚙️</span>
+            <div>
+              <div style="font-size:.88rem;color:var(--white);font-weight:500">Paramètres</div>
+              <div style="font-size:.75rem;color:var(--gray-1)">Seuils RT2012 / RE2020</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Derniers devis -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem">Devis récents</h2>
+          <a href="{% url 'devis_create' %}" class="btn btn-gold btn-sm">+ Nouveau</a>
+        </div>
+        {% if recent_devis %}
+        <div class="card" style="overflow:hidden">
+          {% for d in recent_devis %}
+          <a href="{% url 'devis_edit' d.id %}" style="display:flex;justify-content:space-between;align-items:center;padding:.8rem 1rem;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+            <div>
+              <div style="font-size:.85rem;color:var(--white)">{{ d.client_nom }}</div>
+              <div style="font-size:.73rem;color:var(--gray-1)">{{ d.created_at|date:"d/m/Y" }} · {% if d.montant %}{{ d.montant }}€{% else %}Non chiffré{% endif %}</div>
+            </div>
+            <span class="badge {% if d.statut == 'accepte' %}badge-success{% elif d.statut == 'refuse' %}badge-danger{% elif d.statut == 'facture' %}badge-gold{% else %}badge-gray{% endif %}" style="font-size:.7rem">
+              {{ d.get_statut_display }}
+            </span>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="card" style="padding:1.5rem;text-align:center">
+          <p style="color:var(--gray-1);font-size:.85rem">Aucun devis pour l'instant.</p>
+          <a href="{% url 'devis_create' %}" class="btn btn-gold btn-sm" style="margin-top:.8rem">Créer un devis</a>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
 </div>
 {% endblock %}
