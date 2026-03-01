@@ -8,6 +8,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Crée la table main_devis si elle n'existe pas
         migrations.RunSQL(
             sql="""
             CREATE TABLE IF NOT EXISTS main_devis (
@@ -21,10 +22,16 @@ class Migration(migrations.Migration):
                 montant numeric(8,2) NULL,
                 statut varchar(20) NOT NULL DEFAULT 'en_attente',
                 notes text NOT NULL DEFAULT '',
-                created_at timestamp with time zone NOT NULL,
-                updated_at timestamp with time zone NOT NULL
+                created_at timestamp with time zone NOT NULL DEFAULT now(),
+                updated_at timestamp with time zone NOT NULL DEFAULT now()
             );
             """,
             reverse_sql="DROP TABLE IF EXISTS main_devis;"
+        ),
+        # Ajoute admin_notes au modèle Document
+        migrations.AddField(
+            model_name='document',
+            name='admin_notes',
+            field=models.TextField(blank=True, default=''),
         ),
     ]
