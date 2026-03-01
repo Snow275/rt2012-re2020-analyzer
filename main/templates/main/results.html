@@ -7,7 +7,7 @@
   <div class="ph-inner">
     <span class="s-label">Résultats</span>
     <h1>Analyse de conformité</h1>
-    <p>Détail des critères RT2012 et RE2020 par dossier</p>
+    <p>Détail des critères RT2012 et RE2020 par dossier — seuils adaptés au type de bâtiment et à la zone climatique</p>
   </div>
 </div>
 
@@ -54,8 +54,9 @@
             <span style="font-size:.85rem;color:var(--gray-2)">Bbio</span>
             <div style="display:flex;align-items:center;gap:.6rem">
               <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.rt2012_bbio }}</span>
-              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ rt2012_requirements.bbio }}</span>
-              {% if doc.rt2012_bbio|is_conform_adapted:"rt2012_bbio" %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {% get_seuil "rt2012_bbio" doc.building_type doc.climate_zone %}</span>
+              {% check_conform doc.rt2012_bbio "rt2012_bbio" doc.building_type doc.climate_zone as conform %}
+              {% if conform %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
               {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
             </div>
           </div>
@@ -65,8 +66,9 @@
             <span style="font-size:.85rem;color:var(--gray-2)">Cep</span>
             <div style="display:flex;align-items:center;gap:.6rem">
               <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.rt2012_cep }}</span>
-              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ rt2012_requirements.cep }}</span>
-              {% if doc.rt2012_cep|is_conform_adapted:"rt2012_cep" %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {% get_seuil "rt2012_cep" doc.building_type doc.climate_zone %}</span>
+              {% check_conform doc.rt2012_cep "rt2012_cep" doc.building_type doc.climate_zone as conform %}
+              {% if conform %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
               {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
             </div>
           </div>
@@ -76,8 +78,9 @@
             <span style="font-size:.85rem;color:var(--gray-2)">Tic</span>
             <div style="display:flex;align-items:center;gap:.6rem">
               <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.rt2012_tic }}</span>
-              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ rt2012_requirements.tic }}°C</span>
-              {% if doc.rt2012_tic|is_conform_adapted:"rt2012_tic" %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {% get_seuil "rt2012_tic" doc.building_type doc.climate_zone %}°C</span>
+              {% check_conform doc.rt2012_tic "rt2012_tic" doc.building_type doc.climate_zone as conform %}
+              {% if conform %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
               {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
             </div>
           </div>
@@ -87,8 +90,9 @@
             <span style="font-size:.85rem;color:var(--gray-2)">Étanchéité</span>
             <div style="display:flex;align-items:center;gap:.6rem">
               <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.rt2012_airtightness }}</span>
-              <span style="font-size:.72rem;color:var(--gray-1)">≤ {{ rt2012_requirements.airtightness }}</span>
-              {% if doc.rt2012_airtightness|is_conform_adapted:"rt2012_airtightness" %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">≤ {% get_seuil "rt2012_airtightness" doc.building_type doc.climate_zone %}</span>
+              {% check_conform doc.rt2012_airtightness "rt2012_airtightness" doc.building_type doc.climate_zone as conform %}
+              {% if conform %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
               {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
             </div>
           </div>
@@ -105,11 +109,12 @@
         <div style="display:flex;flex-direction:column;gap:.6rem">
           {% if doc.re2020_energy_efficiency is not None %}
           <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-            <span style="font-size:.85rem;color:var(--gray-2)">Énergie (Cep)</span>
+            <span style="font-size:.85rem;color:var(--gray-2)">Énergie (Cep,nr)</span>
             <div style="display:flex;align-items:center;gap:.6rem">
               <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.re2020_energy_efficiency }}</span>
-              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ re2020_requirements.energy_efficiency }}</span>
-              {% if doc.re2020_energy_efficiency|is_conform_adapted:"re2020_energy_efficiency" %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {% get_seuil "re2020_energy_efficiency" doc.building_type doc.climate_zone %}</span>
+              {% check_conform doc.re2020_energy_efficiency "re2020_energy_efficiency" doc.building_type doc.climate_zone as conform %}
+              {% if conform %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
               {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
             </div>
           </div>
@@ -119,8 +124,9 @@
             <span style="font-size:.85rem;color:var(--gray-2)">Ic énergie (CO₂)</span>
             <div style="display:flex;align-items:center;gap:.6rem">
               <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.re2020_carbon_emissions }}</span>
-              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ re2020_requirements.carbon_emissions }}</span>
-              {% if doc.re2020_carbon_emissions|is_conform_adapted:"re2020_carbon_emissions" %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {% get_seuil "re2020_carbon_emissions" doc.building_type doc.climate_zone %}</span>
+              {% check_conform doc.re2020_carbon_emissions "re2020_carbon_emissions" doc.building_type doc.climate_zone as conform %}
+              {% if conform %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
               {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
             </div>
           </div>
@@ -130,8 +136,9 @@
             <span style="font-size:.85rem;color:var(--gray-2)">Confort thermique (DH)</span>
             <div style="display:flex;align-items:center;gap:.6rem">
               <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.re2020_thermal_comfort }}</span>
-              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ re2020_requirements.thermal_comfort }}</span>
-              {% if doc.re2020_thermal_comfort|is_conform_adapted:"re2020_thermal_comfort" %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {% get_seuil "re2020_thermal_comfort" doc.building_type doc.climate_zone %}</span>
+              {% check_conform doc.re2020_thermal_comfort "re2020_thermal_comfort" doc.building_type doc.climate_zone as conform %}
+              {% if conform %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
               {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
             </div>
           </div>
