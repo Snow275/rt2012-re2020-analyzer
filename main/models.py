@@ -39,6 +39,7 @@ class Document(models.Model):
     name = models.CharField(max_length=255)
     client_name = models.CharField(max_length=255, blank=True, default="")
     client_email = models.EmailField(blank=True, default="")
+    admin_notes = models.TextField(blank=True, default="")
     building_type = models.CharField(max_length=20, choices=BUILDING_TYPE_CHOICES, default='maison')
     climate_zone = models.CharField(max_length=5, choices=ZONE_CHOICES, default='H2')
     upload = models.FileField(upload_to="documents/")
