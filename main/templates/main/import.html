@@ -1,12 +1,135 @@
 {% extends 'main/base.html' %}
-
-{% block title %}Importer{% endblock %}
+{% block title %}Déposer un dossier{% endblock %}
 
 {% block content %}
-<h1>Importer un document technique</h1>
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Télécharger</button>
-</form>
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">Dépôt de dossier</span>
+    <h1>Soumettre un document pour analyse</h1>
+    <p>Délai garanti : 15 jours ouvrés après réception du dossier complet</p>
+  </div>
+</div>
+
+<div class="container">
+  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:3rem;align-items:start">
+
+    <!-- Info sidebar -->
+    <div class="fade-up">
+      <div class="card" style="padding:2rem;margin-bottom:1.5rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem">
+          <span class="text-gold">📎</span> Documents acceptés
+        </h3>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:.6rem">
+          {% for item in "Notice thermique,Attestation RT2012 / RE2020,Plans architecturaux (PDF),DPE si disponible,CCTP / descriptif technique"|split:"," %}
+          <li style="font-size:.85rem;color:var(--gray-2);font-weight:300;display:flex;align-items:center;gap:.5rem">
+            <span class="text-gold" style="font-size:.7rem">→</span> {{ item }}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="card" style="padding:2rem;margin-bottom:1.5rem;border-color:rgba(200,168,75,.2)">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem">
+          <span class="text-gold">⏱</span> Ce qui se passe ensuite
+        </h3>
+        <div style="display:flex;flex-direction:column;gap:.8rem">
+          {% for step in "Accusé de réception sous 24h|Confirmation de complétude du dossier|Analyse documentaire complète|Livraison du rapport PDF + lien de suivi"|split:"|" %}
+          <div style="display:flex;gap:.8rem;align-items:flex-start">
+            <span style="width:20px;height:20px;border-radius:50%;background:rgba(200,168,75,.12);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--gold);flex-shrink:0">{{ forloop.counter }}</span>
+            <span style="font-size:.84rem;color:var(--gray-2);font-weight:300">{{ step }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card" style="padding:1.5rem;background:rgba(200,168,75,.05);border-color:rgba(200,168,75,.2)">
+        <p style="font-size:.82rem;color:var(--gray-2);font-weight:300;line-height:1.7;font-style:italic">
+          "Après envoi, vous recevrez un lien de suivi unique pour suivre l'avancement de votre dossier en temps réel."
+        </p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card card-gold fade-up-2" style="overflow:hidden">
+      <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:2rem 2.5rem;border-bottom:1px solid rgba(200,168,75,.1)">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">Formulaire de dépôt</h2>
+        <p style="font-size:.82rem;color:var(--gray-1);font-weight:300">Vos données sont traitées de manière confidentielle.</p>
+      </div>
+      <div style="padding:2.5rem">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ form.name.label }} *</label>
+              {{ form.name }}
+              {% if form.name.errors %}<span class="form-error">{{ form.name.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+              <label>{{ form.client_name.label }}</label>
+              {{ form.client_name }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ form.client_email.label }}</label>
+            {{ form.client_email }}
+          </div>
+
+          <div class="form-group">
+            <label>{{ form.upload.label }} *</label>
+            <label id="upload-zone" style="border:2px dashed rgba(200,168,75,.25);border-radius:6px;padding:2rem;text-align:center;cursor:pointer;transition:all .25s;background:rgba(200,168,75,.03);display:block">
+              {{ form.upload }}
+              <div id="upload-icon" style="font-size:2rem;color:var(--gold);margin-bottom:.8rem;opacity:.7">📁</div>
+              <p id="upload-text" style="font-size:.85rem;color:var(--gray-2);font-weight:300;margin-bottom:.3rem">Glissez votre PDF ici ou cliquez pour sélectionner</p>
+              <span id="upload-sub" style="font-size:.72rem;color:var(--muted)">PDF uniquement · Max 20 Mo</span>
+            </label>
+            {% if form.upload.errors %}<span class="form-error">{{ form.upload.errors.0 }}</span>{% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;font-size:.95rem;padding:1rem">
+            Envoyer mon dossier →
+          </button>
+          <p style="text-align:center;font-size:.73rem;color:var(--muted);margin-top:.8rem">🔒 Données confidentielles · Réponse sous 24h</p>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const fileInput = document.querySelector('input[type="file"]');
+const zone = document.getElementById('upload-zone');
+const txt = document.getElementById('upload-text');
+const sub = document.getElementById('upload-sub');
+
+fileInput.style.display = 'none';
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) {
+    txt.textContent = fileInput.files[0].name;
+    sub.textContent = (fileInput.files[0].size / 1024 / 1024).toFixed(2) + ' Mo';
+    zone.style.borderColor = 'rgba(200,168,75,.5)';
+    zone.style.background = 'rgba(200,168,75,.07)';
+  }
+});
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'rgba(200,168,75,.6)'; });
+zone.addEventListener('dragleave', () => { zone.style.borderColor = 'rgba(200,168,75,.25)'; });
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    const dt = new DataTransfer();
+    dt.items.add(files[0]);
+    fileInput.files = dt.files;
+    txt.textContent = files[0].name;
+    sub.textContent = (files[0].size / 1024 / 1024).toFixed(2) + ' Mo';
+    zone.style.borderColor = 'rgba(200,168,75,.5)';
+    zone.style.background = 'rgba(200,168,75,.07)';
+  }
+});
+</script>
 {% endblock %}
