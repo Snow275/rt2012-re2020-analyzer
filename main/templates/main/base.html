@@ -139,7 +139,6 @@ footer a{color:var(--gold);text-decoration:none}
       <li><a href="{% url 'results' %}" {% if request.resolver_match.url_name == 'results' %}class="active"{% endif %}>Résultats</a></li>
       <li><a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a></li>
       <li><a href="{% url 'settings' %}" {% if request.resolver_match.url_name == 'settings' %}class="active"{% endif %}>Paramètres</a></li>
-      <li><a href="{% url 'import' %}" class="nav-cta">+ Nouveau dossier</a></li>
       <li><a href="{% url 'logout' %}" style="font-size:.72rem;color:var(--muted)">Déconnexion</a></li>
     {% else %}
       <!-- NAV PUBLIQUE -->
