@@ -26,10 +26,10 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
 
       <!-- COLONNE GAUCHE -->
-      <div>
+      <div style="display:flex;flex-direction:column;gap:1.5rem">
 
         <!-- Statut -->
-        <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+        <div class="card" style="padding:1.5rem">
           <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Statut du dossier</h3>
           <div style="display:flex;flex-direction:column;gap:.6rem">
             {% for val, label in status_choices %}
@@ -41,36 +41,76 @@
           </div>
         </div>
 
-        <!-- Infos dossier -->
+        <!-- Infos client éditables -->
         <div class="card" style="padding:1.5rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Informations</h3>
-          <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.83rem">
-            <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-              <span style="color:var(--gray-1)">Client</span>
-              <span style="color:var(--gray-2)">{{ document.client_name|default:"—" }}</span>
+          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Informations client</h3>
+          <div style="display:flex;flex-direction:column;gap:.8rem">
+            <div>
+              <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Nom du client</label>
+              <input type="text" name="client_name" value="{{ document.client_name|default:'' }}"
+                placeholder="Jean Dupont"
+                style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box"
+                onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
             </div>
-            <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-              <span style="color:var(--gray-1)">Email</span>
-              <span style="color:var(--gray-2)">{{ document.client_email|default:"—" }}</span>
+            <div>
+              <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Email</label>
+              <input type="email" name="client_email" value="{{ document.client_email|default:'' }}"
+                placeholder="client@email.fr"
+                style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box"
+                onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
             </div>
-            <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;font-size:.82rem">
               <span style="color:var(--gray-1)">Déposé le</span>
               <span style="color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;padding:.4rem 0">
-              <span style="color:var(--gray-1)">Token suivi</span>
-              <a href="{% url 'tracking' document.tracking_token %}" target="_blank" style="color:var(--gold);font-size:.75rem;font-family:monospace">Voir le lien →</a>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;font-size:.82rem">
+              <span style="color:var(--gray-1)">Lien de suivi client</span>
+              <a href="{% url 'tracking' document.tracking_token %}" target="_blank" style="color:var(--gold);font-size:.75rem">Voir →</a>
             </div>
+          </div>
+        </div>
+
+        <!-- Document uploadé par le client -->
+        <div class="card" style="padding:1.5rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Document client</h3>
+          {% if document.upload %}
+          <div style="display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.06)">
+            <span style="font-size:1.5rem">📄</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.85rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                {{ document.upload.name|slice:"10:" }}
+              </div>
+              <div style="font-size:.73rem;color:var(--gray-1);margin-top:.2rem">
+                Fichier PDF uploadé par le client
+              </div>
+            </div>
+            <a href="{{ document.upload.url }}" target="_blank" class="btn btn-gold btn-sm" style="flex-shrink:0;font-size:.78rem;padding:.45rem .9rem">
+              ⬇ Télécharger
+            </a>
+          </div>
+          {% else %}
+          <div style="text-align:center;padding:1.5rem;color:var(--gray-1);font-size:.85rem">
+            <div style="font-size:1.5rem;margin-bottom:.5rem">📭</div>
+            Aucun fichier déposé par le client.
+          </div>
+          {% endif %}
+
+          <!-- Notes internes -->
+          <div style="margin-top:1rem">
+            <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Notes internes</label>
+            <textarea name="admin_notes" rows="3" placeholder="Observations, remarques sur le dossier..."
+              style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.83rem;outline:none;resize:vertical;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">{{ document.admin_notes|default:'' }}</textarea>
           </div>
         </div>
 
       </div>
 
       <!-- COLONNE DROITE -->
-      <div>
+      <div style="display:flex;flex-direction:column;gap:1.5rem">
 
         <!-- RT2012 -->
-        <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+        <div class="card" style="padding:1.5rem">
           <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">
             RT2012 — Valeurs mesurées
           </h3>
@@ -94,7 +134,7 @@
         </div>
 
         <!-- RE2020 -->
-        <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+        <div class="card" style="padding:1.5rem">
           <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">
             RE2020 — Valeurs mesurées
           </h3>
@@ -117,11 +157,24 @@
           </div>
         </div>
 
+        <!-- Rapport PDF -->
+        <div class="card" style="padding:1.5rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Rapport d'analyse</h3>
+          <div style="display:flex;gap:.8rem">
+            <a href="{% url 'download_report' document.id %}" class="btn btn-outline" style="flex:1;text-align:center;font-size:.83rem">
+              📄 Télécharger le rapport PDF
+            </a>
+            <a href="{% url 'tracking' document.tracking_token %}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;font-size:.83rem">
+              🔗 Page suivi client
+            </a>
+          </div>
+        </div>
+
       </div>
     </div>
 
     <!-- ACTIONS -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.06)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.06)">
       <form method="post" action="{% url 'delete_document' document.id %}" onsubmit="return confirm('Supprimer définitivement ce dossier ?')">
         {% csrf_token %}
         <button type="submit" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);color:#e53935;padding:.6rem 1.2rem;border-radius:6px;font-size:.85rem;cursor:pointer">
@@ -129,10 +182,8 @@
         </button>
       </form>
       <div style="display:flex;gap:.8rem">
-        <a href="{% url 'results' %}" class="btn btn-outline" style="padding:.6rem 1.2rem;font-size:.85rem">Annuler</a>
-        <button type="submit" class="btn btn-gold" style="padding:.6rem 1.5rem;font-size:.85rem">
-          Enregistrer les modifications
-        </button>
+        <a href="{% url 'home' %}" class="btn btn-outline">Retour</a>
+        <button type="submit" class="btn btn-gold">Enregistrer</button>
       </div>
     </div>
 
