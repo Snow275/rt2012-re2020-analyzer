@@ -2,28 +2,33 @@ from django import template
 
 register = template.Library()
 
-criteria_gte = {
-    're2020_indoor_air_quality': True,
-    'rt2012_enr': True,
+CRITERIA_GREATER_EQUAL = {
+    're2020_thermal_comfort',
+    're2020_indoor_air_quality',
 }
 
-criteria_lte = {
-    're2020_energy_efficiency': True,
-    're2020_thermal_comfort': True,
-    're2020_carbon_emissions': True,
-    're2020_water_management': True,
-    'rt2012_bbio': True,
-    'rt2012_cep': True,
-    'rt2012_tic': True,
-    'rt2012_airtightness': True,
+CRITERIA_LOWER_EQUAL = {
+    're2020_energy_efficiency',
+    're2020_carbon_emissions',
+    're2020_water_management',
+    # ajoute les autres critères qui se comparent par <=
 }
 
 @register.filter
 def is_conform_adapted(value, key):
-    try:
-        value = float(value)
-    except (TypeError, ValueError):
+    seuils = { ... } # ta dict de seuils
+    limit = seuils.get(key)
+    if limit is None or value is None:
         return False
+    try:
+        val = float(value)
+    except (ValueError, TypeError):
+        return False
+    if key in CRITERIA_GREATER_EQUAL:
+        return val >= limit
+    if key in CRITERIA_LOWER_EQUAL:
+        return val <= limit
+    return False
 
     # Change ici suivant ta façon de récupérer les seuils
     seuils = {
