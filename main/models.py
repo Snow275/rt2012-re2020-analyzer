@@ -116,3 +116,49 @@ class Analysis(models.Model):
 
     def __str__(self):
         return f"{self.document.name} - {self.criteria}"
+
+
+class Devis(models.Model):
+    STATUT_CHOICES = [
+        ('en_attente', 'En attente'),
+        ('accepte',    'Accepté'),
+        ('refuse',     'Refusé'),
+        ('facture',    'Facturé'),
+    ]
+
+    TYPE_CHOICES = [
+        ('maison',     'Maison individuelle'),
+        ('collectif',  'Logement collectif'),
+        ('tertiaire',  'Bâtiment tertiaire'),
+        ('autre',      'Autre'),
+    ]
+
+    # Client
+    client_nom   = models.CharField(max_length=255)
+    client_email = models.EmailField()
+    client_phone = models.CharField(max_length=30, blank=True, default='')
+
+    # Projet
+    projet_nom   = models.CharField(max_length=255, blank=True, default='')
+    type_batiment = models.CharField(max_length=20, choices=TYPE_CHOICES, default='maison')
+    norme        = models.CharField(max_length=20, choices=[('RT2012','RT2012'),('RE2020','RE2020'),('Les deux','Les deux')], default='RE2020')
+
+    # Devis
+    montant      = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    statut       = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
+    notes        = models.TextField(blank=True, default='')
+
+    # Dates
+    created_at   = models.DateTimeField(auto_now_add=True)
+    updated_at   = models.DateTimeField(auto_now=True)
+
+    # Lien optionnel avec un dossier
+    document     = models.ForeignKey(Document, on_delete=models.SET_NULL, null=True, blank=True, related_name='devis')
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Devis'
+        verbose_name_plural = 'Devis'
+
+    def __str__(self):
+        return f"Devis {self.id} — {self.client_nom}"
