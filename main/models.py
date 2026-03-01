@@ -76,17 +76,15 @@ class Document(models.Model):
             self.re2020_energy_efficiency,
             self.re2020_thermal_comfort,
             self.re2020_carbon_emissions,
-            self.re2020_water_management,
-            self.re2020_indoor_air_quality,
         ]
         if any(v is None for v in fields):
             return None
+        from main.templatetags.conformity_tags import get_seuils
+        s = get_seuils(self.building_type, self.climate_zone)
         return (
-            self.re2020_energy_efficiency <= 80.0 and
-            self.re2020_thermal_comfort <= 85.0 and      # DH : seuil max
-            self.re2020_carbon_emissions <= 75.0 and
-            self.re2020_water_management <= 70.0 and
-            self.re2020_indoor_air_quality <= 75.0        # Qai : seuil max
+            self.re2020_energy_efficiency <= s['re2020_energy_efficiency'] and
+            self.re2020_thermal_comfort   <= s['re2020_thermal_comfort'] and
+            self.re2020_carbon_emissions  <= s['re2020_carbon_emissions']
         )
 
     @property
@@ -97,12 +95,14 @@ class Document(models.Model):
         ]
         if any(v is None for v in fields):
             return None
+        from main.templatetags.conformity_tags import get_seuils
+        s = get_seuils(self.building_type, self.climate_zone)
         return (
-            self.rt2012_bbio <= 50.0 and
-            self.rt2012_cep <= 50.0 and
-            self.rt2012_tic <= 27.0 and
-            self.rt2012_airtightness <= 0.6 and
-            self.rt2012_enr >= 1.0    # ENR : seuil minimum (>=)
+            self.rt2012_bbio         <= s['rt2012_bbio'] and
+            self.rt2012_cep          <= s['rt2012_cep'] and
+            self.rt2012_tic          <= s['rt2012_tic'] and
+            self.rt2012_airtightness <= s['rt2012_airtightness'] and
+            self.rt2012_enr          >= s['rt2012_enr']
         )
 
 
