@@ -133,7 +133,8 @@ footer a{color:var(--gold);text-decoration:none}
 <nav>
   <a href="{% url 'home' %}" class="nav-logo">Conform<span>Expert</span></a>
   <ul class="nav-links">
-    <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Accueil</a></li>
+    <li><a href="{% url 'landing' %}">Accueil</a></li>
+    <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Dashboard</a></li>
     <li><a href="{% url 'import' %}" {% if request.resolver_match.url_name == 'import' %}class="active"{% endif %}>Déposer</a></li>
     <li><a href="{% url 'results' %}" {% if request.resolver_match.url_name == 'results' %}class="active"{% endif %}>Résultats</a></li>
     <li><a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a></li>
