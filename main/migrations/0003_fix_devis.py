@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -8,7 +8,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Crée la table main_devis si elle n'existe pas
         migrations.RunSQL(
             sql="""
             CREATE TABLE IF NOT EXISTS main_devis (
@@ -25,13 +24,9 @@ class Migration(migrations.Migration):
                 created_at timestamp with time zone NOT NULL DEFAULT now(),
                 updated_at timestamp with time zone NOT NULL DEFAULT now()
             );
+            ALTER TABLE main_document ADD COLUMN IF NOT EXISTS admin_notes text NOT NULL DEFAULT '';
+            ALTER TABLE main_document ADD COLUMN IF NOT EXISTS client_email varchar(254) NOT NULL DEFAULT '';
             """,
             reverse_sql="DROP TABLE IF EXISTS main_devis;"
-        ),
-        # Ajoute admin_notes au modèle Document
-        migrations.AddField(
-            model_name='document',
-            name='admin_notes',
-            field=models.TextField(blank=True, default=''),
         ),
     ]
