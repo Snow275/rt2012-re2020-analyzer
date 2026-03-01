@@ -166,9 +166,13 @@ def home(request):
     five_days_ago = timezone.now() - timedelta(days=5)
     old_pending = documents.filter(status='recu', upload_date__lt=five_days_ago).count()
 
-    # Devis
-    recent_devis = Devis.objects.all()[:5]
-    devis_en_attente = Devis.objects.filter(statut='en_attente').count()
+    # Devis (protégé si table pas encore créée)
+    try:
+        recent_devis = list(Devis.objects.all()[:5])
+        devis_en_attente = Devis.objects.filter(statut='en_attente').count()
+    except Exception:
+        recent_devis = []
+        devis_en_attente = 0
 
     context = {
         'documents': documents,
