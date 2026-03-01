@@ -25,9 +25,22 @@ class Document(models.Model):
         ("termine", "Terminé"),
     )
 
+    BUILDING_TYPE_CHOICES = (
+        ('maison',    'Maison individuelle'),
+        ('collectif', 'Logement collectif'),
+        ('erp',       'ERP (établissement public)'),
+    )
+    ZONE_CHOICES = (
+        ('H1', 'H1 — Nord / altitude (climat froid)'),
+        ('H2', 'H2 — Centre / Ouest (climat tempéré)'),
+        ('H3', 'H3 — Sud / littoral méditerranéen'),
+    )
+
     name = models.CharField(max_length=255)
     client_name = models.CharField(max_length=255, blank=True, default="")
     client_email = models.EmailField(blank=True, default="")
+    building_type = models.CharField(max_length=20, choices=BUILDING_TYPE_CHOICES, default='maison')
+    climate_zone = models.CharField(max_length=5, choices=ZONE_CHOICES, default='H2')
     upload = models.FileField(upload_to="documents/")
     upload_date = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
@@ -59,13 +72,6 @@ class Document(models.Model):
 
     @property
     def re2020_is_conform(self):
-        req = {
-            'energy_efficiency': 80.0,
-            'thermal_comfort': 85.0,
-            'carbon_emissions': 75.0,
-            'water_management': 70.0,
-            'indoor_air_quality': 75.0,
-        }
         fields = [
             self.re2020_energy_efficiency,
             self.re2020_thermal_comfort,
@@ -76,16 +82,15 @@ class Document(models.Model):
         if any(v is None for v in fields):
             return None
         return (
-            self.re2020_energy_efficiency <= req['energy_efficiency'] and
-            self.re2020_thermal_comfort <= req['thermal_comfort'] and
-            self.re2020_carbon_emissions <= req['carbon_emissions'] and
-            self.re2020_water_management <= req['water_management'] and
-            self.re2020_indoor_air_quality <= req['indoor_air_quality']
+            self.re2020_energy_efficiency <= 80.0 and
+            self.re2020_thermal_comfort <= 85.0 and      # DH : seuil max
+            self.re2020_carbon_emissions <= 75.0 and
+            self.re2020_water_management <= 70.0 and
+            self.re2020_indoor_air_quality <= 75.0        # Qai : seuil max
         )
 
     @property
     def rt2012_is_conform(self):
-        req = {'bbio': 50.0, 'cep': 50.0, 'tic': 27.0, 'airtightness': 0.6, 'enr': 1.0}
         fields = [
             self.rt2012_bbio, self.rt2012_cep, self.rt2012_tic,
             self.rt2012_airtightness, self.rt2012_enr,
@@ -93,11 +98,11 @@ class Document(models.Model):
         if any(v is None for v in fields):
             return None
         return (
-            self.rt2012_bbio <= req['bbio'] and
-            self.rt2012_cep <= req['cep'] and
-            self.rt2012_tic <= req['tic'] and
-            self.rt2012_airtightness <= req['airtightness'] and
-            self.rt2012_enr >= req['enr']
+            self.rt2012_bbio <= 50.0 and
+            self.rt2012_cep <= 50.0 and
+            self.rt2012_tic <= 27.0 and
+            self.rt2012_airtightness <= 0.6 and
+            self.rt2012_enr >= 1.0    # ENR : seuil minimum (>=)
         )
 
 
