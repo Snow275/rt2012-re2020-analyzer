@@ -114,6 +114,11 @@ def analyze_document(document, data):
 # VUES PUBLIQUES
 # ──────────────────────────────────────────────
 
+def landing(request):
+    """Page d'accueil publique — vitrine commerciale."""
+    return render(request, 'main/landing.html')
+
+
 def home(request):
     documents = Document.objects.filter(is_active=True)
     total_projects = documents.count()
