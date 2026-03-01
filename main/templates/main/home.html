@@ -1,163 +1,122 @@
 {% extends 'main/base.html' %}
-
-{% block title %}Accueil - Audit RT2012 & RE2020{% endblock %}
+{% block title %}Tableau de bord{% endblock %}
 
 {% block content %}
-
-<!-- HERO SECTION - Orientation service commercial -->
-<div class="jumbotron text-center" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 4rem 2rem;">
-    <h1 class="display-4 font-weight-bold">Audit RT2012 & RE2020</h1>
-    <p class="lead" style="font-size: 1.25rem;">
-        Certification et conformité énergétique pour professionnels du bâtiment
-    </p>
-    <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
-    <div class="mt-4">
-        <a class="btn btn-warning btn-lg mr-2" href="{% url 'contact' %}" role="button">
-            <i class="fas fa-envelope"></i> Demander un devis
-        </a>
-        <a class="btn btn-outline-light btn-lg" href="#process" role="button">
-            Notre processus
-        </a>
-    </div>
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">Tableau de bord</span>
+    <h1>Vue d'ensemble des dossiers</h1>
+    <p>Analyse indépendante RT2012 / RE2020 — délai garanti 15 jours ouvrés</p>
+  </div>
 </div>
 
-<!-- POURQUOI CHOISIR NOTRE CABINET -->
-<div class="container mt-5">
-    <div class="text-center mb-5">
-        <h2>Pourquoi choisir notre expertise ?</h2>
-        <p class="text-muted">Des experts certifiés au service de votre conformité</p>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-certificate fa-3x text-primary"></i>
-                    </div>
-                    <h5 class="card-title">Experts certifiés</h5>
-                    <p class="card-text text-muted">Ingénieurs thermiciens diplômés et certifiés RT2012/RE2020</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-clock fa-3x text-primary"></i>
-                    </div>
-                    <h5 class="card-title">Délais garantis</h5>
-                    <p class="card-text text-muted">Respect des délais contractuels, engagement sur les dates</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-building fa-3x text-primary"></i>
-                    </div>
-                    <h5 class="card-title">Tous types de bâtiments</h5>
-                    <p class="card-text text-muted">Maison individuelle, collectif, tertiaire, industriel</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="container">
 
-<!-- PROCESSUS D'AUDIT -->
-<div class="bg-light py-5" id="process">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2>Notre processus d'audit</h2>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-4 text-center mb-4">
-                <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                    <span class="h3 mb-0">1</span>
-                </div>
-                <h5 class="mt-3">Contact &诊断</h5>
-                <p class="text-muted">Analyse de vos besoins et devis détaillé sous 24h</p>
-            </div>
-            
-            <div class="col-md-4 text-center mb-4">
-                <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                    <span class="h3 mb-0">2</span>
-                </div>
-                <h5 class="mt-3">Visite & Analyse</h5>
-                <p class="text-muted">Thermicien sur site, relevés et modélisation</p>
-            </div>
-            
-            <div class="col-md-4 text-center mb-4">
-                <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                    <span class="h3 mb-0">3</span>
-                </div>
-                <h5 class="mt-3">Rapport & Certification</h5>
-                <p class="text-muted">Rapport complet conforme aux exigences réglementaires</p>
-            </div>
-        </div>
-        
-        <div class="text-center mt-4">
-            <a href="{% url 'contact' %}" class="btn btn-primary">Démarrer un audit</a>
-        </div>
+  <!-- Stats -->
+  <div class="stats-grid fade-up">
+    <div class="stat-card">
+      <div class="stat-label">Dossiers actifs</div>
+      <div class="stat-value">{{ total_projects }}</div>
+      <div class="stat-sub">projets en cours ou analysés</div>
     </div>
-</div>
-
-<!-- STATS DYNAMIQUES (à connecter avec ta DB) -->
-<div class="container mt-5">
-    <div class="row text-center">
-        <div class="col-md-4 mb-3">
-            <h2 class="text-primary font-weight-bold">{{ total_projects|default:"150" }}+</h2>
-            <p class="text-muted">Projets audités</p>
-        </div>
-        <div class="col-md-4 mb-3">
-            <h2 class="text-success font-weight-bold">{{ compliance_rate|default:"95" }}%</h2>
-            <p class="text-muted">Taux de conformité</p>
-        </div>
-        <div class="col-md-4 mb-3">
-            <h2 class="text-info font-weight-bold">{{ avg_carbon|default:"45" }} kg</h2>
-            <p class="text-muted">Émissions CO2/m² moyennes</p>
-        </div>
+    <div class="stat-card">
+      <div class="stat-label">Taux de conformité</div>
+      <div class="stat-value">{{ compliance_rate }}<span style="font-size:1.2rem">%</span></div>
+      <div class="stat-sub">dossiers conformes RT2012 ou RE2020</div>
     </div>
-</div>
-
-<!-- TEMOIGNAGES -->
-<div class="bg-light py-5 mt-5">
-    <div class="container">
-        <h2 class="text-center mb-4">Témoignages de professionnels</h2>
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <p class="card-text">"Equipe professionnelle et réactive. Rapport RT2012 livré dans les délais, sans souci."</p>
-                        <footer class="blockquote-footer">Marie T., Architecte DPLG</footer>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-4">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <p class="card-text">"Excellente expertise technique. Ils ont identifié des points d'amélioration que d'autres avaient manqués."</p>
-                        <footer class="blockquote-footer">Pierre M., Maître d'œuvre</footer>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="stat-card">
+      <div class="stat-label">Émissions CO₂ moyennes</div>
+      <div class="stat-value">{{ avg_carbon }}<span style="font-size:1.2rem"> kg</span></div>
+      <div class="stat-sub">moyenne RE2020 sur les dossiers analysés</div>
     </div>
-</div>
+  </div>
 
-<!-- CTA FINAL -->
-<div class="container my-5 text-center">
-    <div class="card bg-primary text-white">
-        <div class="card-body py-5">
-            <h2>Prêt à démarrer votre projet ?</h2>
-            <p class="mb-4">Contactez-nous pour un diagnostic gratuit</p>
-            <a href="{% url 'contact' %}" class="btn btn-warning btn-lg">Demander un devis</a>
-        </div>
+  <!-- CTA si pas de dossiers -->
+  {% if total_projects == 0 %}
+  <div class="card card-gold fade-up-2" style="padding:3rem;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:1rem">📂</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:.8rem">Aucun dossier pour l'instant</h2>
+    <p style="color:var(--gray-2);font-weight:300;margin-bottom:1.8rem;font-size:.95rem">Déposez votre premier document pour lancer une analyse RT2012 / RE2020.</p>
+    <a href="{% url 'import' %}" class="btn btn-gold">Déposer un dossier →</a>
+  </div>
+  {% else %}
+
+  <!-- Dossiers récents -->
+  <div class="fade-up-2">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem">Dossiers récents</h2>
+      <a href="{% url 'history' %}" class="btn btn-outline btn-sm">Voir tout l'historique</a>
     </div>
-</div>
 
+    <div class="card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Projet</th>
+            <th>Client</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>RT2012</th>
+            <th>RE2020</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in documents|slice:":8" %}
+          <tr>
+            <td><strong style="color:var(--white)">{{ doc.name }}</strong></td>
+            <td>{{ doc.client_name|default:"—" }}</td>
+            <td>{{ doc.upload_date|date:"d/m/Y" }}</td>
+            <td>
+              {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
+              {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
+              {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if doc.rt2012_is_conform is None %}<span class="text-muted">—</span>
+              {% elif doc.rt2012_is_conform %}<span class="badge badge-success">✓ Conforme</span>
+              {% else %}<span class="badge badge-danger">✗ Non conforme</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if doc.re2020_is_conform is None %}<span class="text-muted">—</span>
+              {% elif doc.re2020_is_conform %}<span class="badge badge-success">✓ Conforme</span>
+              {% else %}<span class="badge badge-danger">✗ Non conforme</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex;gap:.5rem">
+                <a href="{% url 'download_report' doc.id %}" class="btn btn-outline btn-sm">📄 Rapport</a>
+                <a href="{% url 'tracking' doc.tracking_token %}" class="btn btn-outline btn-sm">🔗 Suivi</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Actions rapides -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem" class="fade-up-3">
+    <a href="{% url 'import' %}" class="card" style="padding:1.8rem;text-decoration:none;display:block;transition:all .3s;cursor:pointer" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+      <div style="font-size:1.5rem;margin-bottom:.8rem">📤</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.4rem;color:var(--white)">Déposer un dossier</h3>
+      <p style="font-size:.83rem;color:var(--gray-1);font-weight:300">Uploader un PDF pour analyse RT2012 / RE2020</p>
+    </a>
+    <a href="{% url 'results' %}" class="card" style="padding:1.8rem;text-decoration:none;display:block;transition:all .3s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+      <div style="font-size:1.5rem;margin-bottom:.8rem">📊</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.4rem;color:var(--white)">Voir les résultats</h3>
+      <p style="font-size:.83rem;color:var(--gray-1);font-weight:300">Détail des conformités par critère</p>
+    </a>
+    <a href="{% url 'contact' %}" class="card" style="padding:1.8rem;text-decoration:none;display:block;transition:all .3s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+      <div style="font-size:1.5rem;margin-bottom:.8rem">💬</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.4rem;color:var(--white)">Contacter l'expert</h3>
+      <p style="font-size:.83rem;color:var(--gray-1);font-weight:300">Question sur un dossier ou devis</p>
+    </a>
+  </div>
+
+</div>
 {% endblock %}
