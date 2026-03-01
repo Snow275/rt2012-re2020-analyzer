@@ -26,7 +26,7 @@ class DocumentForm(forms.ModelForm):
             ext = upload.name.split('.')[-1].lower()
             if ext not in ['pdf']:
                 raise forms.ValidationError("Seuls les fichiers PDF sont acceptés.")
-            if upload.size > 20 * 1024 * 1024:  # 20MB
+            if upload.size > 20 * 1024 * 1024:
                 raise forms.ValidationError("Le fichier ne doit pas dépasser 20 Mo.")
         return upload
 
