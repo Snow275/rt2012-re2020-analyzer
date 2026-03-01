@@ -203,9 +203,11 @@ def get_tracking_steps(document):
 def tracking(request, token):
     document = get_object_or_404(Document, tracking_token=token)
     step_list = get_tracking_steps(document)
+    progress_pct = {'recu': 15, 'en_cours': 60, 'termine': 100}.get(document.status, 15)
     return render(request, 'main/tracking.html', {
         'document': document,
         'step_list': step_list,
+        'progress_pct': progress_pct,
     })
 
 
