@@ -131,15 +131,24 @@ footer a{color:var(--gold);text-decoration:none}
 <body>
 
 <nav>
-  <a href="{% url 'home' %}" class="nav-logo">Conform<span>Expert</span></a>
+  <a href="{% url 'landing' %}" class="nav-logo">Conform<span>Expert</span></a>
   <ul class="nav-links">
-    <li><a href="{% url 'landing' %}">Accueil</a></li>
-    <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Dashboard</a></li>
-    <li><a href="{% url 'import' %}" {% if request.resolver_match.url_name == 'import' %}class="active"{% endif %}>Déposer</a></li>
-    <li><a href="{% url 'results' %}" {% if request.resolver_match.url_name == 'results' %}class="active"{% endif %}>Résultats</a></li>
-    <li><a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a></li>
-    <li><a href="{% url 'faq' %}" {% if request.resolver_match.url_name == 'faq' %}class="active"{% endif %}>FAQ</a></li>
-    <li><a href="{% url 'contact' %}" class="nav-cta">Contact</a></li>
+    {% if user.is_authenticated %}
+      <!-- NAV ADMIN -->
+      <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Dashboard</a></li>
+      <li><a href="{% url 'results' %}" {% if request.resolver_match.url_name == 'results' %}class="active"{% endif %}>Résultats</a></li>
+      <li><a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a></li>
+      <li><a href="{% url 'settings' %}" {% if request.resolver_match.url_name == 'settings' %}class="active"{% endif %}>Paramètres</a></li>
+      <li><a href="{% url 'import' %}" class="nav-cta">+ Nouveau dossier</a></li>
+      <li><a href="{% url 'logout' %}" style="font-size:.72rem;color:var(--muted)">Déconnexion</a></li>
+    {% else %}
+      <!-- NAV PUBLIQUE -->
+      <li><a href="{% url 'landing' %}#offre">Offre</a></li>
+      <li><a href="{% url 'landing' %}#process">Processus</a></li>
+      <li><a href="{% url 'landing' %}#tarifs">Tarifs</a></li>
+      <li><a href="{% url 'faq' %}" {% if request.resolver_match.url_name == 'faq' %}class="active"{% endif %}>FAQ</a></li>
+      <li><a href="{% url 'import' %}" class="nav-cta">Déposer un dossier</a></li>
+    {% endif %}
   </ul>
 </nav>
 
