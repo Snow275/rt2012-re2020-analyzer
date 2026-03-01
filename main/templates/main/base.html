@@ -1,34 +1,163 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Outil de conformité RE2020{% endblock %}</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'main/style.css' %}">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}ConformExpert{% endblock %} — RT2012 / RE2020</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+{% load static %}
+<style>
+:root {
+  --navy:    #0C1929;
+  --navy-2:  #162438;
+  --navy-3:  #1D3050;
+  --gold:    #C8A84B;
+  --gold-lt: #E2C97A;
+  --white:   #FFFFFF;
+  --gray-1:  #8896A4;
+  --gray-2:  #C2CDD6;
+  --muted:   #68798A;
+  --success: #27C93F;
+  --warning: #FFC107;
+  --danger:  #FF5F56;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--white);-webkit-font-smoothing:antialiased;min-height:100vh}
+
+/* NAV */
+nav{position:fixed;inset:0 0 auto;z-index:999;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 4vw;background:rgba(12,25,41,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(200,168,75,.12)}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--white);text-decoration:none}
+.nav-logo span{color:var(--gold)}
+.nav-links{display:flex;align-items:center;gap:2rem;list-style:none}
+.nav-links a{font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+.nav-cta{background:var(--gold)!important;color:var(--navy)!important;padding:.5rem 1.2rem!important;border-radius:3px;font-weight:500!important;transition:background .2s!important}
+.nav-cta:hover{background:var(--gold-lt)!important}
+
+/* MAIN */
+main{padding-top:64px;min-height:calc(100vh - 64px)}
+
+/* PAGE HEADER */
+.page-header{background:var(--navy-2);border-bottom:1px solid rgba(200,168,75,.1);padding:3rem 4vw 2.5rem}
+.page-header .ph-inner{max-width:1160px;margin:0 auto}
+.page-header .s-label{font-size:.7rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:.6rem}
+.page-header h1{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,2.8vw,2.6rem);font-weight:700;line-height:1.15}
+.page-header p{font-size:.95rem;color:var(--gray-2);font-weight:300;margin-top:.5rem}
+
+/* CONTAINER */
+.container{max-width:1160px;margin:0 auto;padding:3rem 4vw}
+
+/* CARDS */
+.card{background:var(--navy-2);border:1px solid rgba(255,255,255,.06);border-radius:10px;overflow:hidden}
+.card-gold{border-color:rgba(200,168,75,.25)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;font-weight:500;padding:.28rem .75rem;border-radius:20px}
+.badge-success{background:rgba(39,201,63,.12);color:var(--success)}
+.badge-warning{background:rgba(255,193,7,.12);color:var(--warning)}
+.badge-danger{background:rgba(255,95,86,.12);color:var(--danger)}
+.badge-gray{background:rgba(255,255,255,.07);color:var(--gray-2)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.6rem;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;text-decoration:none;cursor:pointer;border:none;transition:all .25s}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--gold-lt);box-shadow:0 6px 24px rgba(200,168,75,.28);transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--white);border:1.5px solid rgba(255,255,255,.15)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:rgba(255,95,86,.12);color:var(--danger);border:1px solid rgba(255,95,86,.2)}
+.btn-danger:hover{background:rgba(255,95,86,.2)}
+.btn-sm{padding:.45rem 1rem;font-size:.82rem}
+
+/* FORMS */
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.1rem}
+.form-group label{font-size:.75rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--gray-2)}
+.form-group input,.form-group select,.form-group textarea{background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:.75rem 1rem;color:var(--white);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:300;transition:border-color .2s,box-shadow .2s;width:100%;outline:none}
+.form-group input::placeholder,.form-group textarea::placeholder{color:var(--muted)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:rgba(200,168,75,.4);box-shadow:0 0 0 3px rgba(200,168,75,.07)}
+.form-group select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2368798A' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center}
+.form-group select option{background:var(--navy-3)}
+.form-group textarea{resize:vertical;min-height:90px}
+.form-error{font-size:.78rem;color:var(--danger);margin-top:.2rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-1);font-weight:500;padding:.8rem 1rem;text-align:left;border-bottom:1px solid rgba(255,255,255,.06)}
+.data-table td{padding:.9rem 1rem;font-size:.88rem;font-weight:300;border-bottom:1px solid rgba(255,255,255,.04);color:var(--gray-2)}
+.data-table tr:hover td{background:rgba(255,255,255,.02)}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2.5rem}
+.stat-card{background:var(--navy-2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1.8rem;transition:border-color .3s}
+.stat-card:hover{border-color:rgba(200,168,75,.2)}
+.stat-label{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-1);margin-bottom:.6rem}
+.stat-value{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;color:var(--gold);line-height:1}
+.stat-sub{font-size:.78rem;color:var(--gray-1);margin-top:.4rem;font-weight:300}
+
+/* MESSAGES */
+.messages{list-style:none;padding:0 4vw;margin-top:.5rem}
+.messages li{padding:.75rem 1.2rem;border-radius:4px;font-size:.88rem;margin-bottom:.5rem}
+.messages .success{background:rgba(39,201,63,.1);border:1px solid rgba(39,201,63,.2);color:var(--success)}
+.messages .error{background:rgba(255,95,86,.1);border:1px solid rgba(255,95,86,.2);color:var(--danger)}
+
+/* FOOTER */
+footer{background:var(--navy-2);border-top:1px solid rgba(200,168,75,.08);padding:2rem 4vw;text-align:center;font-size:.78rem;color:var(--muted)}
+footer a{color:var(--gold);text-decoration:none}
+
+/* UTILS */
+.text-gold{color:var(--gold)}
+.text-muted{color:var(--muted)}
+.text-success{color:var(--success)}
+.text-danger{color:var(--danger)}
+.mt-1{margin-top:.5rem}.mt-2{margin-top:1rem}.mt-3{margin-top:1.5rem}.mt-4{margin-top:2rem}
+.mb-2{margin-bottom:1rem}.mb-3{margin-bottom:1.5rem}.mb-4{margin-bottom:2rem}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .6s ease both}
+.fade-up-2{animation:fadeUp .6s ease both .15s}
+.fade-up-3{animation:fadeUp .6s ease both .3s}
+
+@media(max-width:768px){
+  .nav-links{display:none}
+  .form-row{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr}
+}
+</style>
+{% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">RE2020</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Accueil</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'import' %}">Importer</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'results' %}">Résultats</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'history' %}">Historique</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'settings' %}">Paramètres</a></li>
-            </ul>
-        </div>
-    </nav>
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<nav>
+  <a href="{% url 'home' %}" class="nav-logo">Conform<span>Expert</span></a>
+  <ul class="nav-links">
+    <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Accueil</a></li>
+    <li><a href="{% url 'import' %}" {% if request.resolver_match.url_name == 'import' %}class="active"{% endif %}>Déposer</a></li>
+    <li><a href="{% url 'results' %}" {% if request.resolver_match.url_name == 'results' %}class="active"{% endif %}>Résultats</a></li>
+    <li><a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a></li>
+    <li><a href="{% url 'faq' %}" {% if request.resolver_match.url_name == 'faq' %}class="active"{% endif %}>FAQ</a></li>
+    <li><a href="{% url 'contact' %}" class="nav-cta">Contact</a></li>
+  </ul>
+</nav>
+
+{% if messages %}
+<ul class="messages" style="margin-top:70px">
+  {% for message in messages %}
+  <li class="{{ message.tags }}">{{ message }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+  <p>© 2024 <a href="{% url 'home' %}">ConformExpert</a> — Analyse indépendante RT2012 / RE2020</p>
+</footer>
+
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>
