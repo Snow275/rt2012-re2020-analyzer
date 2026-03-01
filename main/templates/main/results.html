@@ -22,37 +22,33 @@
             <tr>
                 <td><strong>{{ document.name }}</strong></td>
 
-                <td style="color: {% if document.re2020_energy_efficiency|is_conform:re2020_requirements.energy_efficiency %}green{% else %}red{% endif %};">
-                    {{ document.re2020_energy_efficiency|floatformat:1 }} / {{ re2020_requirements.energy_efficiency }}
-                </td>
                 <td style="color: {% if document.re2020_energy_efficiency|is_conform_adapted:'re2020_energy_efficiency' %}green{% else %}red{% endif %};">
-                    {{ document.re2020_thermal_comfort|floatformat:1 }} / {{ re2020_requirements.energy_efficiency }}
+                    {{ document.re2020_energy_efficiency|floatformat:1 }} / {{ re2020_requirements.energy_efficiency }}
                 </td>
                 
                 <td style="color: {% if document.re2020_thermal_comfort|is_conform_adapted:'re2020_thermal_comfort' %}green{% else %}red{% endif %};">
                     {{ document.re2020_thermal_comfort|floatformat:1 }} / {{ re2020_requirements.thermal_comfort }}
                 </td>
-
-                <td style="color: {% if document.re2020_carbon_emissions|is_conform:re2020_requirements.carbon_emissions %}green{% else %}red{% endif %};">
+                
+                <td style="color: {% if document.re2020_carbon_emissions|is_conform_adapted:'re2020_carbon_emissions' %}green{% else %}red{% endif %};">
                     {{ document.re2020_carbon_emissions|floatformat:1 }} / {{ re2020_requirements.carbon_emissions }}
                 </td>
 
-                <td style="color: {% if document.re2020_water_management|is_conform:re2020_requirements.water_management %}green{% else %}red{% endif %};">
+                <td style="color: {% if document.re2020_water_management|is_conform_adapted:'re2020_water_management' %}green{% else %}red{% endif %};">
                     {{ document.re2020_water_management|floatformat:1 }} / {{ re2020_requirements.water_management }}
                 </td>
 
-                <td style="color: {% if document.re2020_indoor_air_quality|is_conform:re2020_requirements.indoor_air_quality %}green{% else %}red{% endif %};">
+                <td style="color: {% if document.re2020_indoor_air_quality|is_conform_adapted:'re2020_indoor_air_quality' %}green{% else %}red{% endif %};">
                     {{ document.re2020_indoor_air_quality|floatformat:1 }} / {{ re2020_requirements.indoor_air_quality }}
                 </td>
 
                 <td style="font-weight: bold; color: {% if document.re2020_is_conform %}green{% else %}red{% endif %};">
-                  {% if document.re2020_is_conform %}
-                    Conforme
-                  {% else %}
-                    Non conforme
-                  {% endif %}
+                    {% if document.re2020_is_conform %}
+                        Conforme
+                    {% else %}
+                        Non conforme
+                    {% endif %}
                 </td>
-                    
             </tr>
             {% empty %}
             <tr><td colspan="7">Aucun document analysé.</td></tr>
@@ -78,27 +74,27 @@
             <tr>
                 <td><strong>{{ document.name }}</strong></td>
 
-                <td style="color: {% if document.rt2012_bbio|is_conform:rt2012_requirements.bbio %}green{% else %}red{% endif %};">
+                <td style="color: {% if document.rt2012_bbio|is_conform_adapted:'rt2012_bbio' %}green{% else %}red{% endif %};">
                     {{ document.rt2012_bbio|floatformat:1 }} / {{ rt2012_requirements.bbio }}
                 </td>
 
-                <td style="color: {% if document.rt2012_cep|is_conform:rt2012_requirements.cep %}green{% else %}red{% endif %};">
+                <td style="color: {% if document.rt2012_cep|is_conform_adapted:'rt2012_cep' %}green{% else %}red{% endif %};">
                     {{ document.rt2012_cep|floatformat:1 }} / {{ rt2012_requirements.cep }}
                 </td>
 
-                <td style="color: {% if document.rt2012_tic|is_conform:rt2012_requirements.tic %}green{% else %}red{% endif %};">
+                <td style="color: {% if document.rt2012_tic|is_conform_adapted:'rt2012_tic' %}green{% else %}red{% endif %};">
                     {{ document.rt2012_tic|floatformat:1 }} / {{ rt2012_requirements.tic }}
                 </td>
 
-                <td style="color: {% if document.rt2012_airtightness|is_conform:rt2012_requirements.airtightness %}green{% else %}red{% endif %};">
+                <td style="color: {% if document.rt2012_airtightness|is_conform_adapted:'rt2012_airtightness' %}green{% else %}red{% endif %};">
                     {{ document.rt2012_airtightness|floatformat:2 }} / {{ rt2012_requirements.airtightness }}
                 </td>
 
-                <td style="color: {% if document.rt2012_enr|is_conform:rt2012_requirements.enr %}green{% else %}red{% endif %};">
+                <td style="color: {% if document.rt2012_enr|is_conform_adapted:'rt2012_enr' %}green{% else %}red{% endif %};">
                     {{ document.rt2012_enr|floatformat:1 }} / {{ rt2012_requirements.enr }}
                 </td>
 
-                <td style="font-weight: bold; color: {% if document.rt2012_bbio|is_conform:rt2012_requirements.bbio and document.rt2012_cep|is_conform:rt2012_requirements.cep and document.rt2012_tic|is_conform:rt2012_requirements.tic and document.rt2012_airtightness|is_conform:rt2012_requirements.airtightness and document.rt2012_enr|is_conform:rt2012_requirements.enr %}green{% else %}red{% endif %};">
+                <td style="font-weight: bold; color: {% if document.rt2012_is_conform %}green{% else %}red{% endif %};">
                     {% if document.rt2012_is_conform %}
                         Conforme
                     {% else %}
