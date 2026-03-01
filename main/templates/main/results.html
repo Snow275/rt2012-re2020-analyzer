@@ -1,132 +1,149 @@
 {% extends 'main/base.html' %}
-{% block title %}Résultats{% endblock %}
+{% block title %}Résultats d'analyse{% endblock %}
+
 {% block content %}
-{% load conformity_tags %}
-
-<div class="container mt-4">
-    <h2>Résultats de l'analyse RE2020</h2>
-    <table class="table table-bordered">
-        <thead class="thead-light">
-            <tr>
-                <th>Document</th>
-                <th>Efficacité énergétique (RE2020)</th>
-                <th>Confort thermique (RE2020)</th>
-                <th>Émissions de carbone (RE2020)</th>
-                <th>Gestion de l'eau (RE2020)</th>
-                <th>Qualité de l'air intérieur (RE2020)</th>
-                <th>Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for document in documents %}
-            <tr>
-                <td><strong>{{ document.name }}</strong></td>
-
-                <td style="color: {% if document.re2020_energy_efficiency|is_conform_adapted:'re2020_energy_efficiency' %}green{% else %}red{% endif %};">
-                    {{ document.re2020_energy_efficiency|floatformat:1 }} / {{ re2020_requirements.energy_efficiency }}
-                </td>
-                
-                <td style="color: {% if document.re2020_thermal_comfort|is_conform_adapted:'re2020_thermal_comfort' %}green{% else %}red{% endif %};">
-                    {{ document.re2020_thermal_comfort|floatformat:1 }} / {{ re2020_requirements.thermal_comfort }}
-                </td>
-                
-                <td style="color: {% if document.re2020_carbon_emissions|is_conform_adapted:'re2020_carbon_emissions' %}green{% else %}red{% endif %};">
-                    {{ document.re2020_carbon_emissions|floatformat:1 }} / {{ re2020_requirements.carbon_emissions }}
-                </td>
-
-                <td style="color: {% if document.re2020_water_management|is_conform_adapted:'re2020_water_management' %}green{% else %}red{% endif %};">
-                    {{ document.re2020_water_management|floatformat:1 }} / {{ re2020_requirements.water_management }}
-                </td>
-
-                <td style="color: {% if document.re2020_indoor_air_quality|is_conform_adapted:'re2020_indoor_air_quality' %}green{% else %}red{% endif %};">
-                    {{ document.re2020_indoor_air_quality|floatformat:1 }} / {{ re2020_requirements.indoor_air_quality }}
-                </td>
-
-                <td style="font-weight: bold; color: {% if document.re2020_is_conform %}green{% else %}red{% endif %};">
-                    {% if document.re2020_is_conform %}
-                        Conforme
-                    {% else %}
-                        Non conforme
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="7">Aucun document analysé.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h2 class="mt-5">Résultats de l'analyse RT 2012</h2>
-    <table class="table table-bordered">
-        <thead class="thead-light">
-            <tr>
-                <th>Document</th>
-                <th>Bbio (RT 2012)</th>
-                <th>Cep (RT 2012)</th>
-                <th>Tic (RT 2012)</th>
-                <th>Étanchéité à l’air (RT 2012)</th>
-                <th>ENR (RT 2012)</th>
-                <th>Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for document in documents %}
-            <tr>
-                <td><strong>{{ document.name }}</strong></td>
-
-                <td style="color: {% if document.rt2012_bbio|is_conform_adapted:'rt2012_bbio' %}green{% else %}red{% endif %};">
-                    {{ document.rt2012_bbio|floatformat:1 }} / {{ rt2012_requirements.bbio }}
-                </td>
-
-                <td style="color: {% if document.rt2012_cep|is_conform_adapted:'rt2012_cep' %}green{% else %}red{% endif %};">
-                    {{ document.rt2012_cep|floatformat:1 }} / {{ rt2012_requirements.cep }}
-                </td>
-
-                <td style="color: {% if document.rt2012_tic|is_conform_adapted:'rt2012_tic' %}green{% else %}red{% endif %};">
-                    {{ document.rt2012_tic|floatformat:1 }} / {{ rt2012_requirements.tic }}
-                </td>
-
-                <td style="color: {% if document.rt2012_airtightness|is_conform_adapted:'rt2012_airtightness' %}green{% else %}red{% endif %};">
-                    {{ document.rt2012_airtightness|floatformat:2 }} / {{ rt2012_requirements.airtightness }}
-                </td>
-
-                <td style="color: {% if document.rt2012_enr|is_conform_adapted:'rt2012_enr' %}green{% else %}red{% endif %};">
-                    {{ document.rt2012_enr|floatformat:1 }} / {{ rt2012_requirements.enr }}
-                </td>
-
-                <td style="font-weight: bold; color: {% if document.rt2012_is_conform %}green{% else %}red{% endif %};">
-                    {% if document.rt2012_is_conform %}
-                        Conforme
-                    {% else %}
-                        Non conforme
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h2 class="mt-5">Actions</h2>
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>Document</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for document in documents %}
-            <tr>
-                <td>{{ document.name }}</td>
-                <td>
-                    <a href="{% url 'download_report' document.id %}" class="btn btn-primary btn-sm">
-                        Télécharger le Rapport
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">Résultats</span>
+    <h1>Analyse de conformité</h1>
+    <p>Détail des critères RT2012 et RE2020 par dossier</p>
+  </div>
 </div>
 
+<div class="container">
+
+  {% if not documents %}
+  <div class="card" style="padding:3rem;text-align:center" class="fade-up">
+    <div style="font-size:2rem;margin-bottom:1rem">📊</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.8rem">Aucun résultat disponible</h2>
+    <p style="color:var(--gray-2);font-weight:300;margin-bottom:1.5rem">Déposez un document pour lancer une analyse.</p>
+    <a href="{% url 'import' %}" class="btn btn-gold">Déposer un dossier →</a>
+  </div>
+  {% else %}
+
+  {% for doc in documents %}
+  <div class="card" style="margin-bottom:2rem;overflow:hidden" class="fade-up">
+    <!-- Doc header -->
+    <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.8rem 2rem;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:.3rem">{{ doc.name }}</h2>
+        <span style="font-size:.78rem;color:var(--gray-1)">Déposé le {{ doc.upload_date|date:"d/m/Y" }}{% if doc.client_name %} · {{ doc.client_name }}{% endif %}</span>
+      </div>
+      <div style="display:flex;gap:.8rem;align-items:center">
+        {% if doc.rt2012_is_conform is not None %}
+          {% if doc.rt2012_is_conform %}<span class="badge badge-success">✓ RT2012 Conforme</span>
+          {% else %}<span class="badge badge-danger">✗ RT2012 Non conforme</span>{% endif %}
+        {% endif %}
+        {% if doc.re2020_is_conform is not None %}
+          {% if doc.re2020_is_conform %}<span class="badge badge-success">✓ RE2020 Conforme</span>
+          {% else %}<span class="badge badge-danger">✗ RE2020 Non conforme</span>{% endif %}
+        {% endif %}
+        <a href="{% url 'download_report' doc.id %}" class="btn btn-outline btn-sm">📄 Rapport</a>
+      </div>
+    </div>
+
+    <div style="padding:2rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem">
+
+      <!-- RT2012 -->
+      <div>
+        <h3 style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem">RT2012 — Critères</h3>
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+          {% if doc.rt2012_bbio is not None %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
+            <span style="font-size:.85rem;color:var(--gray-2)">Bbio</span>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.rt2012_bbio }}</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ rt2012_requirements.bbio }}</span>
+              {% if doc.rt2012_bbio <= rt2012_requirements.bbio %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if doc.rt2012_cep is not None %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
+            <span style="font-size:.85rem;color:var(--gray-2)">Cep</span>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.rt2012_cep }}</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ rt2012_requirements.cep }}</span>
+              {% if doc.rt2012_cep <= rt2012_requirements.cep %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if doc.rt2012_tic is not None %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
+            <span style="font-size:.85rem;color:var(--gray-2)">Tic</span>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.rt2012_tic }}</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ rt2012_requirements.tic }}°C</span>
+              {% if doc.rt2012_tic <= rt2012_requirements.tic %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if doc.rt2012_airtightness is not None %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
+            <span style="font-size:.85rem;color:var(--gray-2)">Étanchéité</span>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.rt2012_airtightness }}</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">≤ {{ rt2012_requirements.airtightness }}</span>
+              {% if doc.rt2012_airtightness <= rt2012_requirements.airtightness %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if not doc.rt2012_bbio and not doc.rt2012_cep %}
+          <p style="font-size:.83rem;color:var(--muted);font-style:italic">Données RT2012 non extraites du document.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- RE2020 -->
+      <div>
+        <h3 style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem">RE2020 — Critères</h3>
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+          {% if doc.re2020_energy_efficiency is not None %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
+            <span style="font-size:.85rem;color:var(--gray-2)">Énergie (Cep)</span>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.re2020_energy_efficiency }}</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ re2020_requirements.energy_efficiency }}</span>
+              {% if doc.re2020_energy_efficiency <= re2020_requirements.energy_efficiency %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if doc.re2020_carbon_emissions is not None %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
+            <span style="font-size:.85rem;color:var(--gray-2)">Ic énergie (CO₂)</span>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.re2020_carbon_emissions }}</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ re2020_requirements.carbon_emissions }}</span>
+              {% if doc.re2020_carbon_emissions <= re2020_requirements.carbon_emissions %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if doc.re2020_thermal_comfort is not None %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
+            <span style="font-size:.85rem;color:var(--gray-2)">Confort thermique (DH)</span>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span style="font-size:.85rem;color:var(--white);font-weight:500">{{ doc.re2020_thermal_comfort }}</span>
+              <span style="font-size:.72rem;color:var(--gray-1)">/ {{ re2020_requirements.thermal_comfort }}</span>
+              {% if doc.re2020_thermal_comfort <= re2020_requirements.thermal_comfort %}<span class="badge badge-success" style="font-size:.65rem">✓</span>
+              {% else %}<span class="badge badge-danger" style="font-size:.65rem">✗</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if not doc.re2020_energy_efficiency and not doc.re2020_carbon_emissions %}
+          <p style="font-size:.83rem;color:var(--muted);font-style:italic">Données RE2020 non extraites du document.</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
 {% endblock %}
