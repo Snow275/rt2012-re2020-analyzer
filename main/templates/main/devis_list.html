@@ -1,0 +1,83 @@
+{% extends 'main/base.html' %}
+{% block title %}Devis — ConformExpert{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">Administration</span>
+    <h1>Gestion des devis</h1>
+    <p>{{ total }} devis au total · {{ en_attente }} en attente</p>
+  </div>
+</div>
+
+<div class="container">
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div style="background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.5rem;font-size:.88rem;color:var(--success)">✓ {{ msg }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- Filtres + bouton créer -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+    <div style="display:flex;gap:.6rem">
+      {% for val, label in statut_choices %}
+      <a href="?statut={{ val }}" class="btn btn-sm {% if current_statut == val %}btn-gold{% else %}btn-outline{% endif %}">{{ label }}</a>
+      {% endfor %}
+      <a href="?" class="btn btn-sm btn-outline {% if not current_statut %}btn-gold{% endif %}">Tous</a>
+    </div>
+    <a href="{% url 'devis_create' %}" class="btn btn-gold">+ Nouveau devis</a>
+  </div>
+
+  <!-- Tableau -->
+  {% if devis_list %}
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Client</th>
+          <th>Projet</th>
+          <th>Type</th>
+          <th>Norme</th>
+          <th>Montant</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in devis_list %}
+        <tr>
+          <td style="color:var(--muted);font-size:.78rem">{{ d.id }}</td>
+          <td>
+            <div style="font-size:.88rem;color:var(--white)">{{ d.client_nom }}</div>
+            <div style="font-size:.75rem;color:var(--gray-1)">{{ d.client_email }}</div>
+          </td>
+          <td style="font-size:.85rem;color:var(--gray-2)">{{ d.projet_nom|default:"—" }}</td>
+          <td style="font-size:.82rem;color:var(--gray-1)">{{ d.get_type_batiment_display }}</td>
+          <td style="font-size:.82rem;color:var(--gray-1)">{{ d.norme }}</td>
+          <td style="font-size:.88rem;color:var(--white)">{% if d.montant %}{{ d.montant }} €{% else %}<span style="color:var(--muted)">—</span>{% endif %}</td>
+          <td>
+            <span class="badge {% if d.statut == 'accepte' %}badge-success{% elif d.statut == 'refuse' %}badge-danger{% elif d.statut == 'facture' %}badge-gold{% else %}badge-gray{% endif %}">
+              {{ d.get_statut_display }}
+            </span>
+          </td>
+          <td style="font-size:.8rem;color:var(--gray-1)">{{ d.created_at|date:"d/m/Y" }}</td>
+          <td>
+            <a href="{% url 'devis_edit' d.id %}" class="btn btn-outline btn-sm">Éditer</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card" style="padding:3rem;text-align:center">
+    <div style="font-size:2rem;margin-bottom:.8rem">💰</div>
+    <p style="color:var(--gray-1)">Aucun devis{% if current_statut %} avec ce statut{% endif %}.</p>
+    <a href="{% url 'devis_create' %}" class="btn btn-gold" style="margin-top:1rem">Créer un devis</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
