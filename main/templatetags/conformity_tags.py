@@ -89,7 +89,9 @@ def get_seuils(building_type='maison', zone='H2'):
 
 
 @register.filter
-def is_conform_adapted(value, key):
+def attr(obj, field_name):
+    """Usage : {{ document|attr:"rt2012_bbio" }}"""
+    return getattr(obj, field_name, None)
     """Filtre simple avec seuils par défaut (maison, H2)."""
     if value is None:
         return False
