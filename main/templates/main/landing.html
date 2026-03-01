@@ -1004,11 +1004,15 @@ footer {
    SCROLL REVEAL
 ════════════════════════════════════════ */
 .reveal {
-  opacity: 0;
-  transform: translateY(24px);
+  opacity: 1;
+  transform: translateY(0);
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
-.reveal.visible {
+.reveal.animate {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.reveal.animate.visible {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1589,6 +1593,9 @@ footer {
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* Scroll reveal */
 const reveals = document.querySelectorAll('.reveal');
+// Add animate class to enable the fade-in effect
+reveals.forEach(el => el.classList.add('animate'));
+
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry, i) => {
     if (entry.isIntersecting) {
@@ -1598,7 +1605,7 @@ const observer = new IntersectionObserver((entries) => {
       observer.unobserve(entry.target);
     }
   });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+}, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
 
 reveals.forEach(el => observer.observe(el));
 
