@@ -10,7 +10,6 @@ pillow==11.1.0
 tzdata==2025.1
 charset-normalizer==3.4.1
 chardet==5.2.0
-weasyprint==62.3
 psycopg2-binary==2.9.10
 dj-database-url==2.3.0
 python-dotenv==1.0.1
