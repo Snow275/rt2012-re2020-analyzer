@@ -1,31 +1,79 @@
 {% extends 'main/base.html' %}
-
 {% block title %}Contact{% endblock %}
 
 {% block content %}
-<h1>Contactez-nous</h1>
-<p>Si vous avez des questions ou des problèmes, n'hésitez pas à nous contacter en utilisant le formulaire ci-dessous.</p>
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">Contact</span>
+    <h1>Nous contacter</h1>
+    <p>Une question sur un dossier ? Un projet à discuter ? Réponse sous 48h.</p>
+  </div>
+</div>
 
-{% if success %}
-    <div class="alert alert-success" role="alert">
-        Merci pour votre message. Nous vous répondrons dans les plus brefs délais.
-    </div>
-{% endif %}
+<div class="container">
+  <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:3rem;align-items:start;max-width:900px;margin:0 auto">
 
-<form method="post" action="{% url 'contact' %}">
-    {% csrf_token %}
-    <div class="mb-3">
-        <label for="id_name" class="form-label">Nom</label>
-        {{ form.name }}
+    <div class="fade-up">
+      <div class="card" style="padding:2rem;margin-bottom:1.5rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem">📍 ConformExpert</h3>
+        <div style="display:flex;flex-direction:column;gap:.8rem">
+          <div style="font-size:.85rem;color:var(--gray-2);font-weight:300;line-height:1.7">
+            Analyse indépendante de conformité thermique RT2012 / RE2020.<br>
+            Délai garanti 15 jours ouvrés.
+          </div>
+          <div style="padding-top:.8rem;border-top:1px solid rgba(255,255,255,.06)">
+            <a href="mailto:contact@conformexpert.fr" style="font-size:.88rem;color:var(--gold);text-decoration:none">contact@conformexpert.fr</a>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:2rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
+        <p style="font-size:.83rem;color:var(--gray-2);font-weight:300;line-height:1.75;font-style:italic">
+          "Pour déposer directement un dossier avec vos documents, utilisez le formulaire de dépôt dédié."
+        </p>
+        <a href="{% url 'import' %}" class="btn btn-gold btn-sm" style="margin-top:1rem;display:inline-flex">Déposer un dossier →</a>
+      </div>
     </div>
-    <div class="mb-3">
-        <label for="id_email" class="form-label">Email</label>
-        {{ form.email }}
+
+    <div class="card card-gold fade-up-2" style="overflow:hidden">
+      <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:2rem 2.5rem;border-bottom:1px solid rgba(200,168,75,.1)">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">Formulaire de contact</h2>
+        <p style="font-size:.82rem;color:var(--gray-1);font-weight:300">Réponse sous 48h ouvrées</p>
+      </div>
+      <div style="padding:2.5rem">
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ form.name.label }} *</label>
+              {{ form.name }}
+              {% if form.name.errors %}<span class="form-error">{{ form.name.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+              <label>{{ form.email.label }} *</label>
+              {{ form.email }}
+              {% if form.email.errors %}<span class="form-error">{{ form.email.errors.0 }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ form.phone.label }}</label>
+              {{ form.phone }}
+            </div>
+            <div class="form-group">
+              <label>{{ form.profile.label }}</label>
+              {{ form.profile }}
+            </div>
+          </div>
+          <div class="form-group">
+            <label>{{ form.message.label }} *</label>
+            {{ form.message }}
+            {% if form.message.errors %}<span class="form-error">{{ form.message.errors.0 }}</span>{% endif %}
+          </div>
+          <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:1rem">Envoyer le message →</button>
+        </form>
+      </div>
     </div>
-    <div class="mb-3">
-        <label for="id_message" class="form-label">Message</label>
-        {{ form.message }}
-    </div>
-    <button type="submit" class="btn btn-primary">Envoyer</button>
-</form>
+
+  </div>
+</div>
 {% endblock %}
