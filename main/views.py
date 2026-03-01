@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings as django_settings
@@ -15,6 +17,30 @@ from .serializers import DocumentSerializer, AnalysisSerializer
 
 import PyPDF2
 import re
+
+
+# ──────────────────────────────────────────────
+# AUTH
+# ──────────────────────────────────────────────
+
+def admin_login(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None and user.is_staff:
+            login(request, user)
+            return redirect(request.GET.get('next', 'home'))
+        else:
+            messages.error(request, 'Identifiants incorrects ou accès non autorisé.')
+    return render(request, 'main/login.html')
+
+
+def admin_logout(request):
+    logout(request)
+    return redirect('landing')
 
 
 # ──────────────────────────────────────────────
@@ -119,6 +145,7 @@ def landing(request):
     return render(request, 'main/landing.html')
 
 
+@login_required(login_url='/login/')
 def home(request):
     documents = Document.objects.filter(is_active=True)
     total_projects = documents.count()
@@ -211,6 +238,7 @@ def tracking(request, token):
     })
 
 
+@login_required(login_url='/login/')
 def results(request):
     documents = Document.objects.filter(is_active=True)
     re2020_req = fetch_re2020_requirements()
@@ -223,6 +251,7 @@ def results(request):
     return render(request, 'main/results.html', context)
 
 
+@login_required(login_url='/login/')
 def history(request):
     documents = Document.objects.all().order_by('-upload_date')
     return render(request, 'main/history.html', {'documents': documents})
@@ -274,6 +303,7 @@ def faq(request):
     return render(request, 'main/faq.html', {'faq_items': faq_items})
 
 
+@login_required(login_url='/login/')
 def settings_view(request):
     re2020_req = fetch_re2020_requirements()
     rt2012_req = fetch_rt2012_requirements()
@@ -291,12 +321,63 @@ def update_re2020(request):
     return redirect('settings')
 
 
+@login_required(login_url='/login/')
 def delete_document(request, doc_id):
     if request.method == 'POST':
         document = get_object_or_404(Document, id=doc_id)
         document.delete()
         messages.success(request, 'Dossier supprimé.')
     return redirect('history')
+
+
+@login_required(login_url='/login/')
+def edit_document(request, doc_id):
+    document = get_object_or_404(Document, id=doc_id)
+
+    STATUS_CHOICES = [
+        ('recu',     'Dossier reçu'),
+        ('en_cours', 'Analyse en cours'),
+        ('termine',  'Analyse terminée'),
+    ]
+    RT2012_FIELDS = [
+        ('rt2012_bbio',         'Bbio', ''),
+        ('rt2012_cep',          'Cep', 'kWh ep/m².an'),
+        ('rt2012_tic',          'Tic', '°C'),
+        ('rt2012_airtightness', 'Étanchéité', 'm³/h.m²'),
+        ('rt2012_enr',          'ENR', ''),
+    ]
+    RE2020_FIELDS = [
+        ('re2020_energy_efficiency', 'Cep,nr', 'kWh/m².an'),
+        ('re2020_carbon_emissions',  'Ic énergie CO₂', 'kgCO2eq/m².an'),
+        ('re2020_thermal_comfort',   'DH (confort été)', 'DH'),
+    ]
+
+    if request.method == 'POST':
+        # Statut
+        new_status = request.POST.get('status')
+        if new_status in dict(STATUS_CHOICES):
+            document.status = new_status
+
+        # Valeurs RT2012
+        for field, _, _ in RT2012_FIELDS:
+            val = request.POST.get(field, '').strip()
+            setattr(document, field, float(val) if val else None)
+
+        # Valeurs RE2020
+        for field, _, _ in RE2020_FIELDS:
+            val = request.POST.get(field, '').strip()
+            setattr(document, field, float(val) if val else None)
+
+        document.save()
+        messages.success(request, f'Dossier « {document.name} » mis à jour.')
+        return redirect('edit_document', doc_id=doc_id)
+
+    return render(request, 'main/edit_document.html', {
+        'document': document,
+        'status_choices': STATUS_CHOICES,
+        'rt2012_fields': RT2012_FIELDS,
+        're2020_fields': RE2020_FIELDS,
+    })
 
 
 def download_report(request, document_id):
