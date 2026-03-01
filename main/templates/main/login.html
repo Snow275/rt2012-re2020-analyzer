@@ -1,0 +1,53 @@
+{% extends 'main/base.html' %}
+{% block title %}Connexion Admin — ConformExpert{% endblock %}
+
+{% block content %}
+<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:3rem 1rem">
+  <div style="width:100%;max-width:420px">
+
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-size:1.6rem;font-weight:700;margin-bottom:.4rem">
+        Conform<span class="text-gold">Expert</span>
+      </div>
+      <p style="font-size:.85rem;color:var(--gray-1)">Accès espace administration</p>
+    </div>
+
+    <div class="card" style="padding:2rem">
+      {% if messages %}
+        {% for msg in messages %}
+        <div style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);border-radius:6px;padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.85rem;color:#e53935">
+          {{ msg }}
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom:1.2rem">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">
+            Identifiant
+          </label>
+          <input type="text" name="username" required autofocus
+            style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.75rem 1rem;color:var(--white);font-size:.9rem;outline:none"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+        </div>
+        <div class="form-group" style="margin-bottom:1.5rem">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">
+            Mot de passe
+          </label>
+          <input type="password" name="password" required
+            style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.75rem 1rem;color:var(--white);font-size:.9rem;outline:none"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+        </div>
+        <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:.85rem">
+          Se connecter
+        </button>
+      </form>
+    </div>
+
+    <p style="text-align:center;margin-top:1.5rem;font-size:.8rem;color:var(--muted)">
+      <a href="{% url 'landing' %}" style="color:var(--gray-1);text-decoration:none">← Retour au site</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
