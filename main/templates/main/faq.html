@@ -1,8 +1,48 @@
 {% extends 'main/base.html' %}
-
 {% block title %}FAQ{% endblock %}
 
 {% block content %}
-<h1>FAQ</h1>
-<p>Voici une liste de questions fréquemment posées.</p>
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">FAQ</span>
+    <h1>Questions fréquentes</h1>
+    <p>Tout ce que vous devez savoir sur nos analyses RT2012 / RE2020.</p>
+  </div>
+</div>
+
+<div class="container">
+  <div style="max-width:760px;margin:0 auto">
+
+    {% for item in faq_items %}
+    <div class="card" style="margin-bottom:1rem;overflow:hidden;cursor:pointer" onclick="toggleFaq(this)">
+      <div style="padding:1.4rem 1.8rem;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+        <h3 style="font-size:.95rem;font-weight:500;color:var(--white);line-height:1.4">{{ item.question }}</h3>
+        <span style="color:var(--gold);font-size:1.1rem;flex-shrink:0;transition:transform .3s" class="faq-arrow">▾</span>
+      </div>
+      <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
+        <div style="padding:0 1.8rem 1.4rem;font-size:.88rem;color:var(--gray-2);font-weight:300;line-height:1.8;border-top:1px solid rgba(255,255,255,.05)">
+          <div style="padding-top:1rem">{{ item.answer }}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="card" style="padding:2rem;text-align:center;margin-top:2rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
+      <p style="font-size:.9rem;color:var(--gray-2);font-weight:300;margin-bottom:1rem">Vous ne trouvez pas la réponse à votre question ?</p>
+      <a href="{% url 'contact' %}" class="btn btn-gold">Contacter l'expert</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleFaq(card) {
+  const answer = card.querySelector('.faq-answer');
+  const arrow = card.querySelector('.faq-arrow');
+  const isOpen = answer.style.maxHeight && answer.style.maxHeight !== '0px';
+  answer.style.maxHeight = isOpen ? '0px' : answer.scrollHeight + 'px';
+  arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+</script>
 {% endblock %}
