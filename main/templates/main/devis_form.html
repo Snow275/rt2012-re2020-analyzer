@@ -1,0 +1,114 @@
+{% extends 'main/base.html' %}
+{% block title %}{% if devis %}Éditer devis{% else %}Nouveau devis{% endif %} — ConformExpert{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">Devis</span>
+    <h1>{% if devis %}Éditer le devis #{{ devis.id }}{% else %}Nouveau devis{% endif %}</h1>
+    <p>{% if devis %}{{ devis.client_nom }}{% else %}Créer un devis client{% endif %}</p>
+  </div>
+</div>
+
+<div class="container">
+  <form method="post" style="max-width:800px;margin:0 auto">
+    {% csrf_token %}
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div style="background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.5rem;font-size:.88rem;color:var(--success)">✓ {{ msg }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem">
+
+      <!-- Infos client -->
+      <div class="card" style="padding:1.5rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Informations client</h3>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Nom du client *</label>
+          <input type="text" name="client_nom" value="{{ devis.client_nom|default:'' }}" required placeholder="Jean Dupont" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Email *</label>
+          <input type="email" name="client_email" value="{{ devis.client_email|default:'' }}" required placeholder="jean@cabinet.fr" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
+        </div>
+        <div class="form-group">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Téléphone</label>
+          <input type="text" name="client_phone" value="{{ devis.client_phone|default:'' }}" placeholder="06 12 34 56 78" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
+        </div>
+      </div>
+
+      <!-- Infos projet -->
+      <div class="card" style="padding:1.5rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Projet</h3>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Nom du projet</label>
+          <input type="text" name="projet_nom" value="{{ devis.projet_nom|default:'' }}" placeholder="Résidence Les Acacias" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Type de bâtiment</label>
+          <select name="type_batiment" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
+            <option value="maison" {% if devis.type_batiment == 'maison' %}selected{% endif %}>Maison individuelle</option>
+            <option value="collectif" {% if devis.type_batiment == 'collectif' %}selected{% endif %}>Logement collectif</option>
+            <option value="tertiaire" {% if devis.type_batiment == 'tertiaire' %}selected{% endif %}>Bâtiment tertiaire</option>
+            <option value="autre" {% if devis.type_batiment == 'autre' %}selected{% endif %}>Autre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Norme concernée</label>
+          <select name="norme" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
+            <option value="RE2020" {% if devis.norme == 'RE2020' %}selected{% endif %}>RE2020</option>
+            <option value="RT2012" {% if devis.norme == 'RT2012' %}selected{% endif %}>RT2012</option>
+            <option value="Les deux" {% if devis.norme == 'Les deux' %}selected{% endif %}>Les deux</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Devis + statut -->
+    <div class="card" style="padding:1.5rem;margin-top:1.5rem">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Devis & Statut</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:1.2rem">
+        <div class="form-group">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Montant (€ HT)</label>
+          <input type="number" step="0.01" name="montant" value="{{ devis.montant|default:'' }}" placeholder="450.00" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
+        </div>
+        <div class="form-group">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Statut</label>
+          <select name="statut" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
+            <option value="en_attente" {% if devis.statut == 'en_attente' or not devis %}selected{% endif %}>En attente</option>
+            <option value="accepte" {% if devis.statut == 'accepte' %}selected{% endif %}>Accepté</option>
+            <option value="refuse" {% if devis.statut == 'refuse' %}selected{% endif %}>Refusé</option>
+            <option value="facture" {% if devis.statut == 'facture' %}selected{% endif %}>Facturé</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Notes internes</label>
+          <textarea name="notes" rows="2" placeholder="Remarques, conditions particulières..." style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none;resize:vertical">{{ devis.notes|default:'' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem">
+      {% if devis %}
+      <form method="post" action="{% url 'devis_delete' devis.id %}" onsubmit="return confirm('Supprimer ce devis ?')">
+        {% csrf_token %}
+        <button type="submit" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);color:#e53935;padding:.6rem 1.2rem;border-radius:6px;font-size:.85rem;cursor:pointer">
+          🗑 Supprimer
+        </button>
+      </form>
+      {% else %}
+      <div></div>
+      {% endif %}
+      <div style="display:flex;gap:.8rem">
+        <a href="{% url 'devis_list' %}" class="btn btn-outline">Annuler</a>
+        <button type="submit" class="btn btn-gold">
+          {% if devis %}Enregistrer{% else %}Créer le devis{% endif %}
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
