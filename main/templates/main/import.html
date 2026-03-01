@@ -76,6 +76,19 @@
             {{ form.client_email }}
           </div>
 
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ form.building_type.label }} *</label>
+              {{ form.building_type }}
+              {% if form.building_type.errors %}<span class="form-error">{{ form.building_type.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+              <label>{{ form.climate_zone.label }} *</label>
+              {{ form.climate_zone }}
+              {% if form.climate_zone.errors %}<span class="form-error">{{ form.climate_zone.errors.0 }}</span>{% endif %}
+            </div>
+          </div>
+
           <div class="form-group">
             <label>{{ form.upload.label }} *</label>
             <label id="upload-zone" style="border:2px dashed rgba(200,168,75,.25);border-radius:6px;padding:2rem;text-align:center;cursor:pointer;transition:all .25s;background:rgba(200,168,75,.03);display:block">
