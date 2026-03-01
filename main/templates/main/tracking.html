@@ -23,7 +23,7 @@
               <span class="badge badge-gray" style="font-size:.88rem;padding:.4rem 1rem">📥 Dossier reçu</span>
             {% elif document.status == 'en_cours' %}
               <span class="badge badge-warning" style="font-size:.88rem;padding:.4rem 1rem">🔍 Analyse en cours</span>
-            {% elif document.status == 'termine' %}
+            {% else %}
               <span class="badge badge-success" style="font-size:.88rem;padding:.4rem 1rem">✓ Analyse terminée</span>
             {% endif %}
           </div>
@@ -33,39 +33,31 @@
           </div>
         </div>
 
-        <!-- Progress bar -->
-        {% if document.status == 'recu' %}{% with pct=15 %}
-        {% elif document.status == 'en_cours' %}{% with pct=60 %}
-        {% else %}{% with pct=100 %}
-        {% endif %}
+        <!-- Progress bar — valeur passée depuis la vue -->
         <div style="margin-bottom:1.5rem">
           <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.5rem">
             <span>Avancement</span>
-            <span>
-              {% if document.status == 'recu' %}15%
-              {% elif document.status == 'en_cours' %}60%
-              {% else %}100%{% endif %}
-            </span>
+            <span>{{ progress_pct }}%</span>
           </div>
           <div style="height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden">
-            <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-lt));
-              width:{% if document.status == 'recu' %}15{% elif document.status == 'en_cours' %}60{% else %}100{% endif %}%;
-              transition:width .6s ease"></div>
+            <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-lt));width:{{ progress_pct }}%;transition:width .6s ease"></div>
           </div>
         </div>
-        {% endwith %}
 
         <!-- Steps -->
         <div style="display:flex;flex-direction:column;gap:.8rem">
-          {% for step_label, step_key in step_list %}
+          {% for step_label, step_state in step_list %}
           <div style="display:flex;align-items:center;gap:.8rem">
             <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;
-              {% if step_key == 'done' %}background:rgba(39,201,63,.15);color:var(--success)
-              {% elif step_key == 'active' %}background:rgba(200,168,75,.15);color:var(--gold)
+              {% if step_state == 'done' %}background:rgba(39,201,63,.15);color:var(--success)
+              {% elif step_state == 'active' %}background:rgba(200,168,75,.15);color:var(--gold)
               {% else %}background:rgba(255,255,255,.05);color:var(--muted){% endif %}">
-              {% if step_key == 'done' %}✓{% elif step_key == 'active' %}→{% else %}○{% endif %}
+              {% if step_state == 'done' %}✓{% elif step_state == 'active' %}→{% else %}○{% endif %}
             </div>
-            <span style="font-size:.84rem;{% if step_key == 'done' %}color:var(--gray-2){% elif step_key == 'active' %}color:var(--white);font-weight:500{% else %}color:var(--muted){% endif %}">
+            <span style="font-size:.84rem;
+              {% if step_state == 'done' %}color:var(--gray-2)
+              {% elif step_state == 'active' %}color:var(--white);font-weight:500
+              {% else %}color:var(--muted){% endif %}">
               {{ step_label }}
             </span>
           </div>
@@ -99,16 +91,6 @@
             <span style="font-size:.82rem;color:var(--gray-1)">Date de réception</span>
             <span style="font-size:.85rem;color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
           </div>
-          {% if document.rt2012_bbio or document.re2020_energy_efficiency %}
-          <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-            <span style="font-size:.82rem;color:var(--gray-1)">Type d'analyse</span>
-            <span style="font-size:.85rem;color:var(--gray-2)">
-              {% if document.rt2012_bbio %}RT2012{% endif %}
-              {% if document.rt2012_bbio and document.re2020_energy_efficiency %} + {% endif %}
-              {% if document.re2020_energy_efficiency %}RE2020{% endif %}
-            </span>
-          </div>
-          {% endif %}
         </div>
       </div>
 
@@ -141,7 +123,7 @@
       {% else %}
       <div class="card" style="padding:2rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
         <p style="font-size:.85rem;color:var(--gray-2);line-height:1.75;font-weight:300">
-          ⏳ L'analyse est en cours. Vous pouvez revenir sur cette page à tout moment pour suivre l'avancement. 
+          ⏳ L'analyse est en cours. Revenez sur cette page pour suivre l'avancement.
           Le rapport sera disponible en téléchargement directement ici dès sa livraison.
         </p>
       </div>
@@ -150,10 +132,4 @@
 
   </div>
 </div>
-{% endblock %}
-
-{% block extra_head %}
-<script>
-// Fournir les steps au template Django via context
-</script>
 {% endblock %}
