@@ -11,7 +11,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Document, Analysis
+from .models import Document, Analysis, Devis
 from .forms import DocumentForm, ContactForm
 from .serializers import DocumentSerializer, AnalysisSerializer
 
@@ -147,7 +147,10 @@ def landing(request):
 
 @login_required(login_url='/login/')
 def home(request):
-    documents = Document.objects.filter(is_active=True)
+    from django.utils import timezone
+    from datetime import timedelta
+
+    documents = Document.objects.filter(is_active=True).order_by('-upload_date')
     total_projects = documents.count()
 
     compliant_count = sum(
@@ -156,17 +159,25 @@ def home(request):
     )
     compliance_rate = round((compliant_count / total_projects * 100), 1) if total_projects else 0
 
-    carbon_values = [
-        doc.re2020_carbon_emissions for doc in documents
-        if doc.re2020_carbon_emissions is not None
-    ]
-    avg_carbon = round(sum(carbon_values) / len(carbon_values), 1) if carbon_values else 0
+    # Dossiers en attente
+    pending_count = documents.filter(status='recu').count()
+
+    # Dossiers reçus depuis + de 5 jours sans traitement
+    five_days_ago = timezone.now() - timedelta(days=5)
+    old_pending = documents.filter(status='recu', upload_date__lt=five_days_ago).count()
+
+    # Devis
+    recent_devis = Devis.objects.all()[:5]
+    devis_en_attente = Devis.objects.filter(statut='en_attente').count()
 
     context = {
         'documents': documents,
         'total_projects': total_projects,
         'compliance_rate': compliance_rate,
-        'avg_carbon': avg_carbon,
+        'pending_count': pending_count,
+        'old_pending': old_pending,
+        'recent_devis': recent_devis,
+        'devis_en_attente': devis_en_attente,
     }
     return render(request, 'main/home.html', context)
 
@@ -652,3 +663,72 @@ def api_report(request, pk):
         return response
     except ImportError:
         return Response({'error': 'WeasyPrint non installé.'}, status=500)
+
+
+# ──────────────────────────────────────────────
+# DEVIS
+# ──────────────────────────────────────────────
+
+@login_required(login_url='/login/')
+def devis_list(request):
+    statut_choices = Devis.STATUT_CHOICES
+    current_statut = request.GET.get('statut', '')
+    qs = Devis.objects.all()
+    if current_statut:
+        qs = qs.filter(statut=current_statut)
+    return render(request, 'main/devis_list.html', {
+        'devis_list': qs,
+        'total': Devis.objects.count(),
+        'en_attente': Devis.objects.filter(statut='en_attente').count(),
+        'statut_choices': statut_choices,
+        'current_statut': current_statut,
+    })
+
+
+@login_required(login_url='/login/')
+def devis_create(request):
+    if request.method == 'POST':
+        d = Devis()
+        d.client_nom   = request.POST.get('client_nom', '').strip()
+        d.client_email = request.POST.get('client_email', '').strip()
+        d.client_phone = request.POST.get('client_phone', '').strip()
+        d.projet_nom   = request.POST.get('projet_nom', '').strip()
+        d.type_batiment = request.POST.get('type_batiment', 'maison')
+        d.norme        = request.POST.get('norme', 'RE2020')
+        d.statut       = request.POST.get('statut', 'en_attente')
+        d.notes        = request.POST.get('notes', '').strip()
+        montant = request.POST.get('montant', '').strip()
+        d.montant = float(montant) if montant else None
+        d.save()
+        messages.success(request, f'Devis pour {d.client_nom} créé.')
+        return redirect('devis_edit', d.id)
+    return render(request, 'main/devis_form.html', {'devis': None})
+
+
+@login_required(login_url='/login/')
+def devis_edit(request, devis_id):
+    d = get_object_or_404(Devis, id=devis_id)
+    if request.method == 'POST':
+        d.client_nom   = request.POST.get('client_nom', '').strip()
+        d.client_email = request.POST.get('client_email', '').strip()
+        d.client_phone = request.POST.get('client_phone', '').strip()
+        d.projet_nom   = request.POST.get('projet_nom', '').strip()
+        d.type_batiment = request.POST.get('type_batiment', 'maison')
+        d.norme        = request.POST.get('norme', 'RE2020')
+        d.statut       = request.POST.get('statut', 'en_attente')
+        d.notes        = request.POST.get('notes', '').strip()
+        montant = request.POST.get('montant', '').strip()
+        d.montant = float(montant) if montant else None
+        d.save()
+        messages.success(request, 'Devis mis à jour.')
+        return redirect('devis_edit', d.id)
+    return render(request, 'main/devis_form.html', {'devis': d})
+
+
+@login_required(login_url='/login/')
+def devis_delete(request, devis_id):
+    d = get_object_or_404(Devis, id=devis_id)
+    if request.method == 'POST':
+        d.delete()
+        messages.success(request, 'Devis supprimé.')
+    return redirect('devis_list')
