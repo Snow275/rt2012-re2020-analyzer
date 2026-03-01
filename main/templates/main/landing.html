@@ -1,0 +1,1652 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConformExpert — Analyse RT2012 / RE2020 Indépendante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════
+   VARIABLES & RESET
+════════════════════════════════════════ */
+:root {
+  --navy:       #0C1929;
+  --navy-2:     #162438;
+  --navy-3:     #1D3050;
+  --gold:       #C8A84B;
+  --gold-lt:    #E2C97A;
+  --cream:      #F4EFE6;
+  --white:      #FFFFFF;
+  --gray-1:     #8896A4;
+  --gray-2:     #C2CDD6;
+  --text-muted: #68798A;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ════════════════════════════════════════
+   ANIMATIONS
+════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideLeft {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+.anim-1 { animation: fadeUp 0.7s ease both 0.1s; }
+.anim-2 { animation: fadeUp 0.7s ease both 0.3s; }
+.anim-3 { animation: fadeUp 0.7s ease both 0.5s; }
+.anim-4 { animation: fadeUp 0.7s ease both 0.7s; }
+.anim-r { animation: slideLeft 0.8s ease both 0.4s; }
+
+/* ════════════════════════════════════════
+   NAV
+════════════════════════════════════════ */
+nav {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 5vw;
+  background: rgba(12, 25, 41, 0.90);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(200, 168, 75, 0.12);
+  transition: background 0.3s;
+}
+.nav-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--white);
+  text-decoration: none;
+}
+.nav-logo span { color: var(--gold); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-2);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--gold); }
+
+.nav-cta {
+  background: var(--gold) !important;
+  color: var(--navy) !important;
+  padding: 0.55rem 1.4rem !important;
+  border-radius: 3px;
+  font-weight: 500 !important;
+  letter-spacing: 0.03em !important;
+  transition: background 0.2s, box-shadow 0.2s !important;
+}
+.nav-cta:hover {
+  background: var(--gold-lt) !important;
+  box-shadow: 0 4px 20px rgba(200,168,75,0.35) !important;
+}
+
+/* ════════════════════════════════════════
+   HERO
+════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 4rem;
+  align-items: center;
+  padding: 10rem 5vw 6rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -200px; right: -200px;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(200,168,75,0.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200,168,75,0.25) 40%, rgba(200,168,75,0.25) 60%, transparent 100%);
+}
+
+/* Grain overlay */
+.hero-grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(200,168,75,0.1);
+  border: 1px solid rgba(200,168,75,0.28);
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.38rem 1rem;
+  border-radius: 2px;
+  margin-bottom: 1.8rem;
+}
+.badge-dot {
+  width: 6px; height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 3.8vw, 3.8rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.6rem;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.hero-desc {
+  font-size: 1.05rem;
+  font-weight: 300;
+  line-height: 1.85;
+  color: var(--gray-2);
+  max-width: 490px;
+  margin-bottom: 2.5rem;
+}
+
+.hero-btns {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gold);
+  color: var(--navy);
+  padding: 0.9rem 2rem;
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.25s;
+  border: 1.5px solid var(--gold);
+}
+.btn-gold:hover {
+  background: var(--gold-lt);
+  border-color: var(--gold-lt);
+  box-shadow: 0 8px 32px rgba(200,168,75,0.28);
+  transform: translateY(-2px);
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--white);
+  padding: 0.9rem 2rem;
+  border-radius: 3px;
+  font-weight: 400;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  transition: all 0.25s;
+}
+.btn-ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.hero-trust {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.trust-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--gray-1);
+}
+.trust-pill svg { color: var(--gold); flex-shrink: 0; }
+
+/* Hero card */
+.hero-card {
+  background: var(--navy-2);
+  border: 1px solid rgba(200,168,75,0.18);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+}
+.hcard-header {
+  background: linear-gradient(135deg, var(--navy-3) 0%, var(--navy-2) 100%);
+  padding: 1.8rem 2rem;
+  border-bottom: 1px solid rgba(200,168,75,0.12);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.hcard-header-icon {
+  width: 40px; height: 40px;
+  background: rgba(200,168,75,0.12);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  font-size: 1.1rem;
+}
+.hcard-header h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.hcard-header p { font-size: 0.78rem; color: var(--gray-1); font-weight: 300; }
+
+.hcard-body { padding: 1.8rem 2rem; }
+
+.process-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+  position: relative;
+}
+.process-row:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 19px; top: 40px;
+  width: 1px; height: calc(100% - 10px);
+  background: rgba(200,168,75,0.15);
+}
+.pr-num {
+  width: 38px; height: 38px; flex-shrink: 0;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem;
+  color: var(--gold);
+  font-family: 'Playfair Display', serif;
+  background: var(--navy-2);
+  position: relative; z-index: 1;
+}
+.pr-content strong { display: block; font-size: 0.92rem; font-weight: 500; margin-bottom: 0.2rem; line-height: 1.3; }
+.pr-content span { font-size: 0.78rem; color: var(--gray-1); font-weight: 300; }
+
+.hcard-footer {
+  margin: 0 2rem 2rem;
+  background: rgba(200,168,75,0.07);
+  border: 1px solid rgba(200,168,75,0.18);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.hcard-footer-icon { color: var(--gold); font-size: 1.2rem; flex-shrink: 0; }
+.hcard-footer p { font-size: 0.82rem; color: var(--gray-2); font-weight: 300; line-height: 1.5; }
+.hcard-footer strong { color: var(--gold); }
+
+/* ════════════════════════════════════════
+   TRUST BAR
+════════════════════════════════════════ */
+.trust-bar {
+  background: var(--navy-2);
+  border-top: 1px solid rgba(200,168,75,0.1);
+  border-bottom: 1px solid rgba(200,168,75,0.1);
+  padding: 1.6rem 5vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3.5rem;
+  flex-wrap: wrap;
+}
+.tb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--gray-2);
+  font-weight: 300;
+}
+.tb-item strong { color: var(--white); font-weight: 500; }
+.tb-sep { width: 1px; height: 24px; background: rgba(255,255,255,0.08); }
+
+/* ════════════════════════════════════════
+   SECTION TEMPLATE
+════════════════════════════════════════ */
+.section {
+  padding: 7rem 5vw;
+}
+.section.alt { background: var(--navy-2); }
+
+.section-inner { max-width: 1160px; margin: 0 auto; }
+
+.s-label {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+}
+.s-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.18;
+  margin-bottom: 1.1rem;
+}
+.s-sub {
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.85;
+  color: var(--gray-2);
+  max-width: 520px;
+}
+
+/* ════════════════════════════════════════
+   OFFRE SECTION
+════════════════════════════════════════ */
+.offre-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3rem;
+  margin-top: 4rem;
+  align-items: start;
+}
+
+.offre-main-card {
+  background: var(--navy-3);
+  border: 1px solid rgba(200,168,75,0.25);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.omc-top {
+  background: linear-gradient(135deg, #1a3352 0%, var(--navy-3) 100%);
+  padding: 2.2rem 2.5rem;
+  border-bottom: 1px solid rgba(200,168,75,0.12);
+  position: relative;
+  overflow: hidden;
+}
+.omc-top::before {
+  content: '';
+  position: absolute;
+  right: -60px; top: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(200,168,75,0.07) 0%, transparent 70%);
+}
+.omc-top-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+.omc-top h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.55rem;
+  margin-bottom: 0.5rem;
+}
+.omc-top p { font-size: 0.88rem; color: var(--gray-2); font-weight: 300; line-height: 1.65; }
+
+.omc-body { padding: 2.2rem 2.5rem; }
+
+.feature-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.feature-row:first-child { padding-top: 0; }
+.feature-row:last-child { border-bottom: none; }
+
+.feat-icon {
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: rgba(200,168,75,0.1);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  font-size: 0.95rem;
+}
+.feat-text strong { display: block; font-size: 0.92rem; font-weight: 500; margin-bottom: 0.18rem; }
+.feat-text span { font-size: 0.8rem; color: var(--gray-1); font-weight: 300; }
+
+.omc-cta {
+  padding: 0 2.5rem 2.5rem;
+}
+.omc-cta a {
+  display: block;
+  text-align: center;
+  background: var(--gold);
+  color: var(--navy);
+  padding: 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.25s;
+}
+.omc-cta a:hover {
+  background: var(--gold-lt);
+  box-shadow: 0 6px 24px rgba(200,168,75,0.3);
+  transform: translateY(-1px);
+}
+
+/* Side cards */
+.offre-side { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.side-card {
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 1.8rem 2rem;
+  transition: all 0.3s;
+}
+.side-card:hover { border-color: rgba(200,168,75,0.2); transform: translateY(-2px); }
+.side-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+.side-card p { font-size: 0.85rem; color: var(--gray-1); font-weight: 300; line-height: 1.7; margin-bottom: 1rem; }
+.side-card a {
+  font-size: 0.82rem;
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 500;
+  display: flex; align-items: center; gap: 0.35rem;
+  transition: gap 0.2s;
+}
+.side-card a:hover { gap: 0.6rem; }
+
+/* ════════════════════════════════════════
+   PROCESS SECTION
+════════════════════════════════════════ */
+.process-cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 4rem;
+  position: relative;
+}
+.process-cols::before {
+  content: '';
+  position: absolute;
+  top: 38px; left: 12%; right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,168,75,0.25), rgba(200,168,75,0.25), rgba(200,168,75,0.25), transparent);
+  z-index: 0;
+}
+
+.pc-card {
+  background: var(--navy);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: all 0.3s;
+  position: relative;
+}
+.pc-card:hover {
+  border-color: rgba(200,168,75,0.25);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+.pc-n {
+  width: 46px; height: 46px;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  color: var(--gold);
+  margin: 0 auto 1.4rem;
+  background: var(--navy);
+  position: relative; z-index: 1;
+}
+.pc-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.25;
+}
+.pc-card p { font-size: 0.82rem; color: var(--gray-1); font-weight: 300; line-height: 1.7; margin-bottom: 0.9rem; }
+.pc-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(200,168,75,0.08);
+  padding: 0.22rem 0.65rem;
+  border-radius: 2px;
+}
+
+/* ════════════════════════════════════════
+   TARIFS SECTION
+════════════════════════════════════════ */
+.tarif-intro {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+  margin-bottom: 3.5rem;
+}
+.tarif-note {
+  background: rgba(200,168,75,0.07);
+  border-left: 3px solid var(--gold);
+  padding: 1rem 1.3rem;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.85rem;
+  color: var(--gray-2);
+  font-weight: 300;
+  line-height: 1.7;
+  font-style: italic;
+}
+
+.tarif-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.tarif-card {
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.tarif-card:hover:not(.featured) { transform: translateY(-3px); border-color: rgba(200,168,75,0.15); }
+
+.tarif-card.featured {
+  border-color: var(--gold);
+  transform: translateY(-6px);
+  box-shadow: 0 30px 70px rgba(0,0,0,0.3), 0 0 0 1px rgba(200,168,75,0.2);
+}
+.feat-label {
+  background: var(--gold);
+  color: var(--navy);
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem;
+}
+
+.tc-body { padding: 2rem; }
+.tc-type { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-1); margin-bottom: 0.4rem; }
+.tc-body h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 1.3rem; }
+
+.tc-price {
+  padding-bottom: 1.4rem;
+  margin-bottom: 1.4rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.tc-from { font-size: 0.75rem; color: var(--gray-1); margin-bottom: 0.2rem; }
+.tc-amount {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  color: var(--gold);
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+.tc-note { font-size: 0.73rem; color: var(--text-muted); }
+
+.tc-features { list-style: none; margin-bottom: 1.6rem; }
+.tc-features li {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 0.84rem; color: var(--gray-2); font-weight: 300;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.tc-features li::before {
+  content: '✓';
+  color: var(--gold);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.tc-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.8rem;
+  border-radius: 4px;
+  transition: all 0.25s;
+}
+.tc-btn.primary {
+  background: var(--gold);
+  color: var(--navy);
+}
+.tc-btn.primary:hover { background: var(--gold-lt); box-shadow: 0 4px 18px rgba(200,168,75,0.3); }
+.tc-btn.outline {
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--white);
+}
+.tc-btn.outline:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ════════════════════════════════════════
+   SUIVI SECTION
+════════════════════════════════════════ */
+.suivi-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+  margin-top: 4rem;
+}
+
+.suivi-mockup {
+  background: var(--navy-3);
+  border: 1px solid rgba(200,168,75,0.18);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+}
+.sm-bar {
+  background: var(--navy-2);
+  padding: 0.9rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.sm-dot { width: 10px; height: 10px; border-radius: 50%; }
+.sm-dot:nth-child(1) { background: #FF5F56; }
+.sm-dot:nth-child(2) { background: #FFBD2E; }
+.sm-dot:nth-child(3) { background: #27C93F; }
+.sm-url {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.72rem;
+  color: var(--gray-1);
+  margin-left: 0.5rem;
+}
+
+.sm-content { padding: 1.8rem; }
+
+.sm-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  background: var(--navy-2);
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+}
+.sm-status-row h4 { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.15rem; }
+.sm-status-row span { font-size: 0.75rem; color: var(--gray-1); }
+.status-badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+.status-badge.en-cours { background: rgba(255,193,7,0.15); color: #FFC107; }
+.status-badge.termine { background: rgba(39,201,63,0.15); color: #27C93F; }
+
+.sm-progress { margin-bottom: 1.5rem; }
+.sm-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--gray-1);
+  margin-bottom: 0.5rem;
+}
+.sm-bar-track {
+  height: 6px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sm-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-lt));
+  width: 65%;
+}
+
+.sm-steps { display: flex; flex-direction: column; gap: 0.6rem; }
+.sm-step {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.8rem;
+  color: var(--gray-2);
+}
+.sm-step-icon {
+  width: 22px; height: 22px; flex-shrink: 0;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem;
+}
+.sm-step-icon.done { background: rgba(39,201,63,0.15); color: #27C93F; }
+.sm-step-icon.active { background: rgba(200,168,75,0.15); color: var(--gold); }
+.sm-step-icon.pending { background: rgba(255,255,255,0.05); color: var(--gray-1); }
+
+.suivi-features { display: flex; flex-direction: column; gap: 1.5rem; }
+.sf-item {
+  display: flex;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+.sf-icon {
+  width: 46px; height: 46px; flex-shrink: 0;
+  background: rgba(200,168,75,0.08);
+  border: 1px solid rgba(200,168,75,0.18);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  font-size: 1.1rem;
+}
+.sf-text strong { display: block; font-size: 0.95rem; font-weight: 500; margin-bottom: 0.3rem; }
+.sf-text span { font-size: 0.83rem; color: var(--gray-1); font-weight: 300; line-height: 1.65; }
+
+/* ════════════════════════════════════════
+   CONTACT / UPLOAD SECTION
+════════════════════════════════════════ */
+#contact.section { background: var(--navy); }
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 5rem;
+  align-items: start;
+  margin-top: 4rem;
+}
+
+.contact-info { display: flex; flex-direction: column; gap: 2rem; }
+
+.ci-card {
+  background: var(--navy-2);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 1.8rem;
+}
+.ci-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ci-card h4 span { color: var(--gold); font-size: 1.1rem; }
+.ci-card p { font-size: 0.85rem; color: var(--gray-1); font-weight: 300; line-height: 1.7; }
+
+.ci-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+.ci-list li { font-size: 0.85rem; color: var(--gray-2); font-weight: 300; display: flex; align-items: center; gap: 0.5rem; }
+.ci-list li::before { content: '→'; color: var(--gold); font-size: 0.8rem; }
+
+/* Form */
+.contact-form-card {
+  background: var(--navy-2);
+  border: 1px solid rgba(200,168,75,0.18);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.cfc-header {
+  background: linear-gradient(135deg, var(--navy-3), var(--navy-2));
+  padding: 2rem 2.5rem;
+  border-bottom: 1px solid rgba(200,168,75,0.1);
+}
+.cfc-header h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  margin-bottom: 0.3rem;
+}
+.cfc-header p { font-size: 0.82rem; color: var(--gray-1); font-weight: 300; }
+
+.cfc-body { padding: 2.5rem; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.form-group label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gray-2);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 300;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  outline: none;
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder { color: var(--text-muted); }
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: rgba(200,168,75,0.4);
+  box-shadow: 0 0 0 3px rgba(200,168,75,0.07);
+}
+.form-group select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2368798A' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; }
+.form-group select option { background: var(--navy-3); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+.upload-zone {
+  border: 2px dashed rgba(200,168,75,0.25);
+  border-radius: 6px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  margin-bottom: 1.2rem;
+  background: rgba(200,168,75,0.03);
+}
+.upload-zone:hover {
+  border-color: rgba(200,168,75,0.45);
+  background: rgba(200,168,75,0.06);
+}
+.upload-icon { font-size: 2rem; color: var(--gold); margin-bottom: 0.8rem; opacity: 0.7; }
+.upload-zone p { font-size: 0.85rem; color: var(--gray-2); font-weight: 300; margin-bottom: 0.3rem; }
+.upload-zone span { font-size: 0.72rem; color: var(--text-muted); }
+.upload-zone input[type="file"] { display: none; }
+
+.form-submit {
+  display: block;
+  width: 100%;
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  padding: 1rem;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.02em;
+}
+.form-submit:hover {
+  background: var(--gold-lt);
+  box-shadow: 0 6px 24px rgba(200,168,75,0.28);
+  transform: translateY(-1px);
+}
+
+.form-guarantee {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.form-guarantee::before { content: '🔒'; }
+
+/* ════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════ */
+footer {
+  background: var(--navy-2);
+  border-top: 1px solid rgba(200,168,75,0.1);
+  padding: 4rem 5vw 2.5rem;
+}
+.footer-inner { max-width: 1160px; margin: 0 auto; }
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 4rem;
+  margin-bottom: 3rem;
+}
+.footer-brand p {
+  font-size: 0.85rem;
+  color: var(--gray-1);
+  font-weight: 300;
+  line-height: 1.75;
+  margin-top: 0.8rem;
+  max-width: 300px;
+}
+.footer-col h5 {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1.2rem;
+}
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+.footer-col a {
+  font-size: 0.85rem;
+  color: var(--gray-1);
+  text-decoration: none;
+  font-weight: 300;
+  transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--gold); }
+
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ════════════════════════════════════════
+   SCROLL REVEAL
+════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .hero, .offre-layout, .suivi-layout, .contact-layout, .tarif-intro, .footer-top {
+    grid-template-columns: 1fr;
+  }
+  .hero { padding-top: 8rem; }
+  .process-cols { grid-template-columns: repeat(2, 1fr); }
+  .process-cols::before { display: none; }
+  .tarif-grid { grid-template-columns: 1fr; }
+  .tarif-card.featured { transform: none; }
+  .form-row { grid-template-columns: 1fr; }
+  nav ul { display: none; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ████ NAV ████ -->
+<nav>
+  <a href="{% url 'landing' %}" class="nav-logo">Conform<span>Expert</span></a>
+  <ul class="nav-links">
+    <li><a href="#offre">Offre</a></li>
+    <li><a href="#process">Processus</a></li>
+    <li><a href="#tarifs">Tarifs</a></li>
+    <li><a href="#suivi">Suivi</a></li>
+    <li><a href="{% url 'import' %}" class="nav-cta">Déposer un dossier</a></li>
+    <li><a href="{% url 'home' %}" style="font-size:.8rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none">Dashboard</a></li>
+  </ul>
+</nav>
+
+<!-- ████ HERO ████ -->
+<section class="hero">
+  <div class="hero-grain"></div>
+
+  <div class="hero-left">
+    <div class="hero-badge anim-1">
+      <span class="badge-dot"></span>
+      Analyse Indépendante · RT2012 / RE2020
+    </div>
+
+    <h1 class="anim-2">
+      La conformité thermique,<br>
+      <em>sans approximation.</em>
+    </h1>
+
+    <p class="hero-desc anim-3">
+      Nous réalisons une analyse documentaire indépendante de conformité RT2012 / RE2020
+      sous <strong>15 jours ouvrés</strong>, basée sur vos documents, avec recommandations concrètes et rapport clair.
+    </p>
+
+    <div class="hero-btns anim-4">
+      <a href="{% url 'import' %}" class="btn-gold">
+        Déposer mon dossier
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#offre" class="btn-ghost">Découvrir l'offre</a>
+    </div>
+
+    <div class="hero-trust anim-4">
+      <div class="trust-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Délai garanti 15 jours
+      </div>
+      <div class="trust-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Rapport + recommandations
+      </div>
+      <div class="trust-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Lien de suivi personnalisé
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-card anim-r">
+    <div class="hcard-header">
+      <div class="hcard-header-icon">📋</div>
+      <div>
+        <h3>Notre processus en 4 étapes</h3>
+        <p>De la réception à la livraison du rapport</p>
+      </div>
+    </div>
+    <div class="hcard-body">
+      <div class="process-row">
+        <div class="pr-num">1</div>
+        <div class="pr-content">
+          <strong>Dépôt de vos documents</strong>
+          <span>Plans, DPE, attestations, notice thermique — via formulaire sécurisé</span>
+        </div>
+      </div>
+      <div class="process-row">
+        <div class="pr-num">2</div>
+        <div class="pr-content">
+          <strong>Analyse documentaire complète</strong>
+          <span>Vérification point par point selon référentiel RT2012 ou RE2020</span>
+        </div>
+      </div>
+      <div class="process-row">
+        <div class="pr-num">3</div>
+        <div class="pr-content">
+          <strong>Rédaction du rapport</strong>
+          <span>Constats, non-conformités identifiées, recommandations actionnables</span>
+        </div>
+      </div>
+      <div class="process-row">
+        <div class="pr-num">4</div>
+        <div class="pr-content">
+          <strong>Livraison & échanges</strong>
+          <span>Rapport PDF + lien de suivi + disponibilité pour questions</span>
+        </div>
+      </div>
+    </div>
+    <div class="hcard-footer">
+      <div class="hcard-footer-icon">⏱</div>
+      <p>Délai garanti : <strong>15 jours ouvrés</strong> après réception complète du dossier. Visite sur site disponible sur demande.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ████ TRUST BAR ████ -->
+<div class="trust-bar">
+  <div class="tb-item">⚡ <strong>15 jours</strong>&nbsp;délai garanti</div>
+  <div class="tb-sep"></div>
+  <div class="tb-item">🔍 Analyse <strong>100% indépendante</strong></div>
+  <div class="tb-sep"></div>
+  <div class="tb-item">📎 RT2012 <strong>&</strong> RE2020</div>
+  <div class="tb-sep"></div>
+  <div class="tb-item">🔗 Lien de <strong>suivi personnalisé</strong></div>
+  <div class="tb-sep"></div>
+  <div class="tb-item">🏗 Architectes · <strong>Promoteurs</strong> · Agents</div>
+</div>
+
+<!-- ████ OFFRE ████ -->
+<section class="section" id="offre">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="s-label">Notre offre</span>
+      <h2 class="s-title">Un service pensé<br>pour les professionnels</h2>
+      <p class="s-sub">Tout ce dont vous avez besoin pour sécuriser la conformité thermique de vos projets — sans superflu, sans ambiguïté.</p>
+    </div>
+
+    <div class="offre-layout">
+
+      <div class="offre-main-card reveal">
+        <div class="omc-top">
+          <div class="omc-top-tag">Service principal</div>
+          <h3>Analyse documentaire RT2012 / RE2020</h3>
+          <p>Une revue complète, indépendante et documentée de la conformité thermique de votre projet, livrée sous 15 jours ouvrés.</p>
+        </div>
+        <div class="omc-body">
+          <div class="feature-row">
+            <div class="feat-icon">📂</div>
+            <div class="feat-text">
+              <strong>Analyse documentaire complète</strong>
+              <span>Plans, attestations, notices, DPE — vérification de l'ensemble des pièces</span>
+            </div>
+          </div>
+          <div class="feature-row">
+            <div class="feat-icon">⏰</div>
+            <div class="feat-text">
+              <strong>Délai garanti : 15 jours ouvrés</strong>
+              <span>Engagement contractuel dès réception du dossier complet</span>
+            </div>
+          </div>
+          <div class="feature-row">
+            <div class="feat-icon">📄</div>
+            <div class="feat-text">
+              <strong>Rapport clair + recommandations</strong>
+              <span>Points de conformité, non-conformités identifiées, actions correctives priorisées</span>
+            </div>
+          </div>
+          <div class="feature-row">
+            <div class="feat-icon">🔗</div>
+            <div class="feat-text">
+              <strong>Lien de suivi personnalisé</strong>
+              <span>Accès en temps réel à l'avancement de votre dossier</span>
+            </div>
+          </div>
+          <div class="feature-row">
+            <div class="feat-icon">🏗</div>
+            <div class="feat-text">
+              <strong>Visite sur site possible</strong>
+              <span>Sur demande, en complément de l'analyse documentaire (option)</span>
+            </div>
+          </div>
+        </div>
+        <div class="omc-cta">
+          <a href="{% url 'import' %}">Déposer mon dossier →</a>
+        </div>
+      </div>
+
+      <div class="offre-side reveal">
+        <div class="side-card">
+          <h4>🏘 Promoteurs & Maîtres d'ouvrage</h4>
+          <p>Sécurisez vos permis et levées de réserves. Notre rapport indépendant vous donne une lecture claire avant dépôt ou réception.</p>
+          <a href="{% url 'import' %}">Soumettre un projet <span>→</span></a>
+        </div>
+        <div class="side-card">
+          <h4>📐 Architectes & BET</h4>
+          <p>Identifiez les points de non-conformité en amont. Évitez les allers-retours en phase chantier grâce à une relecture externe rigoureuse.</p>
+          <a href="{% url 'contact' %}">Prendre contact <span>→</span></a>
+        </div>
+        <div class="side-card">
+          <h4>🏢 Agents immobiliers</h4>
+          <p>Rassurer vos clients vendeurs ou acquéreurs avec une attestation de conformité thermique claire et documentée.</p>
+          <a href="{% url 'import' %}">Demander une analyse <span>→</span></a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ████ PROCESS ████ -->
+<section class="section alt" id="process">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="s-label">Notre processus</span>
+      <h2 class="s-title">De la réception à<br>la livraison du rapport</h2>
+    </div>
+
+    <div class="process-cols">
+      <div class="pc-card reveal">
+        <div class="pc-n">1</div>
+        <h4>Dépôt du dossier</h4>
+        <p>Vous déposez vos documents via notre formulaire sécurisé. Nous accusons réception sous 24h et confirmons la complétude du dossier.</p>
+        <span class="pc-tag">J+0</span>
+      </div>
+      <div class="pc-card reveal">
+        <div class="pc-n">2</div>
+        <h4>Analyse documentaire</h4>
+        <p>Vérification complète selon référentiel RT2012 ou RE2020 : enveloppe thermique, systèmes, attestations, Bbio, Cep, Tic.</p>
+        <span class="pc-tag">J+1 à J+10</span>
+      </div>
+      <div class="pc-card reveal">
+        <div class="pc-n">3</div>
+        <h4>Rédaction du rapport</h4>
+        <p>Rapport structuré : points conformes, non-conformités, niveau de risque, recommandations concrètes et actionnables.</p>
+        <span class="pc-tag">J+10 à J+14</span>
+      </div>
+      <div class="pc-card reveal">
+        <div class="pc-n">4</div>
+        <h4>Livraison & échanges</h4>
+        <p>Rapport PDF livré sur votre lien de suivi. Disponibilité pour un échange de 30 min inclus dans chaque prestation.</p>
+        <span class="pc-tag">J+15 maximum</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ TARIFS ████ -->
+<section class="section" id="tarifs">
+  <div class="section-inner">
+    <div class="tarif-intro">
+      <div class="reveal">
+        <span class="s-label">Tarifs</span>
+        <h2 class="s-title">Transparent,<br>sans surprise</h2>
+        <p class="s-sub">Des offres adaptées à la taille et à la complexité de votre projet. Devis gratuit pour les dossiers hors standard.</p>
+      </div>
+      <div class="reveal">
+        <div class="tarif-note">
+          "Un tarif de lancement est disponible pour votre premier dossier. Contactez-nous directement pour en bénéficier."
+        </div>
+      </div>
+    </div>
+
+    <div class="tarif-grid reveal">
+      <div class="tarif-card">
+        <div class="tc-body">
+          <div class="tc-type">Logement individuel</div>
+          <h3>Maison / Pavillon</h3>
+          <div class="tc-price">
+            <div class="tc-from">À partir de</div>
+            <div class="tc-amount">490 €</div>
+            <div class="tc-note">HT · selon surface et complexité</div>
+          </div>
+          <ul class="tc-features">
+            <li>Analyse documentaire complète</li>
+            <li>RT2012 ou RE2020</li>
+            <li>Rapport PDF structuré</li>
+            <li>Recommandations incluses</li>
+            <li>Lien de suivi personnalisé</li>
+            <li>Échange 30 min inclus</li>
+          </ul>
+          <a href="#contact" class="tc-btn outline">Déposer un dossier</a>
+        </div>
+      </div>
+
+      <div class="tarif-card featured">
+        <div class="feat-label">Le plus demandé</div>
+        <div class="tc-body">
+          <div class="tc-type">Collectif / Tertiaire</div>
+          <h3>Immeuble & bâtiment</h3>
+          <div class="tc-price">
+            <div class="tc-from">À partir de</div>
+            <div class="tc-amount">890 €</div>
+            <div class="tc-note">HT · selon logements / SHON</div>
+          </div>
+          <ul class="tc-features">
+            <li>Analyse documentaire complète</li>
+            <li>RT2012 <strong>et</strong> RE2020 disponibles</li>
+            <li>Rapport PDF détaillé par lot</li>
+            <li>Recommandations priorisées</li>
+            <li>Lien de suivi personnalisé</li>
+            <li>Échange 45 min inclus</li>
+            <li>Visite site sur option</li>
+          </ul>
+          <a href="#contact" class="tc-btn primary">Déposer un dossier</a>
+        </div>
+      </div>
+
+      <div class="tarif-card">
+        <div class="tc-body">
+          <div class="tc-type">Rénovation & ERP</div>
+          <h3>Projet sur mesure</h3>
+          <div class="tc-price">
+            <div class="tc-from">Sur devis</div>
+            <div class="tc-amount">—</div>
+            <div class="tc-note">Gratuit · réponse sous 48h</div>
+          </div>
+          <ul class="tc-features">
+            <li>Analyse spécifique rénovation</li>
+            <li>ERP / bâtiment existant</li>
+            <li>Rapport adapté au contexte</li>
+            <li>Visite sur site possible</li>
+            <li>Lien de suivi personnalisé</li>
+            <li>Accompagnement renforcé</li>
+          </ul>
+          <a href="#contact" class="tc-btn outline">Demander un devis</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ SUIVI ████ -->
+<section class="section alt" id="suivi">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="s-label">Suivi en temps réel</span>
+      <h2 class="s-title">Vous savez toujours<br>où en est votre dossier</h2>
+    </div>
+
+    <div class="suivi-layout">
+      <div class="suivi-mockup reveal">
+        <div class="sm-bar">
+          <div class="sm-dot"></div>
+          <div class="sm-dot"></div>
+          <div class="sm-dot"></div>
+          <div class="sm-url">conformexpert.fr/suivi/DOC-2024-0087</div>
+        </div>
+        <div class="sm-content">
+          <div class="sm-status-row">
+            <div>
+              <h4>Résidence Les Acacias — Lot B</h4>
+              <span>Reçu le 12 nov. · Délai : 1er déc.</span>
+            </div>
+            <span class="status-badge en-cours">En cours</span>
+          </div>
+
+          <div class="sm-progress">
+            <div class="sm-progress-label">
+              <span>Avancement</span>
+              <span>65%</span>
+            </div>
+            <div class="sm-bar-track">
+              <div class="sm-bar-fill"></div>
+            </div>
+          </div>
+
+          <div class="sm-steps">
+            <div class="sm-step">
+              <div class="sm-step-icon done">✓</div>
+              Dossier reçu et validé
+            </div>
+            <div class="sm-step">
+              <div class="sm-step-icon done">✓</div>
+              Analyse enveloppe thermique
+            </div>
+            <div class="sm-step">
+              <div class="sm-step-icon active">→</div>
+              Vérification systèmes & attestations
+            </div>
+            <div class="sm-step">
+              <div class="sm-step-icon pending">○</div>
+              Rédaction du rapport
+            </div>
+            <div class="sm-step">
+              <div class="sm-step-icon pending">○</div>
+              Livraison du rapport PDF
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="suivi-features reveal">
+        <div class="sf-item">
+          <div class="sf-icon">🔗</div>
+          <div class="sf-text">
+            <strong>Lien unique par dossier</strong>
+            <span>Chaque client reçoit un lien de suivi personnalisé, accessible à tout moment sans connexion requise.</span>
+          </div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-icon">📊</div>
+          <div class="sf-text">
+            <strong>Statut mis à jour en temps réel</strong>
+            <span>Réception, analyse, rédaction, livraison — chaque étape est mise à jour dès qu'elle est franchie.</span>
+          </div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-icon">📥</div>
+          <div class="sf-text">
+            <strong>Téléchargement direct du rapport</strong>
+            <span>Le rapport PDF est disponible en téléchargement depuis la même page dès sa livraison.</span>
+          </div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-icon">💬</div>
+          <div class="sf-text">
+            <strong>Échange inclus à la livraison</strong>
+            <span>Un créneau de 30 à 45 minutes est inclus dans chaque prestation pour répondre à vos questions.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ CONTACT / UPLOAD ████ -->
+<section class="section" id="contact">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="s-label">Déposer un dossier</span>
+      <h2 class="s-title">Commençons votre<br>analyse</h2>
+      <p class="s-sub">Remplissez le formulaire et déposez vos documents. Nous accusons réception sous 24h avec confirmation de la complétude de votre dossier.</p>
+    </div>
+
+    <div class="contact-layout">
+      <div class="contact-info reveal">
+        <div class="ci-card">
+          <h4><span>📎</span> Documents à fournir</h4>
+          <ul class="ci-list">
+            <li>Plans architecturaux (PDF)</li>
+            <li>Notice thermique / étude thermique</li>
+            <li>Attestation RT2012 ou RE2020</li>
+            <li>DPE si disponible</li>
+            <li>CCTP ou descriptif technique</li>
+            <li>Tout autre document pertinent</li>
+          </ul>
+        </div>
+        <div class="ci-card">
+          <h4><span>⚡</span> Ce qui se passe ensuite</h4>
+          <p>Accusé de réception sous 24h · Confirmation de complétude du dossier · Analyse sous 15 jours ouvrés · Livraison du rapport avec lien de suivi.</p>
+        </div>
+        <div class="ci-card">
+          <h4><span>📞</span> Une question avant ?</h4>
+          <p>Vous pouvez nous contacter directement pour évaluer votre projet avant de déposer un dossier. Réponse sous 48h.</p>
+        </div>
+      </div>
+
+      <div class="contact-form-card reveal">
+        <div class="cfc-header">
+          <h3>Formulaire de dépôt</h3>
+          <p>Vos informations sont traitées de manière confidentielle.</p>
+        </div>
+        <div class="cfc-body">
+          <form method="post" action="{% url 'contact' %}">
+          {% csrf_token %}
+            <div class="form-row">
+              <div class="form-group">
+                <label>Prénom *</label>
+                <input type="text" placeholder="Jean" required>
+              </div>
+              <div class="form-group">
+                <label>Nom *</label>
+                <input type="text" placeholder="Dupont" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Email *</label>
+                <input type="email" placeholder="jean@cabinet.fr" required>
+              </div>
+              <div class="form-group">
+                <label>Téléphone</label>
+                <input type="tel" placeholder="06 12 34 56 78">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Profil *</label>
+              <select required>
+                <option value="" disabled selected>Sélectionner…</option>
+                <option>Architecte / Bureau d'études</option>
+                <option>Promoteur / Maître d'ouvrage</option>
+                <option>Agent immobilier</option>
+                <option>Particulier</option>
+                <option>Autre</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Type d'analyse *</label>
+              <select required>
+                <option value="" disabled selected>Sélectionner…</option>
+                <option>RT2012</option>
+                <option>RE2020</option>
+                <option>RT2012 et RE2020</option>
+                <option>Je ne sais pas encore</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Description du projet</label>
+              <textarea placeholder="Type de bâtiment, surface, localisation, contexte (permis, réception, litige…)"></textarea>
+            </div>
+
+            <label style="font-size:0.78rem;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:var(--gray-2);display:block;margin-bottom:0.4rem;">
+              Documents à joindre
+            </label>
+            <label class="upload-zone" for="upload">
+              <input type="file" id="upload" multiple accept=".pdf,.dwg,.xlsx,.doc,.docx">
+              <div class="upload-icon">📁</div>
+              <p>Glissez vos fichiers ici ou cliquez pour sélectionner</p>
+              <span>PDF, DWG, Excel, Word · Plusieurs fichiers acceptés</span>
+            </label>
+
+            <button type="submit" class="form-submit">
+              Envoyer mon dossier →
+            </button>
+            <div class="form-guarantee">Données confidentielles · Réponse sous 24h</div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████ FOOTER ████ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="{% url 'landing' %}" class="nav-logo">Conform<span>Expert</span></a>
+        <p>Analyse indépendante de conformité RT2012 / RE2020 pour architectes, promoteurs et agents immobiliers. Rapport clair, délai garanti.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Services</h5>
+        <ul>
+          <li><a href="#offre">Analyse RT2012</a></li>
+          <li><a href="#offre">Analyse RE2020</a></li>
+          <li><a href="#offre">Visite sur site</a></li>
+          <li><a href="#tarifs">Tarifs</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Liens</h5>
+        <ul>
+          <li><a href="#process">Notre processus</a></li>
+          <li><a href="#suivi">Suivi dossier</a></li>
+          <li><a href="#contact">Déposer un dossier</a></li>
+          <li><a href="/cdn-cgi/l/email-protection#dfbcb0b1abbebcab9fbcb0b1b9b0adb2baa7afbaadabf1b9ad">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2024 ConformExpert — Tous droits réservés</span>
+      <span>Mentions légales · Politique de confidentialité</span>
+    </div>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* Scroll reveal */
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+      }, i * 80);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+reveals.forEach(el => observer.observe(el));
+
+/* Upload drag & drop */
+const uploadZone = document.querySelector('.upload-zone');
+const fileInput = document.getElementById('upload');
+
+uploadZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  uploadZone.style.borderColor = 'rgba(200,168,75,0.6)';
+  uploadZone.style.background = 'rgba(200,168,75,0.09)';
+});
+uploadZone.addEventListener('dragleave', () => {
+  uploadZone.style.borderColor = '';
+  uploadZone.style.background = '';
+});
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.style.borderColor = '';
+  uploadZone.style.background = '';
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    const names = Array.from(files).map(f => f.name).join(', ');
+    uploadZone.querySelector('p').textContent = `${files.length} fichier(s) sélectionné(s)`;
+    uploadZone.querySelector('span').textContent = names;
+    uploadZone.style.borderColor = 'rgba(200,168,75,0.5)';
+  }
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) {
+    const names = Array.from(fileInput.files).map(f => f.name).join(', ');
+    uploadZone.querySelector('p').textContent = `${fileInput.files.length} fichier(s) sélectionné(s)`;
+    uploadZone.querySelector('span').textContent = names;
+    uploadZone.style.borderColor = 'rgba(200,168,75,0.5)';
+  }
+});
+
+/* Sticky nav */
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  nav.style.background = window.scrollY > 50 
+    ? 'rgba(12, 25, 41, 0.97)' 
+    : 'rgba(12, 25, 41, 0.90)';
+});
+
+/* Form submit */
+function handleSubmit(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.form-submit');
+  btn.textCon
