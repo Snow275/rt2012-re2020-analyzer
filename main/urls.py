@@ -26,6 +26,12 @@ urlpatterns = [
     # Téléchargement rapport admin
     path('download_report/<int:document_id>/', views.download_report, name='download_report_admin'),
 
+    # ── DEVIS ───────────────────────────────────────
+    path('devis/', views.devis_list, name='devis_list'),
+    path('devis/nouveau/', views.devis_create, name='devis_create'),
+    path('devis/<int:devis_id>/editer/', views.devis_edit, name='devis_edit'),
+    path('devis/<int:devis_id>/supprimer/', views.devis_delete, name='devis_delete'),
+
     # ── API ─────────────────────────────────────────
     path('api/documents/', views.api_document_list, name='api_document_list'),
     path('api/documents/<int:pk>/', views.api_document_detail, name='api_document_detail'),
