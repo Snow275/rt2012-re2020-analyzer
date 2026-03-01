@@ -383,6 +383,11 @@ def edit_document(request, doc_id):
             val = request.POST.get(field, '').strip()
             setattr(document, field, float(val) if val else None)
 
+        # Infos client
+        document.client_name = request.POST.get('client_name', '').strip()
+        document.client_email = request.POST.get('client_email', '').strip()
+        document.admin_notes = request.POST.get('admin_notes', '').strip()
+
         document.save()
         messages.success(request, f'Dossier « {document.name} » mis à jour.')
         return redirect('edit_document', doc_id=doc_id)
