@@ -1,0 +1,159 @@
+{% extends 'main/base.html' %}
+{% block title %}Suivi dossier — {{ document.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">Suivi de dossier</span>
+    <h1>{{ document.name }}</h1>
+    <p>Référence : DOC-{{ document.id|stringformat:"04d" }} · Reçu le {{ document.upload_date|date:"d F Y" }}</p>
+  </div>
+</div>
+
+<div class="container">
+  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:3rem;align-items:start">
+
+    <!-- Statut et progression -->
+    <div class="fade-up">
+      <div class="card card-gold" style="padding:2rem;margin-bottom:1.5rem">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem">
+          <div>
+            <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-1);margin-bottom:.3rem">Statut actuel</div>
+            {% if document.status == 'recu' %}
+              <span class="badge badge-gray" style="font-size:.88rem;padding:.4rem 1rem">📥 Dossier reçu</span>
+            {% elif document.status == 'en_cours' %}
+              <span class="badge badge-warning" style="font-size:.88rem;padding:.4rem 1rem">🔍 Analyse en cours</span>
+            {% elif document.status == 'termine' %}
+              <span class="badge badge-success" style="font-size:.88rem;padding:.4rem 1rem">✓ Analyse terminée</span>
+            {% endif %}
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:.72rem;color:var(--gray-1);margin-bottom:.2rem">Délai</div>
+            <div style="font-size:.88rem;color:var(--gold);font-weight:500">15 jours ouvrés</div>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        {% if document.status == 'recu' %}{% with pct=15 %}
+        {% elif document.status == 'en_cours' %}{% with pct=60 %}
+        {% else %}{% with pct=100 %}
+        {% endif %}
+        <div style="margin-bottom:1.5rem">
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.5rem">
+            <span>Avancement</span>
+            <span>
+              {% if document.status == 'recu' %}15%
+              {% elif document.status == 'en_cours' %}60%
+              {% else %}100%{% endif %}
+            </span>
+          </div>
+          <div style="height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden">
+            <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-lt));
+              width:{% if document.status == 'recu' %}15{% elif document.status == 'en_cours' %}60{% else %}100{% endif %}%;
+              transition:width .6s ease"></div>
+          </div>
+        </div>
+        {% endwith %}
+
+        <!-- Steps -->
+        <div style="display:flex;flex-direction:column;gap:.8rem">
+          {% for step_label, step_key in step_list %}
+          <div style="display:flex;align-items:center;gap:.8rem">
+            <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;
+              {% if step_key == 'done' %}background:rgba(39,201,63,.15);color:var(--success)
+              {% elif step_key == 'active' %}background:rgba(200,168,75,.15);color:var(--gold)
+              {% else %}background:rgba(255,255,255,.05);color:var(--muted){% endif %}">
+              {% if step_key == 'done' %}✓{% elif step_key == 'active' %}→{% else %}○{% endif %}
+            </div>
+            <span style="font-size:.84rem;{% if step_key == 'done' %}color:var(--gray-2){% elif step_key == 'active' %}color:var(--white);font-weight:500{% else %}color:var(--muted){% endif %}">
+              {{ step_label }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if document.status == 'termine' %}
+      <a href="{% url 'download_report' document.id %}" class="btn btn-gold" style="width:100%;justify-content:center">
+        📄 Télécharger le rapport PDF
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Infos dossier -->
+    <div class="fade-up-2">
+      <div class="card" style="padding:2rem;margin-bottom:1.5rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.2rem">Informations du dossier</h3>
+        <div style="display:flex;flex-direction:column;gap:.8rem">
+          {% if document.client_name %}
+          <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <span style="font-size:.82rem;color:var(--gray-1)">Client</span>
+            <span style="font-size:.85rem;color:var(--gray-2)">{{ document.client_name }}</span>
+          </div>
+          {% endif %}
+          <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <span style="font-size:.82rem;color:var(--gray-1)">Référence</span>
+            <span style="font-size:.85rem;color:var(--gold);font-family:monospace">DOC-{{ document.id|stringformat:"04d" }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <span style="font-size:.82rem;color:var(--gray-1)">Date de réception</span>
+            <span style="font-size:.85rem;color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
+          </div>
+          {% if document.rt2012_bbio or document.re2020_energy_efficiency %}
+          <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <span style="font-size:.82rem;color:var(--gray-1)">Type d'analyse</span>
+            <span style="font-size:.85rem;color:var(--gray-2)">
+              {% if document.rt2012_bbio %}RT2012{% endif %}
+              {% if document.rt2012_bbio and document.re2020_energy_efficiency %} + {% endif %}
+              {% if document.re2020_energy_efficiency %}RE2020{% endif %}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if document.status == 'termine' %}
+      <div class="card" style="padding:2rem;border-color:rgba(200,168,75,.2)">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem">Résumé de l'analyse</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div style="background:var(--navy-3);border-radius:8px;padding:1.2rem;text-align:center">
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">RT2012</div>
+            {% if document.rt2012_is_conform is None %}
+              <span style="color:var(--muted);font-size:.85rem">Non analysé</span>
+            {% elif document.rt2012_is_conform %}
+              <span class="badge badge-success">✓ Conforme</span>
+            {% else %}
+              <span class="badge badge-danger">✗ Non conforme</span>
+            {% endif %}
+          </div>
+          <div style="background:var(--navy-3);border-radius:8px;padding:1.2rem;text-align:center">
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">RE2020</div>
+            {% if document.re2020_is_conform is None %}
+              <span style="color:var(--muted);font-size:.85rem">Non analysé</span>
+            {% elif document.re2020_is_conform %}
+              <span class="badge badge-success">✓ Conforme</span>
+            {% else %}
+              <span class="badge badge-danger">✗ Non conforme</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="card" style="padding:2rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
+        <p style="font-size:.85rem;color:var(--gray-2);line-height:1.75;font-weight:300">
+          ⏳ L'analyse est en cours. Vous pouvez revenir sur cette page à tout moment pour suivre l'avancement. 
+          Le rapport sera disponible en téléchargement directement ici dès sa livraison.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+// Fournir les steps au template Django via context
+</script>
+{% endblock %}
