@@ -17,6 +17,20 @@ from .serializers import DocumentSerializer, AnalysisSerializer
 
 import PyPDF2
 import re
+import threading
+
+
+def send_mail_async(sujet, corps, from_email, recipient_list):
+    """Envoie un email dans un thread séparé pour ne pas bloquer la réponse HTTP."""
+    def _send():
+        try:
+            send_mail(sujet, corps, from_email, recipient_list, fail_silently=False)
+            print(f"MAIL ENVOYÉ OK → {recipient_list}")
+        except Exception as e:
+            print(f"ERREUR MAIL : {e}")
+    t = threading.Thread(target=_send)
+    t.daemon = True
+    t.start()
 
 
 # ──────────────────────────────────────────────
@@ -30,17 +44,14 @@ def send_mail_reception(document):
     sujet = f"[ConformExpert] Votre dossier a bien été reçu — {document.name}"
     corps = f"""Bonjour,
 
-Nous avons bien reçu votre dossier « {document.name } » (réf. DOC-{document.id:04d}).
+Nous avons bien reçu votre dossier « {document.name} » (réf. DOC-{document.id:04d}).
 
 Notre équipe va examiner votre dossier dans les meilleurs délais et vous recontactera sous 24h pour confirmer sa complétude.
 
 Cordialement,
 L'équipe ConformExpert
 """
-    try:
-        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=False)
-    except Exception:
-        pass
+    send_mail_async(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email])
 
 
 def send_mail_validation_devis(document, devis=None):
@@ -68,10 +79,7 @@ En cas de question, répondez simplement à cet email.
 Cordialement,
 L'équipe ConformExpert
 """
-    try:
-        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=True)
-    except Exception:
-        pass
+    send_mail_async(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email])
 
 
 def send_mail_analyse_commence(document):
@@ -92,10 +100,7 @@ Délai prévu : 15 jours ouvrés.
 Cordialement,
 L'équipe ConformExpert
 """
-    try:
-        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=True)
-    except Exception:
-        pass
+    send_mail_async(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email])
 
 
 def send_mail_analyse_terminee(document):
@@ -121,10 +126,7 @@ Votre lien de suivi (à conserver) : {tracking_url}
 Cordialement,
 L'équipe ConformExpert
 """
-    try:
-        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=True)
-    except Exception:
-        pass
+    send_mail_async(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email])
 
 
 # ──────────────────────────────────────────────
@@ -240,7 +242,7 @@ def analyze_document(document, data):
     document.rt2012_tic = data.get('tic')
     document.rt2012_airtightness = data.get('airtightness')
     document.rt2012_enr = data.get('enr')
-    document.status = 'en_cours'
+    # Ne pas changer le statut ici — il reste 'recu' jusqu'à validation manuelle
     document.save()
 
 
