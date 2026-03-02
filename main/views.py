@@ -20,6 +20,114 @@ import re
 
 
 # ──────────────────────────────────────────────
+# EMAILS
+# ──────────────────────────────────────────────
+
+def send_mail_reception(document):
+    """Mail 1 — Confirmation de dépôt (sans lien de suivi)."""
+    if not document.client_email:
+        return
+    sujet = f"[ConformExpert] Votre dossier a bien été reçu — {document.name}"
+    corps = f"""Bonjour,
+
+Nous avons bien reçu votre dossier « {document.name } » (réf. DOC-{document.id:04d}).
+
+Notre équipe va examiner votre dossier dans les meilleurs délais et vous recontactera sous 24h pour confirmer sa complétude.
+
+Cordialement,
+L'équipe ConformExpert
+"""
+    try:
+        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=True)
+    except Exception:
+        pass
+
+
+def send_mail_validation_devis(document, devis=None):
+    """Mail 2 — Dossier validé, envoi du devis."""
+    if not document.client_email:
+        return
+    tracking_url = f"https://web-production-f6c00.up.railway.app/suivi/{document.tracking_token}/"
+    montant = f"{devis.montant} € HT" if devis and devis.montant else "nous vous contacterons pour convenir du tarif"
+    sujet = f"[ConformExpert] Votre dossier est validé — devis d'analyse"
+    corps = f"""Bonjour{' ' + document.client_name if document.client_name else ''},
+
+Votre dossier « {document.name} » (réf. DOC-{document.id:04d}) a été examiné et validé par notre équipe.
+
+── DEVIS D'ANALYSE ──────────────────────────
+Prestation : Analyse de conformité RT2012 / RE2020
+Montant : {montant}
+Délai : 15 jours ouvrés après acceptation
+─────────────────────────────────────────────
+
+Pour accepter ce devis et démarrer l'analyse, cliquez sur le lien ci-dessous :
+{tracking_url}?accepter_devis=1
+
+En cas de question, répondez simplement à cet email.
+
+Cordialement,
+L'équipe ConformExpert
+"""
+    try:
+        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=True)
+    except Exception:
+        pass
+
+
+def send_mail_analyse_commence(document):
+    """Mail 3 — Analyse en cours, avec lien de suivi."""
+    if not document.client_email:
+        return
+    tracking_url = f"https://web-production-f6c00.up.railway.app/suivi/{document.tracking_token}/"
+    sujet = f"[ConformExpert] L'analyse de votre dossier a commencé"
+    corps = f"""Bonjour{' ' + document.client_name if document.client_name else ''},
+
+Bonne nouvelle ! L'analyse de votre dossier « {document.name} » (réf. DOC-{document.id:04d}) a démarré.
+
+Vous pouvez suivre l'avancement en temps réel sur votre page de suivi :
+{tracking_url}
+
+Délai prévu : 15 jours ouvrés.
+
+Cordialement,
+L'équipe ConformExpert
+"""
+    try:
+        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=True)
+    except Exception:
+        pass
+
+
+def send_mail_analyse_terminee(document):
+    """Mail 4 — Analyse terminée, rapport disponible."""
+    if not document.client_email:
+        return
+    tracking_url = f"https://web-production-f6c00.up.railway.app/suivi/{document.tracking_token}/"
+    sujet = f"[ConformExpert] Votre rapport d'analyse est disponible"
+    corps = f"""Bonjour{' ' + document.client_name if document.client_name else ''},
+
+L'analyse de votre dossier « {document.name} » (réf. DOC-{document.id:04d}) est terminée.
+
+Votre rapport d'analyse est maintenant disponible en téléchargement sur votre page de suivi :
+{tracking_url}
+
+Vous y trouverez :
+• Le rapport complet au format PDF
+• Le détail des critères RT2012 / RE2020 vérifiés
+• La conclusion de conformité
+
+Votre lien de suivi (à conserver) : {tracking_url}
+
+Cordialement,
+L'équipe ConformExpert
+"""
+    try:
+        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=True)
+    except Exception:
+        pass
+
+
+# ──────────────────────────────────────────────
 # AUTH
 # ──────────────────────────────────────────────
 
@@ -195,6 +303,7 @@ def import_document(request):
             text = extract_text_from_pdf(upload_path)
             data = parse_pdf_text(text)
             analyze_document(document, data)
+            send_mail_reception(document)
             messages.success(request, "Dossier reçu. Votre lien de suivi a été créé.")
             return redirect('tracking', token=document.tracking_token)
         else:
@@ -246,10 +355,22 @@ def tracking(request, token):
     document = get_object_or_404(Document, tracking_token=token)
     step_list = get_tracking_steps(document)
     progress_pct = {'recu': 15, 'en_cours': 60, 'termine': 100}.get(document.status, 15)
+
+    # Acceptation du devis via lien email
+    devis_accepte = False
+    if request.GET.get('accepter_devis') == '1' and document.status == 'recu':
+        document.status = 'en_cours'
+        document.save()
+        send_mail_analyse_commence(document)
+        step_list = get_tracking_steps(document)
+        progress_pct = 60
+        devis_accepte = True
+
     return render(request, 'main/tracking.html', {
         'document': document,
         'step_list': step_list,
         'progress_pct': progress_pct,
+        'devis_accepte': devis_accepte,
     })
 
 
@@ -370,6 +491,7 @@ def edit_document(request, doc_id):
     if request.method == 'POST':
         # Statut
         new_status = request.POST.get('status')
+        old_status = document.status
         if new_status in dict(STATUS_CHOICES):
             document.status = new_status
 
@@ -389,6 +511,24 @@ def edit_document(request, doc_id):
         document.admin_notes = request.POST.get('admin_notes', '').strip()
 
         document.save()
+
+        # Envoi des emails selon changement de statut
+        if old_status != new_status:
+            if new_status == 'recu':
+                # Dossier validé → envoyer devis
+                try:
+                    devis = document.devis.filter(statut='en_attente').first()
+                except Exception:
+                    devis = None
+                send_mail_validation_devis(document, devis)
+                messages.info(request, f'Email de validation + devis envoyé à {document.client_email}.' if document.client_email else 'Pas d\'email client renseigné.')
+            elif new_status == 'en_cours':
+                send_mail_analyse_commence(document)
+                messages.info(request, f'Email "analyse commencée" envoyé à {document.client_email}.' if document.client_email else 'Pas d\'email client renseigné.')
+            elif new_status == 'termine':
+                send_mail_analyse_terminee(document)
+                messages.info(request, f'Email "rapport disponible" envoyé à {document.client_email}.' if document.client_email else 'Pas d\'email client renseigné.')
+
         messages.success(request, f'Dossier « {document.name} » mis à jour.')
         return redirect('edit_document', doc_id=doc_id)
 
