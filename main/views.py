@@ -38,7 +38,7 @@ Cordialement,
 L'équipe ConformExpert
 """
     try:
-        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=True)
+        send_mail(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email], fail_silently=False)
     except Exception:
         pass
 
