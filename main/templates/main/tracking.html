@@ -11,6 +11,18 @@
 </div>
 
 <div class="container">
+
+  <!-- Bannière acceptation devis -->
+  {% if devis_accepte %}
+  <div style="background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
+    <span style="font-size:1.5rem">✅</span>
+    <div>
+      <div style="font-size:.95rem;color:var(--success);font-weight:500">Devis accepté — l'analyse a démarré !</div>
+      <div style="font-size:.82rem;color:var(--gray-1);margin-top:.3rem">Un email de confirmation vous a été envoyé. Conservez cette page pour suivre l'avancement.</div>
+    </div>
+  </div>
+  {% endif %}
+
   <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:3rem;align-items:start">
 
     <!-- Statut et progression -->
@@ -33,7 +45,7 @@
           </div>
         </div>
 
-        <!-- Progress bar — valeur passée depuis la vue -->
+        <!-- Progress bar -->
         <div style="margin-bottom:1.5rem">
           <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.5rem">
             <span>Avancement</span>
@@ -70,6 +82,13 @@
         📄 Télécharger le rapport PDF
       </a>
       {% endif %}
+
+      {% if document.status == 'recu' and not devis_accepte %}
+      <div class="card" style="padding:1.5rem;margin-top:1.5rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.2)">
+        <div style="font-size:.88rem;color:var(--gold);font-weight:500;margin-bottom:.5rem">⏳ En attente de validation</div>
+        <p style="font-size:.82rem;color:var(--gray-2);line-height:1.7">Votre dossier est en cours d'examen. Vous recevrez un email avec le devis dès qu'il sera validé par notre équipe.</p>
+      </div>
+      {% endif %}
     </div>
 
     <!-- Infos dossier -->
@@ -90,6 +109,11 @@
           <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
             <span style="font-size:.82rem;color:var(--gray-1)">Date de réception</span>
             <span style="font-size:.85rem;color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:.5rem 0">
+            <span style="font-size:.82rem;color:var(--gray-1)">Votre lien de suivi</span>
+            <button onclick="navigator.clipboard.writeText('{{ request.build_absolute_uri }}');this.textContent='✓ Copié !';setTimeout(()=>this.textContent='🔗 Copier',2000)"
+              style="background:none;border:none;color:var(--gold);font-size:.78rem;cursor:pointer">🔗 Copier</button>
           </div>
         </div>
       </div>
