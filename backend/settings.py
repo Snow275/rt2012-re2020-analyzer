@@ -86,10 +86,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email
-# En dev : affiche les emails dans la console
-# En prod : remplacer par smtp.gmail.com ou Mailgun etc.
-)
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # On force le SMTP
 EMAIL_HOST = 'smtp.gmail.com'
