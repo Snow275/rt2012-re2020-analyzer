@@ -532,6 +532,12 @@ def edit_document(request, doc_id):
         'status_choices': STATUS_CHOICES,
         'rt2012_fields': RT2012_FIELDS,
         're2020_fields': RE2020_FIELDS,
+        'email_steps': [
+            ('1', '#60a5fa', 'rgba(59,130,246,.12)', 'Confirmation reception', 'Confirmer la reception du dossier', 'reception'),
+            ('2', '#c8a84b', 'rgba(200,168,75,.12)', 'Envoi du devis', "Devis avec bouton d'acceptation", 'devis'),
+            ('3', '#2dd4bf', 'rgba(20,184,166,.12)', 'Debut analyse + lien suivi', "Notifier le demarrage de l'analyse", 'analyse_commence'),
+            ('4', '#27c93f', 'rgba(39,201,63,.12)', 'Rapport final disponible', 'Rapport telechargeable sur le lien suivi', 'analyse_terminee'),
+        ],
     })
 
 
