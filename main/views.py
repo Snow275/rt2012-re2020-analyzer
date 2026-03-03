@@ -541,6 +541,33 @@ def edit_document(request, doc_id):
     })
 
 
+@login_required(login_url='/login/')
+def send_email_manual(request, doc_id, email_type):
+    if request.method != 'POST':
+        return redirect('edit_document', doc_id=doc_id)
+    document = get_object_or_404(Document, id=doc_id)
+    if not document.client_email:
+        messages.error(request, 'Aucun email client renseigne.')
+        return redirect('edit_document', doc_id=doc_id)
+    if email_type == 'reception':
+        send_mail_reception(document)
+        messages.success(request, f'Email de reception envoye a {document.client_email}.')
+    elif email_type == 'devis':
+        try:
+            devis = document.devis.filter(statut='en_attente').first()
+        except Exception:
+            devis = None
+        send_mail_validation_devis(document, devis)
+        messages.success(request, f'Email devis envoye a {document.client_email}.')
+    elif email_type == 'analyse_commence':
+        send_mail_analyse_commence(document)
+        messages.success(request, f'Email analyse demarree envoye a {document.client_email}.')
+    elif email_type == 'analyse_terminee':
+        send_mail_analyse_terminee(document)
+        messages.success(request, f'Email rapport disponible envoye a {document.client_email}.')
+    return redirect('edit_document', doc_id=doc_id)
+
+
 def download_report(request, document_id):
     document = get_object_or_404(Document, id=document_id)
 
