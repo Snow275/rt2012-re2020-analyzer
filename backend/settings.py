@@ -89,9 +89,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Email
 # En dev : affiche les emails dans la console
 # En prod : remplacer par smtp.gmail.com ou Mailgun etc.
-EMAIL_BACKEND = os.environ.get(
-    'EMAIL_BACKEND',
-    'django.core.mail.backends.console.EmailBackend'
 )
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # On force le SMTP
