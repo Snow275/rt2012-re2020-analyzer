@@ -183,4 +183,34 @@
 
   </form>
 </div>
+
+  <!-- WORKFLOW EMAILS -->
+  <div class="card" style="padding:1.5rem;margin-top:2rem">
+    <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">✉️ Workflow emails client</h3>
+    {% if not document.client_email %}
+    <div style="background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.2rem;font-size:.83rem;color:#ffc107">
+      ⚠️ Aucun email client — enregistrez d'abord l'email dans "Informations client" ci-dessus.
+    </div>
+    {% endif %}
+    <div style="display:flex;flex-direction:column;gap:.7rem">
+      {% for num, color, bg, title, desc, type in email_steps %}
+      <div style="display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,.06)">
+        <div style="width:32px;height:32px;border-radius:8px;background:{{ bg }};color:{{ color }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0">{{ num }}</div>
+        <div style="flex:1">
+          <div style="font-size:.88rem;color:var(--white);font-weight:500">{{ title }}</div>
+          <div style="font-size:.78rem;color:var(--gray-1);margin-top:.2rem">{{ desc }}</div>
+        </div>
+        <form method="post" action="{% url 'send_email_manual' document.id type %}">
+          {% csrf_token %}
+          <button type="submit" {% if not document.client_email %}disabled{% endif %}
+            style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.45rem 1rem;border-radius:6px;font-size:.8rem;cursor:pointer;opacity:{% if document.client_email %}1{% else %}.4{% endif %}">
+            ✉ Envoyer
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
 {% endblock %}
