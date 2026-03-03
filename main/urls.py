@@ -22,6 +22,7 @@ urlpatterns = [
     path('parametres/', views.settings_view, name='settings'),
     path('parametres/re2020/', views.update_re2020, name='update_re2020'),
     path('dossier/<int:doc_id>/editer/', views.edit_document, name='edit_document'),
+    path('dossier/<int:doc_id>/email/<str:email_type>/', views.send_email_manual, name='send_email_manual'),
     path('dossier/<int:doc_id>/supprimer/', views.delete_document, name='delete_document'),
     # Téléchargement rapport admin
     path('download_report/<int:document_id>/', views.download_report, name='download_report_admin'),
