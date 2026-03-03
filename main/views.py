@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings as django_settings
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
@@ -37,96 +37,89 @@ def send_mail_async(sujet, corps, from_email, recipient_list):
 # EMAILS
 # ──────────────────────────────────────────────
 
+SITE_URL = "https://web-production-f6c00.up.railway.app"
+
+
+def _send_html_async(sujet, template_name, context, destinataire):
+    if not destinataire:
+        return
+    def _send():
+        try:
+            html = render_to_string(f'main/emails/{template_name}', context)
+            msg = EmailMultiAlternatives(sujet, sujet, django_settings.DEFAULT_FROM_EMAIL, [destinataire])
+            msg.attach_alternative(html, "text/html")
+            msg.send()
+            print(f"MAIL HTML ENVOYÉ OK → {destinataire}")
+        except Exception as e:
+            print(f"ERREUR MAIL : {e}")
+    import threading
+    t = threading.Thread(target=_send)
+    t.daemon = True
+    t.start()
+
+
 def send_mail_reception(document):
-    """Mail 1 — Confirmation de dépôt (sans lien de suivi)."""
     if not document.client_email:
         return
-    sujet = f"[ConformExpert] Votre dossier a bien été reçu — {document.name}"
-    corps = f"""Bonjour,
-
-Nous avons bien reçu votre dossier « {document.name} » (réf. DOC-{document.id:04d}).
-
-Notre équipe va examiner votre dossier dans les meilleurs délais et vous recontactera sous 24h pour confirmer sa complétude.
-
-Cordialement,
-L'équipe ConformExpert
-"""
-    send_mail_async(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email])
+    _send_html_async(
+        f"[ConformExpert] Dossier bien reçu — {document.name}",
+        "email_reception.html",
+        {'doc_id': f"{document.id:04d}", 'doc_name': document.name,
+         'client_name': document.client_name or '',
+         'date_depot': document.upload_date.strftime('%d/%m/%Y à %H:%M')},
+        document.client_email,
+    )
 
 
 def send_mail_validation_devis(document, devis=None):
-    """Mail 2 — Dossier validé, envoi du devis."""
     if not document.client_email:
         return
-    tracking_url = f"https://web-production-f6c00.up.railway.app/suivi/{document.tracking_token}/"
-    montant = f"{devis.montant} € HT" if devis and devis.montant else "nous vous contacterons pour convenir du tarif"
-    sujet = f"[ConformExpert] Votre dossier est validé — devis d'analyse"
-    corps = f"""Bonjour{' ' + document.client_name if document.client_name else ''},
-
-Votre dossier « {document.name} » (réf. DOC-{document.id:04d}) a été examiné et validé par notre équipe.
-
-── DEVIS D'ANALYSE ──────────────────────────
-Prestation : Analyse de conformité RT2012 / RE2020
-Montant : {montant}
-Délai : 15 jours ouvrés après acceptation
-─────────────────────────────────────────────
-
-Pour accepter ce devis et démarrer l'analyse, cliquez sur le lien ci-dessous :
-{tracking_url}?accepter_devis=1
-
-En cas de question, répondez simplement à cet email.
-
-Cordialement,
-L'équipe ConformExpert
-"""
-    send_mail_async(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email])
+    montant_ht = float(devis.montant) if devis and devis.montant else 0
+    tva = round(montant_ht * 0.20, 2)
+    _send_html_async(
+        f"[ConformExpert] Votre devis — {document.name}",
+        "email_devis.html",
+        {'doc_id': f"{document.id:04d}", 'doc_name': document.name,
+         'client_name': document.client_name or '',
+         'accepter_url': f"{SITE_URL}/suivi/{document.tracking_token}/?accepter_devis=1",
+         'montant_ht': f"{montant_ht:.2f}", 'tva': f"{tva:.2f}",
+         'montant_ttc': f"{montant_ht + tva:.2f}",
+         'norme': devis.norme if devis else 'RT2012 / RE2020',
+         'notes': devis.notes if devis else ''},
+        document.client_email,
+    )
 
 
 def send_mail_analyse_commence(document):
-    """Mail 3 — Analyse en cours, avec lien de suivi."""
     if not document.client_email:
         return
-    tracking_url = f"https://web-production-f6c00.up.railway.app/suivi/{document.tracking_token}/"
-    sujet = f"[ConformExpert] L'analyse de votre dossier a commencé"
-    corps = f"""Bonjour{' ' + document.client_name if document.client_name else ''},
-
-Bonne nouvelle ! L'analyse de votre dossier « {document.name} » (réf. DOC-{document.id:04d}) a démarré.
-
-Vous pouvez suivre l'avancement en temps réel sur votre page de suivi :
-{tracking_url}
-
-Délai prévu : 15 jours ouvrés.
-
-Cordialement,
-L'équipe ConformExpert
-"""
-    send_mail_async(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email])
+    _send_html_async(
+        "[ConformExpert] L'analyse de votre dossier a démarré",
+        "email_analyse_commence.html",
+        {'doc_id': f"{document.id:04d}", 'doc_name': document.name,
+         'client_name': document.client_name or '',
+         'tracking_url': f"{SITE_URL}/suivi/{document.tracking_token}/"},
+        document.client_email,
+    )
 
 
 def send_mail_analyse_terminee(document):
-    """Mail 4 — Analyse terminée, rapport disponible."""
     if not document.client_email:
         return
-    tracking_url = f"https://web-production-f6c00.up.railway.app/suivi/{document.tracking_token}/"
-    sujet = f"[ConformExpert] Votre rapport d'analyse est disponible"
-    corps = f"""Bonjour{' ' + document.client_name if document.client_name else ''},
-
-L'analyse de votre dossier « {document.name} » (réf. DOC-{document.id:04d}) est terminée.
-
-Votre rapport d'analyse est maintenant disponible en téléchargement sur votre page de suivi :
-{tracking_url}
-
-Vous y trouverez :
-• Le rapport complet au format PDF
-• Le détail des critères RT2012 / RE2020 vérifiés
-• La conclusion de conformité
-
-Votre lien de suivi (à conserver) : {tracking_url}
-
-Cordialement,
-L'équipe ConformExpert
-"""
-    send_mail_async(sujet, corps, django_settings.DEFAULT_FROM_EMAIL, [document.client_email])
+    _send_html_async(
+        f"[ConformExpert] Votre rapport est disponible — {document.name}",
+        "email_analyse_terminee.html",
+        {'doc_id': f"{document.id:04d}", 'doc_name': document.name,
+         'client_name': document.client_name or '',
+         'tracking_url': f"{SITE_URL}/suivi/{document.tracking_token}/",
+         'rapport_items': [
+             "Analyse complète des critères RT2012 / RE2020",
+             "Conclusion de conformité détaillée",
+             "Recommandations éventuelles",
+             "Rapport PDF téléchargeable",
+         ]},
+        document.client_email,
+    )
 
 
 # ──────────────────────────────────────────────
