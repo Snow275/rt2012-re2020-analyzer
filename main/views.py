@@ -45,14 +45,20 @@ def _send_html_async(sujet, template_name, context, destinataire):
         return
     def _send():
         try:
+            import sendgrid
+            from sendgrid.helpers.mail import Mail, To
             html = render_to_string(f'main/emails/{template_name}', context)
-            msg = EmailMultiAlternatives(sujet, sujet, django_settings.DEFAULT_FROM_EMAIL, [destinataire])
-            msg.attach_alternative(html, "text/html")
-            msg.send()
-            print(f"MAIL HTML ENVOYÉ OK → {destinataire}")
+            sg = sendgrid.SendGridAPIClient(api_key=django_settings.SENDGRID_API_KEY)
+            message = Mail(
+                from_email=django_settings.DEFAULT_FROM_EMAIL,
+                to_emails=destinataire,
+                subject=sujet,
+                html_content=html,
+            )
+            response = sg.send(message)
+            print(f"MAIL SENDGRID OK -> {destinataire} (status {response.status_code})")
         except Exception as e:
             print(f"ERREUR MAIL : {e}")
-    import threading
     t = threading.Thread(target=_send)
     t.daemon = True
     t.start()
