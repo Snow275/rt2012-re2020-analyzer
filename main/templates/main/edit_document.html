@@ -7,7 +7,11 @@
   <div class="ph-inner">
     <span class="s-label">Administration</span>
     <h1>{{ document.name }}</h1>
-    <p>DOC-{{ document.id|stringformat:"04d" }} · {{ document.get_building_type_display }} · Zone {{ document.climate_zone }}</p>
+    <p>DOC-{{ document.id|stringformat:"04d" }} ·
+      {% if document.status == 'recu' %}<span style="color:#60a5fa">Dossier reçu</span>
+      {% elif document.status == 'en_cours' %}<span style="color:var(--gold)">Analyse en cours</span>
+      {% else %}<span style="color:var(--success)">Analyse terminée</span>{% endif %}
+    </p>
   </div>
 </div>
 
@@ -21,196 +25,256 @@
   {% endfor %}
   {% endif %}
 
-  <form method="post">
-    {% csrf_token %}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+  <!-- ONGLETS -->
+  <div style="display:flex;gap:0;margin-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.08)">
+    <button onclick="showTab('infos')" id="tab-infos"
+      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--gold);color:var(--gold);font-weight:500;margin-bottom:-1px">
+      📋 Informations
+    </button>
+    <button onclick="showTab('documents')" id="tab-documents"
+      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
+      📁 Documents
+    </button>
+    <button onclick="showTab('emails')" id="tab-emails"
+      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
+      ✉️ Emails
+    </button>
+  </div>
 
-      <!-- COLONNE GAUCHE -->
-      <div style="display:flex;flex-direction:column;gap:1.5rem">
+  <!-- ONGLET INFORMATIONS -->
+  <div id="panel-infos">
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
 
-        <!-- Statut -->
-        <div class="card" style="padding:1.5rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Statut du dossier</h3>
-          <div style="display:flex;flex-direction:column;gap:.6rem">
-            {% for val, label in status_choices %}
-            <label style="display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border-radius:6px;border:1px solid {% if document.status == val %}rgba(200,168,75,.3){% else %}rgba(255,255,255,.05){% endif %};cursor:pointer;background:{% if document.status == val %}rgba(200,168,75,.06){% else %}transparent{% endif %}">
-              <input type="radio" name="status" value="{{ val }}" {% if document.status == val %}checked{% endif %} style="accent-color:var(--gold)">
-              <span style="font-size:.88rem;color:{% if document.status == val %}var(--gold){% else %}var(--gray-2){% endif %}">{{ label }}</span>
-            </label>
-            {% endfor %}
+        <!-- COLONNE GAUCHE -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+
+          <!-- Statut -->
+          <div class="card" style="padding:1.5rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Statut du dossier</h3>
+            <div style="display:flex;flex-direction:column;gap:.6rem">
+              {% for val, label in status_choices %}
+              <label style="display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border-radius:6px;border:1px solid {% if document.status == val %}rgba(200,168,75,.3){% else %}rgba(255,255,255,.05){% endif %};cursor:pointer;background:{% if document.status == val %}rgba(200,168,75,.06){% else %}transparent{% endif %}">
+                <input type="radio" name="status" value="{{ val }}" {% if document.status == val %}checked{% endif %} style="accent-color:var(--gold)">
+                <span style="font-size:.88rem;color:{% if document.status == val %}var(--gold){% else %}var(--gray-2){% endif %}">{{ label }}</span>
+              </label>
+              {% endfor %}
+            </div>
           </div>
-        </div>
 
-        <!-- Infos client éditables -->
-        <div class="card" style="padding:1.5rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Informations client</h3>
-          <div style="display:flex;flex-direction:column;gap:.8rem">
-            <div>
-              <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Nom du client</label>
-              <input type="text" name="client_name" value="{{ document.client_name|default:'' }}"
-                placeholder="Jean Dupont"
-                style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box"
-                onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-            </div>
-            <div>
-              <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Email</label>
-              <input type="email" name="client_email" value="{{ document.client_email|default:'' }}"
-                placeholder="client@email.fr"
-                style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box"
-                onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;font-size:.82rem">
-              <span style="color:var(--gray-1)">Déposé le</span>
-              <span style="color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Document uploadé par le client -->
-        <div class="card" style="padding:1.5rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Document client</h3>
-          {% if document.upload %}
-          <div style="display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.06)">
-            <span style="font-size:1.5rem">📄</span>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:.85rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                {{ document.upload.name|slice:"10:" }}
+          <!-- Infos client -->
+          <div class="card" style="padding:1.5rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Informations client</h3>
+            <div style="display:flex;flex-direction:column;gap:.8rem">
+              <div>
+                <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Nom du client</label>
+                <input type="text" name="client_name" value="{{ document.client_name|default:'' }}"
+                  placeholder="Jean Dupont"
+                  style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box"
+                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
               </div>
-              <div style="font-size:.73rem;color:var(--gray-1);margin-top:.2rem">
-                Fichier PDF uploadé par le client
+              <div>
+                <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Email</label>
+                <input type="email" name="client_email" value="{{ document.client_email|default:'' }}"
+                  placeholder="client@email.fr"
+                  style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box"
+                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;font-size:.82rem">
+                <span style="color:var(--gray-1)">Déposé le</span>
+                <span style="color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
               </div>
             </div>
-            <a href="{{ document.upload.url }}" target="_blank" class="btn btn-gold btn-sm" style="flex-shrink:0;font-size:.78rem;padding:.45rem .9rem">
-              ⬇ Télécharger
-            </a>
           </div>
-          {% else %}
-          <div style="text-align:center;padding:1.5rem;color:var(--gray-1);font-size:.85rem">
-            <div style="font-size:1.5rem;margin-bottom:.5rem">📭</div>
-            Aucun fichier déposé par le client.
-          </div>
-          {% endif %}
 
           <!-- Notes internes -->
-          <div style="margin-top:1rem">
-            <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Notes internes</label>
-            <textarea name="admin_notes" rows="3" placeholder="Observations, remarques sur le dossier..."
+          <div class="card" style="padding:1.5rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:.8rem;color:var(--gold)">Notes internes</h3>
+            <textarea name="admin_notes" rows="4" placeholder="Observations, remarques sur le dossier..."
               style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.83rem;outline:none;resize:vertical;box-sizing:border-box"
               onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">{{ document.admin_notes|default:'' }}</textarea>
           </div>
+
         </div>
 
-      </div>
+        <!-- COLONNE DROITE -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
 
-      <!-- COLONNE DROITE -->
-      <div style="display:flex;flex-direction:column;gap:1.5rem">
-
-        <!-- RT2012 -->
-        <div class="card" style="padding:1.5rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">
-            RT2012 — Valeurs mesurées
-          </h3>
-          <div style="display:flex;flex-direction:column;gap:.8rem">
-            {% for field, label, unit in rt2012_fields %}
-            <div style="display:flex;align-items:center;gap:.8rem">
-              <label style="width:140px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
-                {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
-              </label>
-              <input type="number" step="0.01" name="{{ field }}"
-                value="{% if document|attr:field is not None %}{{ document|attr:field }}{% endif %}"
-                placeholder="—"
-                style="flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.5rem .8rem;color:var(--white);font-size:.88rem;outline:none"
-                onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-              <span style="font-size:.7rem;color:var(--muted);width:60px;text-align:right">
-                ≤ {% get_seuil field document.building_type document.climate_zone %}
-              </span>
+          <!-- RT2012 -->
+          <div class="card" style="padding:1.5rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">RT2012 — Valeurs mesurées</h3>
+            <div style="display:flex;flex-direction:column;gap:.8rem">
+              {% for field, label, unit in rt2012_fields %}
+              <div style="display:flex;align-items:center;gap:.8rem">
+                <label style="width:140px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
+                  {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
+                </label>
+                <input type="number" step="0.01" name="{{ field }}"
+                  value="{% if document|attr:field is not None %}{{ document|attr:field }}{% endif %}"
+                  placeholder="—"
+                  style="flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.5rem .8rem;color:var(--white);font-size:.88rem;outline:none"
+                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+                <span style="font-size:.7rem;color:var(--muted);width:60px;text-align:right">
+                  ≤ {% get_seuil field document.building_type document.climate_zone %}
+                </span>
+              </div>
+              {% endfor %}
             </div>
-            {% endfor %}
           </div>
-        </div>
 
-        <!-- RE2020 -->
-        <div class="card" style="padding:1.5rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">
-            RE2020 — Valeurs mesurées
-          </h3>
-          <div style="display:flex;flex-direction:column;gap:.8rem">
-            {% for field, label, unit in re2020_fields %}
-            <div style="display:flex;align-items:center;gap:.8rem">
-              <label style="width:180px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
-                {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
-              </label>
-              <input type="number" step="0.01" name="{{ field }}"
-                value="{% if document|attr:field is not None %}{{ document|attr:field }}{% endif %}"
-                placeholder="—"
-                style="flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.5rem .8rem;color:var(--white);font-size:.88rem;outline:none"
-                onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-              <span style="font-size:.7rem;color:var(--muted);width:60px;text-align:right">
-                ≤ {% get_seuil field document.building_type document.climate_zone %}
-              </span>
+          <!-- RE2020 -->
+          <div class="card" style="padding:1.5rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">RE2020 — Valeurs mesurées</h3>
+            <div style="display:flex;flex-direction:column;gap:.8rem">
+              {% for field, label, unit in re2020_fields %}
+              <div style="display:flex;align-items:center;gap:.8rem">
+                <label style="width:180px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
+                  {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
+                </label>
+                <input type="number" step="0.01" name="{{ field }}"
+                  value="{% if document|attr:field is not None %}{{ document|attr:field }}{% endif %}"
+                  placeholder="—"
+                  style="flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.5rem .8rem;color:var(--white);font-size:.88rem;outline:none"
+                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+                <span style="font-size:.7rem;color:var(--muted);width:60px;text-align:right">
+                  ≤ {% get_seuil field document.building_type document.climate_zone %}
+                </span>
+              </div>
+              {% endfor %}
             </div>
-            {% endfor %}
           </div>
-        </div>
 
-        <!-- Rapport PDF -->
-        <div class="card" style="padding:1.5rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Rapport d'analyse</h3>
-          <div style="display:flex;gap:.8rem">
-            <a href="{% url 'download_report' document.id %}" class="btn btn-outline" style="flex:1;text-align:center;font-size:.83rem">
+          <!-- Rapport PDF -->
+          <div class="card" style="padding:1.5rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Rapport d'analyse</h3>
+            <a href="{% url 'download_report' document.id %}" class="btn btn-outline" style="width:100%;text-align:center;font-size:.83rem">
               📄 Télécharger le rapport PDF
             </a>
           </div>
+
         </div>
-
       </div>
-    </div>
 
-    <!-- ACTIONS -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.06)">
-      <form method="post" action="{% url 'delete_document' document.id %}" onsubmit="return confirm('Supprimer définitivement ce dossier ?')">
-        {% csrf_token %}
-        <button type="submit" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);color:#e53935;padding:.6rem 1.2rem;border-radius:6px;font-size:.85rem;cursor:pointer">
-          🗑 Supprimer le dossier
-        </button>
-      </form>
-      <div style="display:flex;gap:.8rem">
-        <a href="{% url 'home' %}" class="btn btn-outline">Retour</a>
-        <button type="submit" class="btn btn-gold">Enregistrer</button>
-      </div>
-    </div>
-
-  </form>
-</div>
-
-  <!-- WORKFLOW EMAILS -->
-  <div class="card" style="padding:1.5rem;margin-top:2rem">
-    <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">✉️ Workflow emails client</h3>
-    {% if not document.client_email %}
-    <div style="background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.2rem;font-size:.83rem;color:#ffc107">
-      ⚠️ Aucun email client — enregistrez d'abord l'email dans "Informations client" ci-dessus.
-    </div>
-    {% endif %}
-    <div style="display:flex;flex-direction:column;gap:.7rem">
-      {% for num, color, bg, title, desc, type in email_steps %}
-      <div style="display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,.06)">
-        <div style="width:32px;height:32px;border-radius:8px;background:{{ bg }};color:{{ color }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0">{{ num }}</div>
-        <div style="flex:1">
-          <div style="font-size:.88rem;color:var(--white);font-weight:500">{{ title }}</div>
-          <div style="font-size:.78rem;color:var(--gray-1);margin-top:.2rem">{{ desc }}</div>
-        </div>
-        <form method="post" action="{% url 'send_email_manual' document.id type %}">
+      <!-- ACTIONS -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.06)">
+        <form method="post" action="{% url 'delete_document' document.id %}" onsubmit="return confirm('Supprimer définitivement ce dossier ?')">
           {% csrf_token %}
-          <button type="submit" {% if not document.client_email %}disabled{% endif %}
-            style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.45rem 1rem;border-radius:6px;font-size:.8rem;cursor:pointer;opacity:{% if document.client_email %}1{% else %}.4{% endif %}">
-            ✉ Envoyer
+          <button type="submit" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);color:#e53935;padding:.6rem 1.2rem;border-radius:6px;font-size:.85rem;cursor:pointer">
+            🗑 Supprimer
           </button>
         </form>
+        <div style="display:flex;gap:.8rem">
+          <a href="{% url 'home' %}" class="btn btn-outline">Retour</a>
+          <button type="submit" class="btn btn-gold">Enregistrer</button>
+        </div>
       </div>
-      {% endfor %}
+
+    </form>
+  </div>
+
+  <!-- ONGLET DOCUMENTS -->
+  <div id="panel-documents" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+
+      <!-- Document client -->
+      <div class="card" style="padding:1.5rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">📥 Document déposé par le client</h3>
+        {% if document.upload %}
+        <div style="display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.06)">
+          <span style="font-size:2rem">📄</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.85rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              {{ document.upload.name|slice:"10:" }}
+            </div>
+            <div style="font-size:.73rem;color:var(--gray-1);margin-top:.2rem">PDF · Déposé le {{ document.upload_date|date:"d/m/Y" }}</div>
+          </div>
+          <a href="{{ document.upload.url }}" target="_blank" class="btn btn-gold btn-sm" style="flex-shrink:0;font-size:.78rem;padding:.45rem .9rem">
+            ⬇ Télécharger
+          </a>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:2rem;color:var(--gray-1);font-size:.85rem">
+          <div style="font-size:2rem;margin-bottom:.5rem">📭</div>
+          Aucun fichier déposé par le client.
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Rapport généré -->
+      <div class="card" style="padding:1.5rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">📊 Rapport d'analyse</h3>
+        <div style="text-align:center;padding:1.5rem 1rem">
+          <div style="font-size:2rem;margin-bottom:.8rem">📋</div>
+          <p style="font-size:.83rem;color:var(--gray-1);margin-bottom:1.2rem">Rapport généré automatiquement à partir des valeurs saisies.</p>
+          <a href="{% url 'download_report' document.id %}" class="btn btn-gold" style="font-size:.85rem">
+            📄 Télécharger le rapport PDF
+          </a>
+        </div>
+        {% if document.status == 'termine' %}
+        <div style="margin-top:1rem;padding:.8rem 1rem;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.15);border-radius:8px;font-size:.82rem;color:var(--success);text-align:center">
+          ✓ Analyse terminée — rapport disponible pour le client
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ONGLET EMAILS -->
+  <div id="panel-emails" style="display:none">
+    <div class="card" style="padding:1.5rem">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">✉️ Workflow emails client</h3>
+
+      {% if not document.client_email %}
+      <div style="background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.2rem;font-size:.83rem;color:#ffc107">
+        ⚠️ Aucun email client — renseignez l'email dans l'onglet <strong>Informations</strong> d'abord.
+      </div>
+      {% else %}
+      <div style="background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.15);border-radius:8px;padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.82rem;color:var(--success)">
+        ✓ Email client : <strong>{{ document.client_email }}</strong>
+      </div>
+      {% endif %}
+
+      <div style="display:flex;flex-direction:column;gap:.7rem">
+        {% for num, color, bg, title, desc, type in email_steps %}
+        <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">
+          <div style="width:36px;height:36px;border-radius:10px;background:{{ bg }};color:{{ color }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0">{{ num }}</div>
+          <div style="flex:1">
+            <div style="font-size:.9rem;color:var(--white);font-weight:500">{{ title }}</div>
+            <div style="font-size:.78rem;color:var(--gray-1);margin-top:.2rem">{{ desc }}</div>
+          </div>
+          <form method="post" action="{% url 'send_email_manual' document.id type %}">
+            {% csrf_token %}
+            <button type="submit" {% if not document.client_email %}disabled{% endif %}
+              style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.5rem 1.2rem;border-radius:7px;font-size:.82rem;cursor:{% if document.client_email %}pointer{% else %}not-allowed{% endif %};opacity:{% if document.client_email %}1{% else %}.4{% endif %};font-weight:500">
+              ✉ Envoyer
+            </button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
     </div>
   </div>
 
 </div>
+
+<script>
+function showTab(name) {
+  ['infos','documents','emails'].forEach(t => {
+    document.getElementById('panel-' + t).style.display = t === name ? 'block' : 'none';
+    const btn = document.getElementById('tab-' + t);
+    if (t === name) {
+      btn.style.borderBottom = '2px solid var(--gold)';
+      btn.style.color = 'var(--gold)';
+      btn.style.fontWeight = '500';
+    } else {
+      btn.style.borderBottom = '2px solid transparent';
+      btn.style.color = 'var(--gray-1)';
+      btn.style.fontWeight = 'normal';
+    }
+  });
+}
+</script>
+
 {% endblock %}
