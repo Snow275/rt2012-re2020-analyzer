@@ -5,12 +5,151 @@
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Paramètres</span>
-    <h1>Configuration des seuils</h1>
-    <p>Valeurs de référence utilisées pour les analyses de conformité.</p>
+    <h1>Paramètres du site</h1>
+    <p>Configurez votre plateforme et les valeurs de référence.</p>
   </div>
 </div>
 
 <div class="container">
+
+  <form method="post" action="{% url 'update_site_settings' %}" style="margin-bottom: 3rem;">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:1fr;gap:2rem;max-width:900px;margin-bottom:2rem;">
+      
+      <!-- Langue du site -->
+      <div class="card fade-up" style="padding:1.8rem 2rem;">
+        <h3 style="font-size:1.1rem;margin-bottom:1rem;color:var(--green);display:flex;align-items:center;gap:.5rem;">
+          <svg style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
+          Langue du site
+        </h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+          <label style="cursor:pointer; display:flex; align-items:center; justify-content:center; padding:1.2rem; border:1px solid {% if site_settings.language == 'fr' %}var(--green){% else %}var(--navy-3){% endif %}; border-radius:8px; background:{% if site_settings.language == 'fr' %}rgba(26,158,46,.1){% else %}var(--navy-3){% endif %}; transition:all .2s;">
+            <input type="radio" name="language" value="fr" {% if site_settings.language == 'fr' %}checked{% endif %} style="display:none;">
+            <span style="font-weight:600; font-size:.9rem; color:{% if site_settings.language == 'fr' %}var(--green){% else %}var(--gray-2){% endif %}">FR Français</span>
+          </label>
+          <label style="cursor:pointer; display:flex; align-items:center; justify-content:center; padding:1.2rem; border:1px solid {% if site_settings.language == 'en' %}var(--green){% else %}var(--navy-3){% endif %}; border-radius:8px; background:{% if site_settings.language == 'en' %}rgba(26,158,46,.1){% else %}var(--navy-3){% endif %}; transition:all .2s;">
+            <input type="radio" name="language" value="en" {% if site_settings.language == 'en' %}checked{% endif %} style="display:none;">
+            <span style="font-weight:600; font-size:.9rem; color:{% if site_settings.language == 'en' %}var(--green){% else %}var(--gray-2){% endif %}">GB English</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Pays & Réglementations -->
+      <div class="card fade-up" style="padding:1.8rem 2rem; animation-delay:.1s;">
+        <h3 style="font-size:1.1rem;margin-bottom:1.5rem;color:var(--green);display:flex;align-items:center;gap:.5rem;">
+          <svg style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Pays & Réglementations
+        </h3>
+        
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">Pays</label>
+          <select name="country" class="form-control" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; appearance:none; font-size:.95rem;">
+            <option value="France" {% if site_settings.country == 'France' %}selected{% endif %}>France</option>
+            <option value="Belgique" {% if site_settings.country == 'Belgique' %}selected{% endif %}>Belgique</option>
+            <option value="Suisse" {% if site_settings.country == 'Suisse' %}selected{% endif %}>Suisse</option>
+            <option value="Luxembourg" {% if site_settings.country == 'Luxembourg' %}selected{% endif %}>Luxembourg</option>
+            <option value="Canada" {% if site_settings.country == 'Canada' %}selected{% endif %}>Canada</option>
+            <option value="Maroc" {% if site_settings.country == 'Maroc' %}selected{% endif %}>Maroc</option>
+            <option value="Autre / Custom" {% if site_settings.country == 'Autre / Custom' %}selected{% endif %}>Autre / Custom</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.8rem;">Réglementations actives</label>
+          <div style="display:flex; flex-wrap:wrap; gap:2rem;">
+            <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer;">
+              <input type="checkbox" name="active_re2020" {% if site_settings.active_re2020 %}checked{% endif %} style="accent-color:var(--navy-1); width:18px; height:18px; background:var(--navy-1); border:1px solid rgba(255,255,255,.2); border-radius:4px;">
+              <span style="font-size:.95rem; font-weight:500; color:#fff;">RE2020</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer;">
+              <input type="checkbox" name="active_rt2012" {% if site_settings.active_rt2012 %}checked{% endif %} style="accent-color:var(--navy-1); width:18px; height:18px; background:var(--navy-1); border:1px solid rgba(255,255,255,.2); border-radius:4px;">
+              <span style="font-size:.95rem; font-weight:500; color:#fff;">RT2012</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer;">
+              <input type="checkbox" name="active_rt2012_re2020" {% if site_settings.active_rt2012_re2020 %}checked{% endif %} style="accent-color:var(--navy-1); width:18px; height:18px; background:var(--navy-1); border:1px solid rgba(255,255,255,.2); border-radius:4px;">
+              <span style="font-size:.95rem; font-weight:500; color:#fff;">RT2012_RE2020</span>
+            </label>
+          </div>
+          <div style="margin-top:1rem;">
+             <input type="text" placeholder="Ajouter une réglementation..." class="form-control" style="width:calc(100% - 40px); background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; font-size:.95rem; display:inline-block;"><button type="button" class="btn btn-outline" style="width:30px; margin-left:10px; padding:.7rem 0; display:inline-block; border-color:rgba(255,255,255,.1); color:var(--gray-2);">+</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem;">
+          <div>
+            <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">Devise</label>
+            <input type="text" name="currency" value="{{ site_settings.currency }}" class="form-control" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; font-size:.95rem;">
+          </div>
+          <div>
+            <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">Symbole</label>
+            <input type="text" name="currency_symbol" value="{{ site_settings.currency_symbol }}" class="form-control" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; font-size:.95rem;">
+          </div>
+          <div>
+            <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">TVA / TVA %</label>
+            <input type="number" step="0.1" name="vat_rate" value="{{ site_settings.vat_rate|stringformat:'s' }}" class="form-control" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; font-size:.95rem;">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+        <!-- Informations société -->
+        <div class="card fade-up" style="padding:1.8rem 2rem; animation-delay:.2s;">
+          <h3 style="font-size:1.1rem;margin-bottom:1.5rem;color:var(--green);display:flex;align-items:center;gap:.5rem;">
+            <svg style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            Informations société
+          </h3>
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+            <div>
+              <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">Nom de la société</label>
+              <input type="text" name="company_name" value="{{ site_settings.company_name }}" class="form-control" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; font-size:.95rem;">
+            </div>
+            <div>
+              <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">Téléphone</label>
+              <input type="text" name="company_phone" value="{{ site_settings.company_phone }}" class="form-control" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; font-size:.95rem;">
+            </div>
+          </div>
+          <div>
+            <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">Adresse</label>
+            <input type="text" name="company_address" value="{{ site_settings.company_address }}" class="form-control" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; font-size:.95rem;">
+          </div>
+        </div>
+
+        <!-- Paramètres email -->
+        <div class="card fade-up" style="padding:1.8rem 2rem; animation-delay:.3s;">
+          <h3 style="font-size:1.1rem;margin-bottom:1.5rem;color:var(--green);display:flex;align-items:center;gap:.5rem;">
+            <svg style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            Paramètres email
+          </h3>
+          
+          <div style="margin-bottom:1.5rem;">
+            <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">Email expéditeur</label>
+            <input type="email" name="email_sender" value="{{ site_settings.email_sender }}" class="form-control" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; font-size:.95rem;">
+          </div>
+          <div>
+            <label style="display:block; font-weight:600; font-size:.9rem; color:#fff; margin-bottom:.5rem;">Texte pied de page email</label>
+            <textarea name="email_footer" class="form-control" rows="2" style="width:100%; background:var(--navy-1); border:1px solid rgba(255,255,255,.1); color:#fff; padding:.8rem; border-radius:6px; resize:none; font-size:.95rem;">{{ site_settings.email_footer }}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="text-align:right; max-width:900px;">
+      <button type="submit" class="btn btn-primary" style="padding:.8rem 2rem; font-weight:600; background:var(--green); border-color:var(--green);">
+        Enregistrer les paramètres du site
+      </button>
+    </div>
+  </form>
+
+  <hr style="border-color:rgba(255,255,255,.05); margin: 3rem 0; max-width:900px;">
+  
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; max-width:900px; margin-bottom:1.5rem;">
+    <div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem; margin-bottom:0.2rem;">Configuration des seuils</h2>
+      <p style="color:var(--gray-2); font-size:0.9rem;">Valeurs de référence utilisées pour les analyses de conformité.</p>
+    </div>
+  </div>
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:900px">
 
     <!-- RT2012 -->
