@@ -59,7 +59,7 @@
               {% for val, label in status_choices %}
               <label
                 style="display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border-radius:6px;border:1px solid {% if document.status == val %}rgba(200,168,75,.3){% else %}rgba(255,255,255,.05){% endif %};cursor:pointer;background:{% if document.status == val %}rgba(200,168,75,.06){% else %}transparent{% endif %}">
-                <input type="radio" name="status" value="{{ val }}" {% if document.status==val %}checked{% endif %}
+                <input type="radio" name="status" value="{{ val }}" {% if document.status == val %}checked{% endif %}
                   style="accent-color:var(--gold)">
                 <span
                   style="font-size:.88rem;color:{% if document.status == val %}var(--gold){% else %}var(--gray-2){% endif %}">{{
