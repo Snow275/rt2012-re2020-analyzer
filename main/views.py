@@ -11,7 +11,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Document, Analysis, Devis
+from .models import Document, Analysis, Devis, SiteSettings
 from .forms import DocumentForm, ContactForm
 from .serializers import DocumentSerializer, AnalysisSerializer
 
@@ -444,10 +444,36 @@ def faq(request):
 def settings_view(request):
     re2020_req = fetch_re2020_requirements()
     rt2012_req = fetch_rt2012_requirements()
+    site_settings = SiteSettings.load()
     return render(request, 'main/settings.html', {
         're2020_req': re2020_req,
         'rt2012_req': rt2012_req,
+        'site_settings': site_settings,
     })
+
+@login_required(login_url='/login/')
+def update_site_settings(request):
+    if request.method == 'POST':
+        settings = SiteSettings.load()
+        settings.language = request.POST.get('language', settings.language)
+        settings.country = request.POST.get('country', settings.country)
+        settings.active_re2020 = request.POST.get('active_re2020') == 'on'
+        settings.active_rt2012 = request.POST.get('active_rt2012') == 'on'
+        settings.active_rt2012_re2020 = request.POST.get('active_rt2012_re2020') == 'on'
+        settings.currency = request.POST.get('currency', settings.currency)
+        settings.currency_symbol = request.POST.get('currency_symbol', settings.currency_symbol)
+        try:
+            settings.vat_rate = float(request.POST.get('vat_rate', settings.vat_rate))
+        except ValueError:
+            pass
+        settings.company_name = request.POST.get('company_name', settings.company_name)
+        settings.company_phone = request.POST.get('company_phone', settings.company_phone)
+        settings.company_address = request.POST.get('company_address', settings.company_address)
+        settings.email_sender = request.POST.get('email_sender', settings.email_sender)
+        settings.email_footer = request.POST.get('email_footer', settings.email_footer)
+        settings.save()
+        messages.success(request, 'Paramètres du site mis à jour.')
+    return redirect('settings')
 
 
 def update_re2020(request):
@@ -539,10 +565,10 @@ def edit_document(request, doc_id):
         'rt2012_fields': RT2012_FIELDS,
         're2020_fields': RE2020_FIELDS,
         'email_steps': [
-            ('1', '#60a5fa', 'rgba(59,130,246,.12)', 'Confirmation reception', 'Confirmer la reception du dossier', 'reception'),
+            ('1', '#60a5fa', 'rgba(59,130,246,.12)', 'Confirmation réception', 'Confirmer la réception du dossier', 'reception'),
             ('2', '#c8a84b', 'rgba(200,168,75,.12)', 'Envoi du devis', "Devis avec bouton d'acceptation", 'devis'),
-            ('3', '#2dd4bf', 'rgba(20,184,166,.12)', 'Debut analyse + lien suivi', "Notifier le demarrage de l'analyse", 'analyse_commence'),
-            ('4', '#27c93f', 'rgba(39,201,63,.12)', 'Rapport final disponible', 'Rapport telechargeable sur le lien suivi', 'analyse_terminee'),
+            ('3', '#2dd4bf', 'rgba(20,184,166,.12)', 'Début analyse + lien suivi', "Notifier le démarrage de l'analyse", 'analyse_commence'),
+            ('4', '#27c93f', 'rgba(39,201,63,.12)', 'Rapport final disponible', 'Rapport téléchargeable sur le lien suivi', 'analyse_terminee'),
         ],
     })
 
@@ -553,24 +579,24 @@ def send_email_manual(request, doc_id, email_type):
         return redirect('edit_document', doc_id=doc_id)
     document = get_object_or_404(Document, id=doc_id)
     if not document.client_email:
-        messages.error(request, 'Aucun email client renseigne.')
+        messages.error(request, 'Aucun email client renseigné.')
         return redirect('edit_document', doc_id=doc_id)
     if email_type == 'reception':
         send_mail_reception(document)
-        messages.success(request, f'Email de reception envoye a {document.client_email}.')
+        messages.success(request, f'Email de réception envoyé à {document.client_email}.')
     elif email_type == 'devis':
         try:
             devis = document.devis.filter(statut='en_attente').first()
         except Exception:
             devis = None
         send_mail_validation_devis(document, devis)
-        messages.success(request, f'Email devis envoye a {document.client_email}.')
+        messages.success(request, f'Email devis envoyé à {document.client_email}.')
     elif email_type == 'analyse_commence':
         send_mail_analyse_commence(document)
-        messages.success(request, f'Email analyse demarree envoye a {document.client_email}.')
+        messages.success(request, f'Email analyse démarrée envoyé à {document.client_email}.')
     elif email_type == 'analyse_terminee':
         send_mail_analyse_terminee(document)
-        messages.success(request, f'Email rapport disponible envoye a {document.client_email}.')
+        messages.success(request, f'Email rapport disponible envoyé à {document.client_email}.')
     return redirect('edit_document', doc_id=doc_id)
 
 @login_required(login_url='/login/')
