@@ -47,6 +47,7 @@ class Document(models.Model):
     is_active = models.BooleanField(default=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="recu")
     tracking_token = models.CharField(max_length=64, unique=True, blank=True)
+    rapport_pdf = models.FileField(upload_to="rapports/", null=True, blank=True)
 
     # Champs RE2020
     re2020_energy_efficiency = models.FloatField(null=True, blank=True)
