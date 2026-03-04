@@ -573,6 +573,39 @@ def send_email_manual(request, doc_id, email_type):
         messages.success(request, f'Email rapport disponible envoye a {document.client_email}.')
     return redirect('edit_document', doc_id=doc_id)
 
+@login_required(login_url='/login/')
+def upload_rapport_pdf(request, doc_id):
+    if request.method == 'POST' and request.FILES.get('rapport_pdf'):
+        document = get_object_or_404(Document, id=doc_id)
+        document.rapport_pdf = request.FILES['rapport_pdf']
+        document.save()
+        messages.success(request, 'Rapport PDF uploadé avec succès.')
+    return redirect('edit_document', doc_id=doc_id)
+
+def download_rapport_word(request, doc_id):
+    from docx import Document as DocxDocument
+    from docx.shared import Pt, RGBColor, Cm
+    from io import BytesIO
+    document = get_object_or_404(Document, id=doc_id)
+    doc = DocxDocument()
+    doc.add_heading(f'Rapport ConformExpert — {document.name}', 0)
+    doc.add_paragraph(f'Référence : DOC-{document.id:04d}')
+    doc.add_paragraph(f'Client : {document.client_name or "—"}')
+    doc.add_paragraph(f'Date : {document.upload_date.strftime("%d/%m/%Y")}')
+    doc.add_heading('RT2012', level=1)
+    for label, val in [('Bbio', document.rt2012_bbio), ('Cep', document.rt2012_cep), ('Tic', document.rt2012_tic), ('Étanchéité', document.rt2012_airtightness), ('ENR', document.rt2012_enr)]:
+        doc.add_paragraph(f'{label} : {val if val is not None else "—"}')
+    doc.add_heading('RE2020', level=1)
+    for label, val in [('Cep,nr', document.re2020_energy_efficiency), ('Ic énergie', document.re2020_carbon_emissions), ('DH', document.re2020_thermal_comfort)]:
+        doc.add_paragraph(f'{label} : {val if val is not None else "—"}')
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    safe_name = document.name.replace(' ', '_')
+    response = HttpResponse(buffer.read(), content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    response['Content-Disposition'] = f'attachment; filename="rapport_{safe_name}.docx"'
+    return response
+
 
 def download_report(request, document_id):
     document = get_object_or_404(Document, id=document_id)
