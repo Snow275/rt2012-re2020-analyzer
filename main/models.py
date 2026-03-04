@@ -164,3 +164,44 @@ class Devis(models.Model):
 
     def __str__(self):
         return f"Devis {self.id} — {self.client_nom}"
+
+class SiteSettings(models.Model):
+    # Langue et Région
+    language = models.CharField(max_length=10, default='fr')
+    country = models.CharField(max_length=50, default='France')
+    
+    # Réglementations actives
+    active_re2020 = models.BooleanField(default=True)
+    active_rt2012 = models.BooleanField(default=True)
+    active_rt2012_re2020 = models.BooleanField(default=False)
+    
+    # Facturation
+    currency = models.CharField(max_length=10, default='EUR')
+    currency_symbol = models.CharField(max_length=5, default='€')
+    vat_rate = models.FloatField(default=20.0)
+    
+    # Infos société
+    company_name = models.CharField(max_length=255, default='ThermConform', blank=True)
+    company_phone = models.CharField(max_length=50, default='01 23 45 67 89', blank=True)
+    company_address = models.CharField(max_length=255, default='Paris, France', blank=True)
+    
+    # Emails
+    email_sender = models.EmailField(default='contact@thermconform.fr', blank=True)
+    email_footer = models.TextField(default='ThermConform — Bureau d\'études thermiques certifié. Ne pas répondre à cet email.', blank=True)
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    class Meta:
+        verbose_name = 'Paramètres du site'
+        verbose_name_plural = 'Paramètres du site'
+
+    def __str__(self):
+        return "Configuration Générale"
+
