@@ -78,10 +78,17 @@
       </div>
 
       {% if document.status == 'termine' %}
-      <a href="{% url 'download_report' document.id %}" class="btn btn-gold" style="width:100%;justify-content:center">
+      {% if document.rapport_pdf %}
+      <a href="{{ document.rapport_pdf.url }}" target="_blank" class="btn btn-gold" style="width:100%;justify-content:center">
+        📄 Télécharger le rapport PDF
+      </a>
+      {% else %}
+      <a href="{% url 'download_report' document.id %}" target="_blank" class="btn btn-gold" style="width:100%;justify-content:center">
         📄 Télécharger le rapport PDF
       </a>
       {% endif %}
+      {% endif %}
+      
 
       {% if document.status == 'recu' and not devis_accepte %}
       <div class="card" style="padding:1.5rem;margin-top:1.5rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.2)">
