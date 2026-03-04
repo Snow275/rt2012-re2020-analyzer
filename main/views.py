@@ -781,7 +781,7 @@ def download_report(request, document_id):
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     safe_name = document.name.replace(' ', '_').replace('/', '-')
-    response['Content-Disposition'] = f'attachment; filename="rapport_{safe_name}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="rapport_{safe_name}.pdf"'
     return response
 
 
