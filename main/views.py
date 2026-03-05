@@ -191,56 +191,118 @@ def extract_text_from_pdf(upload_path):
 
 
 def parse_pdf_text(text):
+    """
+    Extrait les valeurs numériques du texte PDF selon la norme détectée.
+    Supporte : RT2012, RE2020, PEB, MINERGIE, SIA380, CNEB2015/2020, LENOZ.
+    Chaque pattern cherche sur tout le texte avec des variantes souples.
+    """
     data = {}
-    re2020_section = ""
-    rt2012_section = ""
+    t = text  # on cherche sur tout le texte
 
-    if "RE2020" in text and "RT2012" in text:
-        re2020_section = text.split("RE2020")[1].split("RT2012")[0]
-        rt2012_section = text.split("RT2012")[1]
-    elif "RE2020" in text:
-        re2020_section = text.split("RE2020")[1]
-    elif "RT2012" in text:
-        rt2012_section = text.split("RT2012")[1]
-
-    # RE2020
+    # ── FRANCE RT2012 ──────────────────────────────────────
     for pattern, key in [
-        (r'Cep\s*=\s*([\d.]+)', 'energy_efficiency'),
-        (r'DH\s*=\s*([\d.]+)', 'thermal_comfort'),
-        (r'Ic.?energie\s*=\s*([\d.]+)', 'carbon_emissions'),
-        (r'Eau\s*=\s*([\d.]+)', 'water_management'),
-        (r'Qai\s*=\s*([\d.]+)', 'indoor_air_quality'),
+        (r'Bbio\s*[=:]\s*([\d.,]+)',        'rt2012_bbio'),
+        (r'Cep\s*[=:]\s*([\d.,]+)',         'rt2012_cep'),
+        (r'Tic\s*[=:]\s*([\d.,]+)',         'rt2012_tic'),
+        (r'[Ee]tanch[e\xe9]it[e\xe9]\s*[=:]\s*([\d.,]+)', 'rt2012_airtightness'),
+        (r'ENR\s*[=:]\s*([\d.,]+)',         'rt2012_enr'),
     ]:
-        m = re.search(pattern, re2020_section, re.IGNORECASE)
+        m = re.search(pattern, t, re.IGNORECASE)
         if m:
-            data[key] = float(m.group(1))
+            data[key] = float(m.group(1).replace(',', '.'))
 
-    # RT2012
+    # ── FRANCE RE2020 ──────────────────────────────────────
     for pattern, key in [
-        (r'Bbio\s*=\s*([\d.]+)', 'bbio'),
-        (r'Cep\s*=\s*([\d.]+)', 'cep_rt'),
-        (r'Tic\s*=\s*([\d.]+)', 'tic'),
-        (r'Etancheite\s*=\s*([\d.]+)', 'airtightness'),
-        (r'Enr\s*=\s*([\d.]+)', 'enr'),
+        (r'Cep,?nr\s*[=:]\s*([\d.,]+)',             're2020_energy_efficiency'),
+        (r'DH\s*[=:]\s*([\d.,]+)',                  're2020_thermal_comfort'),
+        (r'Ic.{0,10}[ée]nergie\s*[=:]\s*([\d.,]+)', 're2020_carbon_emissions'),
+        (r'Ic.{0,10}construction\s*[=:]\s*([\d.,]+)','re2020_ic_construction'),
     ]:
-        m = re.search(pattern, rt2012_section, re.IGNORECASE)
+        m = re.search(pattern, t, re.IGNORECASE)
         if m:
-            data[key] = float(m.group(1))
+            data[key] = float(m.group(1).replace(',', '.'))
+
+    # ── BELGIQUE PEB ───────────────────────────────────────
+    for pattern, key in [
+        (r'Espec\s*[=:]\s*([\d.,]+)',   'peb_espec'),
+        (r'\bEw\b\s*[=:]\s*([\d.,]+)', 'peb_ew'),
+        (r'U\s*mur\s*[=:]\s*([\d.,]+)', 'peb_u_mur'),
+        (r'U\s*toit\s*[=:]\s*([\d.,]+)','peb_u_toit'),
+        (r'U\s*plancher\s*[=:]\s*([\d.,]+)','peb_u_plancher'),
+    ]:
+        m = re.search(pattern, t, re.IGNORECASE)
+        if m:
+            data[key] = float(m.group(1).replace(',', '.'))
+
+    # ── SUISSE MINERGIE / SIA380 ───────────────────────────
+    for pattern, key in [
+        (r'Qh\s*[=:]\s*([\d.,]+)',   'minergie_qh'),
+        (r'Qtot\s*[=:]\s*([\d.,]+)', 'minergie_qtot'),
+        (r'n50\s*[=:]\s*([\d.,]+)',  'minergie_n50'),
+    ]:
+        m = re.search(pattern, t, re.IGNORECASE)
+        if m:
+            data[key] = float(m.group(1).replace(',', '.'))
+
+    # ── CANADA CNEB2015 / CNEB2020 ─────────────────────────
+    for pattern, key in [
+        (r'[Ii]ntensit[eé].{0,20}[=:]\s*([\d.,]+)', 'cneb_ei'),
+        (r'U\s*mur\s*[=:]\s*([\d.,]+)',            'cneb_u_mur'),
+        (r'U\s*toit\s*[=:]\s*([\d.,]+)',           'cneb_u_toit'),
+        (r'U\s*fen[eê]tre\s*[=:]\s*([\d.,]+)',     'cneb_u_fenetre'),
+        (r'[Ii]nfiltration\s*[=:]\s*([\d.,]+)',     'cneb_infiltration'),
+    ]:
+        m = re.search(pattern, t, re.IGNORECASE)
+        if m:
+            data[key] = float(m.group(1).replace(',', '.'))
+
+    # ── LUXEMBOURG LENOZ ───────────────────────────────────
+    for pattern, key in [
+        (r'[Ee]nergie\s+primaire\s*[=:]\s*([\d.,]+)', 'lenoz_ep'),
+        (r'\bEw\b\s*[=:]\s*([\d.,]+)',               'lenoz_ew'),
+        (r'U\s*mur\s*[=:]\s*([\d.,]+)',               'lenoz_u_mur'),
+        (r'U\s*toit\s*[=:]\s*([\d.,]+)',              'lenoz_u_toit'),
+    ]:
+        m = re.search(pattern, t, re.IGNORECASE)
+        if m:
+            data[key] = float(m.group(1).replace(',', '.'))
 
     return data
 
 
 def analyze_document(document, data):
-    document.re2020_energy_efficiency = data.get('energy_efficiency')
-    document.re2020_thermal_comfort = data.get('thermal_comfort')
-    document.re2020_carbon_emissions = data.get('carbon_emissions')
-    document.re2020_water_management = data.get('water_management')
-    document.re2020_indoor_air_quality = data.get('indoor_air_quality')
-    document.rt2012_bbio = data.get('bbio')
-    document.rt2012_cep = data.get('cep_rt')
-    document.rt2012_tic = data.get('tic')
-    document.rt2012_airtightness = data.get('airtightness')
-    document.rt2012_enr = data.get('enr')
+    # ── FR RT2012 ──
+    document.rt2012_bbio        = data.get('rt2012_bbio')
+    document.rt2012_cep         = data.get('rt2012_cep')
+    document.rt2012_tic         = data.get('rt2012_tic')
+    document.rt2012_airtightness= data.get('rt2012_airtightness')
+    document.rt2012_enr         = data.get('rt2012_enr')
+    # ── FR RE2020 ──
+    document.re2020_energy_efficiency = data.get('re2020_energy_efficiency')
+    document.re2020_thermal_comfort   = data.get('re2020_thermal_comfort')
+    document.re2020_carbon_emissions  = data.get('re2020_carbon_emissions')
+    # ── BE PEB ──
+    document.peb_espec      = data.get('peb_espec')
+    document.peb_ew         = data.get('peb_ew')
+    document.peb_u_mur      = data.get('peb_u_mur')
+    document.peb_u_toit     = data.get('peb_u_toit')
+    document.peb_u_plancher = data.get('peb_u_plancher')
+    # ── CH MINERGIE / SIA380 ──
+    document.minergie_qh   = data.get('minergie_qh')
+    document.minergie_qtot = data.get('minergie_qtot')
+    document.minergie_n50  = data.get('minergie_n50')
+    document.sia380_qh     = data.get('minergie_qh') or data.get('sia380_qh')
+    # ── CA CNEB ──
+    document.cneb_ei          = data.get('cneb_ei')
+    document.cneb_u_mur       = data.get('cneb_u_mur')
+    document.cneb_u_toit      = data.get('cneb_u_toit')
+    document.cneb_u_fenetre   = data.get('cneb_u_fenetre')
+    document.cneb_infiltration= data.get('cneb_infiltration')
+    # ── LU LENOZ ──
+    document.lenoz_ep    = data.get('lenoz_ep')
+    document.lenoz_ew    = data.get('lenoz_ew')
+    document.lenoz_u_mur = data.get('lenoz_u_mur')
+    document.lenoz_u_toit= data.get('lenoz_u_toit')
     # Ne pas changer le statut ici — il reste 'recu' jusqu'à validation manuelle
     document.save()
 
