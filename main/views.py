@@ -442,11 +442,40 @@ def faq(request):
 
 @login_required(login_url='/login/')
 def settings_view(request):
-    re2020_req = fetch_re2020_requirements()
-    rt2012_req = fetch_rt2012_requirements()
+    from main.templatetags.conformity_tags import (
+        get_seuils, NORME_FIELDS, NORMES_PAR_PAYS
+    )
+
+    PAYS_LABELS = {
+        'FR': '🇫🇷 France',
+        'BE': '🇧🇪 Belgique',
+        'CH': '🇨🇭 Suisse',
+        'CA': '🇨🇦 Canada',
+        'LU': '🇱🇺 Luxembourg',
+    }
+    NORME_LABELS = {
+        'RT2012': 'RT 2012', 'RE2020': 'RE 2020', 'PEB': 'PEB',
+        'MINERGIE': 'Minergie', 'SIA380': 'SIA 380',
+        'CNEB2015': 'CNEB 2015', 'CNEB2020': 'CNEB 2020', 'LENOZ': 'LENOZ',
+    }
+
+    seuils_par_pays = []
+    for pays_code, normes in NORMES_PAR_PAYS.items():
+        normes_data = []
+        for norme_code in normes:
+            seuils = get_seuils('maison', 'H2', pays_code, norme_code)
+            fields = NORME_FIELDS.get(norme_code, [])
+            fields_seuils = []
+            for field, label, unit in fields:
+                val = seuils.get(field, '—')
+                if isinstance(val, float) and val == int(val):
+                    val = int(val)
+                fields_seuils.append((label, val, unit))
+            normes_data.append((norme_code, NORME_LABELS.get(norme_code, norme_code), fields_seuils))
+        seuils_par_pays.append((pays_code, PAYS_LABELS.get(pays_code, pays_code), normes_data))
+
     return render(request, 'main/settings.html', {
-        're2020_req': re2020_req,
-        'rt2012_req': rt2012_req,
+        'seuils_par_pays': seuils_par_pays,
     })
 
 
