@@ -101,13 +101,17 @@
         <!-- COLONNE DROITE -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
 
-          <!-- RT2012 -->
+          <!-- Valeurs mesurées — dynamique selon la norme du dossier -->
           <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">RT2012 — Valeurs mesurées</h3>
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">
+              {{ document.get_norme_display }} — Valeurs mesurées
+              <span style="font-size:.72rem;color:var(--gray-1);font-weight:400;margin-left:.5rem">{{ document.get_pays_display }}</span>
+            </h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
-              {% for field, label, unit in rt2012_fields %}
+              {% get_norme_fields document.norme as norme_fields %}
+              {% for field, label, unit in norme_fields %}
               <div style="display:flex;align-items:center;gap:.8rem">
-                <label style="width:140px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
+                <label style="width:160px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
                   {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
                 </label>
                 <input type="number" step="0.01" name="{{ field }}"
@@ -115,32 +119,12 @@
                   placeholder="—"
                   style="flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.5rem .8rem;color:var(--white);font-size:.88rem;outline:none"
                   onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-                <span style="font-size:.7rem;color:var(--muted);width:60px;text-align:right">
-                  ≤ {% get_seuil field document.building_type document.climate_zone %}
+                <span style="font-size:.7rem;color:var(--muted);width:70px;text-align:right">
+                  ≤ {% get_seuil field document.building_type document.climate_zone document.pays document.norme %}
                 </span>
               </div>
-              {% endfor %}
-            </div>
-          </div>
-
-          <!-- RE2020 -->
-          <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">RE2020 — Valeurs mesurées</h3>
-            <div style="display:flex;flex-direction:column;gap:.8rem">
-              {% for field, label, unit in re2020_fields %}
-              <div style="display:flex;align-items:center;gap:.8rem">
-                <label style="width:180px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
-                  {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
-                </label>
-                <input type="number" step="0.01" name="{{ field }}"
-                  value="{% if document|attr:field is not None %}{{ document|attr:field }}{% endif %}"
-                  placeholder="—"
-                  style="flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.5rem .8rem;color:var(--white);font-size:.88rem;outline:none"
-                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-                <span style="font-size:.7rem;color:var(--muted);width:60px;text-align:right">
-                  ≤ {% get_seuil field document.building_type document.climate_zone %}
-                </span>
-              </div>
+              {% empty %}
+              <p style="font-size:.83rem;color:var(--muted);font-style:italic">Aucun champ défini pour cette norme.</p>
               {% endfor %}
             </div>
           </div>
