@@ -1,4 +1,5 @@
 {% extends 'main/base.html' %}
+{% load conformity_tags %}
 {% block title %}Paramètres{% endblock %}
 
 {% block content %}
@@ -6,83 +7,40 @@
   <div class="ph-inner">
     <span class="s-label">Paramètres</span>
     <h1>Configuration des seuils</h1>
-    <p>Valeurs de référence utilisées pour les analyses de conformité.</p>
+    <p>Valeurs de référence utilisées pour les analyses de conformité — par pays et norme.</p>
   </div>
 </div>
 
 <div class="container">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:900px">
 
-    <!-- RT2012 -->
-    <div class="card fade-up" style="overflow:hidden">
-      <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.5rem 2rem;border-bottom:1px solid rgba(255,255,255,.05)">
-        <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem">Référentiel</div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem">RT 2012</h2>
-      </div>
-      <div style="padding:1.8rem 2rem">
-        <div style="display:flex;flex-direction:column;gap:.8rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-            <span style="font-size:.85rem;color:var(--gray-2)">Bbio max</span>
-            <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ rt2012_req.bbio }}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-            <span style="font-size:.85rem;color:var(--gray-2)">Cep max (kWh/m².an)</span>
-            <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ rt2012_req.cep }}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-            <span style="font-size:.85rem;color:var(--gray-2)">Tic max (°C)</span>
-            <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ rt2012_req.tic }}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-            <span style="font-size:.85rem;color:var(--gray-2)">Étanchéité max</span>
-            <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ rt2012_req.airtightness }}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-            <span style="font-size:.85rem;color:var(--gray-2)">ENR min</span>
-            <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ rt2012_req.enr }}</span>
+  {% for pays_code, pays_label, normes in seuils_par_pays %}
+  <div style="margin-bottom:2.5rem">
+    <h2 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--gray-1);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem">
+      <span>{{ pays_label }}</span>
+      <span style="display:inline-block;width:32px;height:1px;background:rgba(255,255,255,.1)"></span>
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem">
+      {% for norme_code, norme_label, fields_seuils in normes %}
+      <div class="card fade-up" style="overflow:hidden">
+        <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.05)">
+          <div style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.25rem">Référentiel</div>
+          <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:0">{{ norme_label }}</h3>
+        </div>
+        <div style="padding:1.4rem 1.8rem">
+          <div style="display:flex;flex-direction:column;gap:.6rem">
+            {% for label, val, unit in fields_seuils %}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--navy-3);border-radius:6px">
+              <span style="font-size:.82rem;color:var(--gray-2)">{{ label }}{% if unit %} <span style="font-size:.7rem;color:var(--muted)">({{ unit }})</span>{% endif %}</span>
+              <span style="font-family:monospace;color:var(--gold);font-size:.88rem">{{ val }}</span>
+            </div>
+            {% endfor %}
           </div>
         </div>
       </div>
+      {% endfor %}
     </div>
-
-    <!-- RE2020 -->
-    <div class="card fade-up-2" style="overflow:hidden">
-      <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.5rem 2rem;border-bottom:1px solid rgba(255,255,255,.05)">
-        <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem">Référentiel</div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem">RE 2020</h2>
-      </div>
-      <div style="padding:1.8rem 2rem">
-        <form method="post" action="{% url 'update_re2020' %}">
-          {% csrf_token %}
-          <div style="display:flex;flex-direction:column;gap:.8rem">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-              <span style="font-size:.85rem;color:var(--gray-2)">Énergie max (Cep)</span>
-              <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ re2020_req.energy_efficiency }}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-              <span style="font-size:.85rem;color:var(--gray-2)">Confort thermique max</span>
-              <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ re2020_req.thermal_comfort }}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-              <span style="font-size:.85rem;color:var(--gray-2)">Émissions CO₂ max</span>
-              <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ re2020_req.carbon_emissions }}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-              <span style="font-size:.85rem;color:var(--gray-2)">Gestion eau max</span>
-              <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ re2020_req.water_management }}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:var(--navy-3);border-radius:6px">
-              <span style="font-size:.85rem;color:var(--gray-2)">Qualité air max</span>
-              <span style="font-family:monospace;color:var(--gold);font-size:.9rem">{{ re2020_req.indoor_air_quality }}</span>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-outline btn-sm" style="margin-top:1.2rem;width:100%;justify-content:center">
-            Mettre à jour RE2020
-          </button>
-        </form>
-      </div>
-    </div>
-
   </div>
+  {% endfor %}
+
 </div>
 {% endblock %}
