@@ -889,17 +889,58 @@ def api_report(request, pk):
 
 @login_required(login_url='/login/')
 def devis_list(request):
-    statut_choices = Devis.STATUT_CHOICES
+    from django.db.models import Sum
+    from datetime import date
     current_statut = request.GET.get('statut', '')
     qs = Devis.objects.all()
     if current_statut:
         qs = qs.filter(statut=current_statut)
+
+    # KPIs
+    today = date.today()
+    nb_acceptes = Devis.objects.filter(statut='accepte').count()
+    nb_attente  = Devis.objects.filter(statut='en_attente').count()
+    nb_refuses  = Devis.objects.filter(statut='refuse').count()
+    total       = Devis.objects.count()
+
+    ca_mois  = Devis.objects.filter(statut='accepte', created_at__year=today.year, created_at__month=today.month).aggregate(s=Sum('montant'))['s'] or 0
+    ca_total = Devis.objects.filter(statut='accepte').aggregate(s=Sum('montant'))['s'] or 0
+    ca_attente = Devis.objects.filter(statut='en_attente').aggregate(s=Sum('montant'))['s'] or 0
+
+    taux_conversion = round(nb_acceptes / total * 100) if total else 0
+    taux_attente    = round(nb_attente  / total * 100) if total else 0
+    taux_refuses    = round(nb_refuses  / total * 100) if total else 0
+
+    # Revenus 6 derniers mois
+    from datetime import timedelta
+    import calendar
+    revenus_mois = []
+    max_montant = 1
+    for i in range(5, -1, -1):
+        m = (today.month - i - 1) % 12 + 1
+        y = today.year - ((today.month - i - 1) // 12)
+        montant = Devis.objects.filter(statut='accepte', created_at__year=y, created_at__month=m).aggregate(s=Sum('montant'))['s'] or 0
+        revenus_mois.append({'label': calendar.month_abbr[m][:3], 'montant': int(montant), 'raw': montant})
+        if montant > max_montant:
+            max_montant = montant
+    for r in revenus_mois:
+        r['pct'] = round(r['raw'] / max_montant * 100) if max_montant else 0
+
     return render(request, 'main/devis_list.html', {
         'devis_list': qs,
-        'total': Devis.objects.count(),
-        'en_attente': Devis.objects.filter(statut='en_attente').count(),
-        'statut_choices': statut_choices,
+        'total': total,
+        'nb_acceptes': nb_acceptes,
+        'nb_attente': nb_attente,
+        'nb_refuses': nb_refuses,
+        'ca_mois': int(ca_mois),
+        'ca_total': int(ca_total),
+        'ca_attente': int(ca_attente),
+        'taux_conversion': taux_conversion,
+        'taux_attente': taux_attente,
+        'taux_refuses': taux_refuses,
+        'revenus_mois': revenus_mois,
         'current_statut': current_statut,
+        'statut_choices': Devis.STATUT_CHOICES,
     })
 
 
