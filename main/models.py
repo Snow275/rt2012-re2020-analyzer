@@ -35,6 +35,23 @@ class Document(models.Model):
         ('H2', 'H2 — Centre / Ouest (climat tempéré)'),
         ('H3', 'H3 — Sud / littoral méditerranéen'),
     )
+    PAYS_CHOICES = (
+        ('FR', '🇫🇷 France'),
+        ('BE', '🇧🇪 Belgique'),
+        ('CH', '🇨🇭 Suisse'),
+        ('CA', '🇨🇦 Canada'),
+        ('LU', '🇱🇺 Luxembourg'),
+    )
+    NORME_CHOICES = (
+        ('RT2012',   'RT2012'),
+        ('RE2020',   'RE2020'),
+        ('PEB',      'PEB'),
+        ('MINERGIE', 'Minergie'),
+        ('SIA380',   'SIA 380'),
+        ('CNEB2015', 'CNEB 2015'),
+        ('CNEB2020', 'CNEB 2020'),
+        ('LENOZ',    'LENOZ'),
+    )
 
     name = models.CharField(max_length=255)
     client_name = models.CharField(max_length=255, blank=True, default="")
@@ -48,6 +65,8 @@ class Document(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="recu")
     tracking_token = models.CharField(max_length=64, unique=True, blank=True)
     rapport_pdf = models.FileField(upload_to="rapports/", null=True, blank=True)
+    pays = models.CharField(max_length=5, choices=PAYS_CHOICES, default="FR")
+    norme = models.CharField(max_length=10, choices=NORME_CHOICES, default="RE2020")
 
     # Champs RE2020
     re2020_energy_efficiency = models.FloatField(null=True, blank=True)
@@ -63,6 +82,32 @@ class Document(models.Model):
     rt2012_airtightness = models.FloatField(null=True, blank=True)
     rt2012_enr = models.FloatField(null=True, blank=True)
 
+    # Champs PEB (Belgique)
+    peb_espec = models.FloatField(null=True, blank=True)
+    peb_ew = models.FloatField(null=True, blank=True)
+    peb_u_mur = models.FloatField(null=True, blank=True)
+    peb_u_toit = models.FloatField(null=True, blank=True)
+    peb_u_plancher = models.FloatField(null=True, blank=True)
+
+    # Champs Minergie / SIA380 (Suisse)
+    minergie_qh = models.FloatField(null=True, blank=True)
+    minergie_qtot = models.FloatField(null=True, blank=True)
+    minergie_n50 = models.FloatField(null=True, blank=True)
+    sia380_qh = models.FloatField(null=True, blank=True)
+
+    # Champs CNEB (Canada)
+    cneb_ei = models.FloatField(null=True, blank=True)
+    cneb_u_mur = models.FloatField(null=True, blank=True)
+    cneb_u_toit = models.FloatField(null=True, blank=True)
+    cneb_u_fenetre = models.FloatField(null=True, blank=True)
+    cneb_infiltration = models.FloatField(null=True, blank=True)
+
+    # Champs LENOZ (Luxembourg)
+    lenoz_ep = models.FloatField(null=True, blank=True)
+    lenoz_ew = models.FloatField(null=True, blank=True)
+    lenoz_u_mur = models.FloatField(null=True, blank=True)
+    lenoz_u_toit = models.FloatField(null=True, blank=True)
+
     def __str__(self):
         return self.name
 
@@ -73,39 +118,39 @@ class Document(models.Model):
         super().save(*args, **kwargs)
 
     @property
-    def re2020_is_conform(self):
-        fields = [
-            self.re2020_energy_efficiency,
-            self.re2020_thermal_comfort,
-            self.re2020_carbon_emissions,
-        ]
-        if any(v is None for v in fields):
+    def is_conform(self):
+        """Vérifie la conformité selon le pays et la norme du dossier."""
+        from main.templatetags.conformity_tags import get_seuils, NORME_FIELDS, CRITERIA_GREATER_EQUAL
+        norme_fields = NORME_FIELDS.get(self.norme, [])
+        if not norme_fields:
             return None
-        from main.templatetags.conformity_tags import get_seuils
-        s = get_seuils(self.building_type, self.climate_zone)
-        return (
-            self.re2020_energy_efficiency <= s['re2020_energy_efficiency'] and
-            self.re2020_thermal_comfort   <= s['re2020_thermal_comfort'] and
-            self.re2020_carbon_emissions  <= s['re2020_carbon_emissions']
-        )
+        s = get_seuils(self.building_type, self.climate_zone, self.pays, self.norme)
+        for field, _, _ in norme_fields:
+            val = getattr(self, field, None)
+            if val is None:
+                return None
+            limit = s.get(field)
+            if limit is None:
+                continue
+            if field in CRITERIA_GREATER_EQUAL:
+                if float(val) < limit:
+                    return False
+            else:
+                if float(val) > limit:
+                    return False
+        return True
+
+    @property
+    def re2020_is_conform(self):
+        if self.norme != 'RE2020':
+            return None
+        return self.is_conform
 
     @property
     def rt2012_is_conform(self):
-        fields = [
-            self.rt2012_bbio, self.rt2012_cep, self.rt2012_tic,
-            self.rt2012_airtightness, self.rt2012_enr,
-        ]
-        if any(v is None for v in fields):
+        if self.norme != 'RT2012':
             return None
-        from main.templatetags.conformity_tags import get_seuils
-        s = get_seuils(self.building_type, self.climate_zone)
-        return (
-            self.rt2012_bbio         <= s['rt2012_bbio'] and
-            self.rt2012_cep          <= s['rt2012_cep'] and
-            self.rt2012_tic          <= s['rt2012_tic'] and
-            self.rt2012_airtightness <= s['rt2012_airtightness'] and
-            self.rt2012_enr          >= s['rt2012_enr']
-        )
+        return self.is_conform
 
 
 class Analysis(models.Model):
