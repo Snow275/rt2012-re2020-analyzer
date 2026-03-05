@@ -5,13 +5,15 @@ from .models import Document
 class DocumentForm(forms.ModelForm):
     class Meta:
         model = Document
-        fields = ['name', 'client_name', 'client_email', 'building_type', 'climate_zone', 'upload']
+        fields = ['name', 'client_name', 'client_email', 'building_type', 'climate_zone', 'pays', 'norme', 'upload']
         labels = {
             'name': 'Nom du projet',
             'client_name': 'Votre nom',
             'client_email': 'Votre email',
             'building_type': 'Type de bâtiment',
             'climate_zone': 'Zone climatique',
+            'pays': 'Pays',
+            'norme': 'Norme applicable',
             'upload': 'Document (PDF)',
         }
         widgets = {
