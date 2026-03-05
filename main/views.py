@@ -499,12 +499,14 @@ def edit_document(request, doc_id):
         # Valeurs RT2012
         for field, _, _ in RT2012_FIELDS:
             val = request.POST.get(field, '').strip()
-            setattr(document, field, float(val) if val else None)
+            if val:
+                setattr(document, field, float(val))
 
         # Valeurs RE2020
         for field, _, _ in RE2020_FIELDS:
             val = request.POST.get(field, '').strip()
-            setattr(document, field, float(val) if val else None)
+            if val:
+                setattr(document, field, float(val))
 
         # Infos client
         document.client_name = request.POST.get('client_name', '').strip()
