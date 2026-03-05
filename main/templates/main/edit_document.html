@@ -282,4 +282,54 @@ function showTab(name) {
 }
 </script>
 
+<!-- MODALE DEVIS -->
+<div id="modal-devis" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center">
+  <div style="background:var(--navy-2);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:2rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.5rem;color:var(--gold)">✉ Envoyer le devis</h3>
+    <form method="post" action="{% url 'send_email_manual' document.id 'devis' %}">
+      {% csrf_token %}
+      <input type="hidden" name="create_devis" value="1">
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div>
+          <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Nom du projet</label>
+          <input type="text" name="projet_nom" value="{{ document.name }}" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+          <div>
+            <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Norme</label>
+            <select name="norme" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none">
+              <option value="RE2020">RE2020</option>
+              <option value="RT2012">RT2012</option>
+              <option value="Les deux">Les deux</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Montant HT (€)</label>
+            <input type="number" name="montant" step="0.01" placeholder="650.00" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Notes (optionnel)</label>
+          <textarea name="notes" rows="2" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.83rem;outline:none;resize:vertical;box-sizing:border-box" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end">
+        <button type="button" onclick="fermerModalDevis()" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--gray-2);padding:.6rem 1.2rem;border-radius:7px;font-size:.83rem;cursor:pointer">Annuler</button>
+        <button type="submit" class="btn btn-gold">✉ Envoyer le devis</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function ouvrirModalDevis() {
+  const m = document.getElementById('modal-devis');
+  m.style.display = 'flex';
+}
+function fermerModalDevis() {
+  document.getElementById('modal-devis').style.display = 'none';
+}
+document.getElementById('modal-devis').addEventListener('click', function(e) {
+  if (e.target === this) fermerModalDevis();
+});
+</script>
 {% endblock %}
