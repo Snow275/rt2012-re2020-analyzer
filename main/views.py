@@ -561,12 +561,24 @@ def send_email_manual(request, doc_id, email_type):
         send_mail_reception(document)
         messages.success(request, f'Email de reception envoye a {document.client_email}.')
     elif email_type == 'devis':
-        try:
-            devis = document.devis.filter(statut='en_attente').first()
-        except Exception:
-            devis = None
-        send_mail_validation_devis(document, devis)
-        messages.success(request, f'Email devis envoye a {document.client_email}.')
+    # Créer le devis si demandé depuis la modale
+    if request.POST.get('create_devis'):
+        montant = request.POST.get('montant', '').strip()
+        devis = Devis(
+            client_nom=document.client_name or document.client_email,
+            client_email=document.client_email,
+            projet_nom=request.POST.get('projet_nom', document.name),
+            norme=request.POST.get('norme', 'RE2020'),
+            montant=float(montant) if montant else None,
+            notes=request.POST.get('notes', ''),
+            statut='en_attente',
+            document=document,
+        )
+        devis.save()
+    else:
+        devis = document.devis.filter(statut='en_attente').first()
+    send_mail_validation_devis(document, devis)
+    messages.success(request, f'Email devis envoyé à {document.client_email}.')
     elif email_type == 'analyse_commence':
         send_mail_analyse_commence(document)
         messages.success(request, f'Email analyse demarree envoye a {document.client_email}.')
