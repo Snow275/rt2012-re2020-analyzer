@@ -127,8 +127,18 @@ NORME_FIELDS = {
 
 
 def get_seuils(building_type='maison', zone='H2', pays='FR', norme='RE2020'):
-    bt = building_type or 'maison'
-    z  = zone or 'H2'
+    bt    = (building_type or 'maison').lower().strip()
+    z     = (zone  or 'H2').upper().strip()
+    pays  = (pays  or 'FR').upper().strip()
+    norme = (norme or 'RE2020').upper().strip()
+
+    # Normalisation des types de bâtiment courants
+    _bt_map = {
+        'individual': 'maison', 'individuel': 'maison', 'house': 'maison',
+        'apartment': 'collectif', 'appartement': 'collectif', 'immeuble': 'collectif',
+        'building': 'collectif',
+    }
+    bt = _bt_map.get(bt, bt)
 
     if pays == 'FR' and norme == 'RT2012':
         return {
@@ -199,16 +209,32 @@ def attr(obj, field_name):
 
 
 @register.simple_tag
-def get_seuil(key, building_type='maison', zone='H2', pays='FR', norme='RE2020'):
-    return get_seuils(building_type, zone, pays, norme).get(key, '—')
+def get_seuil(key, building_type=None, zone=None, pays=None, norme=None):
+    seuils = get_seuils(
+        building_type or 'maison',
+        zone          or 'H2',
+        pays          or 'FR',
+        norme         or 'RE2020',
+    )
+    val = seuils.get(key)
+    if val is None:
+        return '—'
+    if isinstance(val, float) and val == int(val):
+        return int(val)
+    return val
 
 
 @register.simple_tag
-def check_conform(value, key, building_type='maison', zone='H2', pays='FR', norme='RE2020'):
+def check_conform(value, key, building_type=None, zone=None, pays=None, norme=None):
     if value is None:
         return False
-    seuils = get_seuils(building_type, zone, pays, norme)
-    limit  = seuils.get(key)
+    seuils = get_seuils(
+        building_type or 'maison',
+        zone          or 'H2',
+        pays          or 'FR',
+        norme         or 'RE2020',
+    )
+    limit = seuils.get(key)
     if limit is None:
         return False
     try:
@@ -216,8 +242,8 @@ def check_conform(value, key, building_type='maison', zone='H2', pays='FR', norm
     except (ValueError, TypeError):
         return False
     if key in CRITERIA_GREATER_EQUAL:
-        return val >= limit
-    return val <= limit
+        return val >= float(limit)
+    return val <= float(limit)
 
 
 @register.simple_tag
