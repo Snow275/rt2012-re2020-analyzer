@@ -1,10 +1,5 @@
 from django.db import models
 
-dependencies = [
-    ('contenttypes', '0002_remove_content_type_name'),
-    ('auth', '0012_alter_user_first_name_max_length'),
-]
-
 class Standard(models.Model):
     TYPE_CHOICES = (
         ("RE2020", "RE2020"),
