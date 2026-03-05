@@ -93,12 +93,7 @@
     <!-- Actions -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem">
       {% if devis %}
-      <form method="post" action="{% url 'devis_delete' devis.id %}" onsubmit="return confirm('Supprimer ce devis ?')">
-        {% csrf_token %}
-        <button type="submit" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);color:#e53935;padding:.6rem 1.2rem;border-radius:6px;font-size:.85rem;cursor:pointer">
-          🗑 Supprimer
-        </button>
-      </form>
+      <div></div>
       {% else %}
       <div></div>
       {% endif %}
@@ -110,5 +105,15 @@
       </div>
     </div>
   </form>
-</div>
+
+  {% if devis %}
+  <div style="margin-top:1rem;display:flex;justify-content:flex-start">
+    <form method="post" action="{% url 'devis_delete' devis.id %}" onsubmit="return confirm('Supprimer ce devis ?')">
+      {% csrf_token %}
+      <button type="submit" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);color:#e53935;padding:.6rem 1.2rem;border-radius:6px;font-size:.85rem;cursor:pointer">
+        🗑 Supprimer
+      </button>
+    </form>
+  </div>
+  {% endif %}
 {% endblock %}
