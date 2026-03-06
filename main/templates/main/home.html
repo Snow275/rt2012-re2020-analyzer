@@ -1,70 +1,6 @@
 {% extends 'main/base.html' %}
 {% block title %}Dashboard Admin — ConformExpert{% endblock %}
 
-{#
-╔══════════════════════════════════════════════════════════════════╗
-║  MODÈLE DJANGO — MULTI-RÉFÉRENTIELS                             ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  models.py                                                       ║
-║  ─────────────────────────────────────────────────────────────  ║
-║  class Document(models.Model):                                   ║
-║      name        = models.CharField(max_length=255)              ║
-║      client_name = models.CharField(max_length=255, blank=True)  ║
-║      upload_date = models.DateField(auto_now_add=True)           ║
-║      status      = models.CharField(choices=[                    ║
-║                       ('recu',     'Reçu'),                      ║
-║                       ('en_cours', 'En cours'),                  ║
-║                       ('termine',  'Terminé'),                   ║
-║                   ], max_length=20)                              ║
-║                                                                  ║
-║      @property                                                   ║
-║      def conformite_globale(self):                               ║
-║          """                                                     ║
-║          'conforme'     → tous les référentiels sont ✓          ║
-║          'non_conforme' → au moins un référentiel est ✗         ║
-║          'en_cours'     → mix None/True (aucun ✗ mais incomplet)║
-║          None           → aucun référentiel attaché             ║
-║          """                                                     ║
-║          refs = list(self.referentiels.all())                    ║
-║          if not refs: return None                                ║
-║          if any(r.is_conform is False for r in refs):            ║
-║              return 'non_conforme'                               ║
-║          if all(r.is_conform is True for r in refs):             ║
-║              return 'conforme'                                   ║
-║          return 'en_cours'                                       ║
-║                                                                  ║
-║  class DocumentReferentiel(models.Model):                        ║
-║      REFERENTIELS = [                                            ║
-║          ('RT2012', 'RT2012'),                                   ║
-║          ('RE2020', 'RE2020'),                                   ║
-║          ('CNEB',   'CNEB'),                                     ║
-║          ('AUTRE',  'Autre'),                                    ║
-║      ]                                                           ║
-║      document   = models.ForeignKey(Document,                    ║
-║                      related_name='referentiels',               ║
-║                      on_delete=models.CASCADE)                   ║
-║      nom        = models.CharField(max_length=50,                ║
-║                      choices=REFERENTIELS)                       ║
-║      is_conform = models.BooleanField(null=True, blank=True)     ║
-║                   # None = pas encore analysé                    ║
-║                                                                  ║
-║  views.py                                                        ║
-║  ─────────────────────────────────────────────────────────────  ║
-║  documents = Document.objects                                    ║
-║                  .prefetch_related('referentiels')               ║
-║                  .order_by('-upload_date')[:6]                   ║
-║                                                                  ║
-║  total = DocumentReferentiel.objects                             ║
-║              .exclude(is_conform=None).count()                   ║
-║  ok    = DocumentReferentiel.objects                             ║
-║              .filter(is_conform=True).count()                    ║
-║  compliance_rate = round(ok/total*100, 1) if total else 0        ║
-║                                                                  ║
-║  Migration : python manage.py makemigrations && migrate          ║
-╚══════════════════════════════════════════════════════════════════╝
-#}
-
 {% block content %}
 <div class="page-header">
   <div class="ph-inner">
@@ -130,7 +66,7 @@
               <th>Client</th>
               <th>Date</th>
               <th>Statut</th>
-              <th>Référentiels</th>
+              <th>Norme</th>
               <th>Conformité</th>
               <th></th>
             </tr>
@@ -147,32 +83,17 @@
                 {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>
                 {% endif %}
               </td>
-              <td style="white-space:nowrap">
-                {% with refs=doc.referentiels.all %}
-                  {% if refs %}
-                    {% for ref in refs %}
-                      {% if ref.is_conform is None %}
-                        <span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;letter-spacing:.04em;padding:.18rem .55rem;border-radius:3px;background:rgba(136,150,164,.12);color:#8896A4;border:1px solid rgba(136,150,164,.2);margin:.1rem .15rem .1rem 0">{{ ref.nom }}</span>
-                      {% elif ref.is_conform %}
-                        <span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;letter-spacing:.04em;padding:.18rem .55rem;border-radius:3px;background:rgba(52,199,89,.1);color:#34C759;border:1px solid rgba(52,199,89,.25);margin:.1rem .15rem .1rem 0">{{ ref.nom }} ✓</span>
-                      {% else %}
-                        <span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;letter-spacing:.04em;padding:.18rem .55rem;border-radius:3px;background:rgba(255,69,58,.1);color:#FF453A;border:1px solid rgba(255,69,58,.25);margin:.1rem .15rem .1rem 0">{{ ref.nom }} ✗</span>
-                      {% endif %}
-                    {% endfor %}
-                  {% else %}
-                    <span class="text-muted">—</span>
-                  {% endif %}
-                {% endwith %}
-              </td>
               <td>
-                {% if doc.conformite_globale == 'conforme' %}
-                  <span class="badge badge-success">Conforme</span>
-                {% elif doc.conformite_globale == 'non_conforme' %}
-                  <span class="badge badge-danger">Non conforme</span>
-                {% elif doc.conformite_globale == 'en_cours' %}
-                  <span class="badge badge-warning">En cours</span>
+                {% if doc.norme %}
+                  <span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;letter-spacing:.04em;padding:.18rem .55rem;border-radius:3px;background:rgba(200,168,75,.1);color:#C8A84B;border:1px solid rgba(200,168,75,.25)">{{ doc.norme }}</span>
                 {% else %}
                   <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if doc.is_conform is None %}<span class="text-muted">—</span>
+                {% elif doc.is_conform %}<span class="badge badge-success">Conforme</span>
+                {% else %}<span class="badge badge-danger">Non conforme</span>
                 {% endif %}
               </td>
               <td>
@@ -253,6 +174,7 @@
         {% else %}
         <div class="card" style="padding:1.5rem;text-align:center">
           <p style="color:var(--gray-1);font-size:.85rem">Aucun devis pour l'instant.</p>
+          <a href="{% url 'devis_create' %}" class="btn btn-gold btn-sm" style="margin-top:.8rem">Créer un devis</a>
         </div>
         {% endif %}
       </div>
