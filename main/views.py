@@ -767,22 +767,27 @@ def download_report(request, document_id):
     from io import BytesIO
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.units import cm
+    from reportlab.lib.units import cm, mm
     from reportlab.lib import colors
     from reportlab.platypus import (
         SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-        HRFlowable, PageBreak, KeepTogether
+        HRFlowable, PageBreak
     )
     from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-    from reportlab.platypus.flowables import BalancedColumns
-    from main.templatetags.conformity_tags import get_seuils, CRITERIA_GREATER_EQUAL, NORME_FIELDS
+    from reportlab.pdfgen import canvas as pdfcanvas
+    from reportlab.platypus.flowables import Flowable
+    from main.templatetags.conformity_tags import get_seuils, CRITERIA_GREATER_EQUAL
     from datetime import date
 
-    # ── Couleurs ──────────────────────────────────────────
+    PAGE_W, PAGE_H = A4  # 595.27 x 841.89 points
+    ML = 2*cm; MR = 2*cm; MT = 2*cm; MB = 2.5*cm
+    W = PAGE_W - ML - MR  # ~17cm
+
+    # ── Couleurs ──
     NAVY   = colors.HexColor('#0C1929')
-    NAVY2  = colors.HexColor('#112236')
+    NAVY2  = colors.HexColor('#0F2035')
     GOLD   = colors.HexColor('#C8A84B')
-    GOLD_L = colors.HexColor('#E0D4A0')
+    GOLD_L = colors.HexColor('#F5EDD0')
     GREEN  = colors.HexColor('#1A9E2E')
     GREEN_L= colors.HexColor('#E8F8EE')
     RED    = colors.HexColor('#C62828')
@@ -793,433 +798,461 @@ def download_report(request, document_id):
     MUTED  = colors.HexColor('#888899')
     TEXT   = colors.HexColor('#1A1A2E')
 
-    W = 17 * cm
-    PAGE_W, PAGE_H = A4
+    def st(name, **kw):
+        d = dict(fontName='Helvetica', fontSize=9, textColor=TEXT, leading=14, spaceAfter=0)
+        d.update(kw)
+        return ParagraphStyle(name, **d)
 
-    buffer = BytesIO()
+    seuils     = get_seuils(document.building_type, document.climate_zone, document.pays, document.norme)
+    is_conform = document.is_conform
+    norme      = document.norme
+    pays_map   = {'FR':'France','BE':'Belgique','CH':'Suisse','CA':'Canada','LU':'Luxembourg'}
+    pays_label = pays_map.get(document.pays, document.pays)
+    today_str  = date.today().strftime("%d/%m/%Y")
 
-    # ── Styles ────────────────────────────────────────────
-    def s(name, **kw):
-        defaults = dict(fontName='Helvetica', fontSize=9, textColor=TEXT, leading=13)
-        defaults.update(kw)
-        return ParagraphStyle(name, **defaults)
+    if is_conform is True:
+        verdict_txt = "Conforme"
+        verdict_col = GREEN
+        verdict_bg  = GREEN_L
+    elif is_conform is False:
+        verdict_txt = "Non Conforme"
+        verdict_col = RED
+        verdict_bg  = RED_L
+    else:
+        verdict_txt = "En cours d'analyse"
+        verdict_col = MUTED
+        verdict_bg  = LGRAY
 
-    body   = s('body', spaceAfter=4)
-    bold   = s('bold', fontName='Helvetica-Bold')
-    muted  = s('muted', textColor=MUTED, fontSize=8)
-    center = s('center', alignment=TA_CENTER)
-    ok_s   = s('ok',  fontName='Helvetica-Bold', textColor=GREEN, alignment=TA_CENTER)
-    nok_s  = s('nok', fontName='Helvetica-Bold', textColor=RED,   alignment=TA_CENTER)
-    gold_s = s('gold',fontName='Helvetica-Bold', textColor=GOLD,  fontSize=8, characterSpacing=1)
-    white_s= s('white',textColor=WHITE)
-    small  = s('small', fontSize=7.5, textColor=MUTED)
+    # ── Helpers styles ──
+    def section_title(num, title):
+        label = f"{num}.  {title.upper()}"
+        return [
+            HRFlowable(width=W, thickness=1.5, color=GOLD, spaceAfter=5, spaceBefore=10),
+            Paragraph(label, st('sh', fontName='Helvetica-Bold', fontSize=8,
+                                textColor=GOLD, characterSpacing=0.8, spaceAfter=8)),
+        ]
 
-    seuils    = get_seuils(document.building_type, document.climate_zone, document.pays, document.norme)
-    is_conform= document.is_conform
-    norme     = document.norme
-    pays_labels = {'FR': 'France', 'BE': 'Belgique', 'CH': 'Suisse', 'CA': 'Canada', 'LU': 'Luxembourg'}
-    pays_label  = pays_labels.get(document.pays, document.pays)
-    today_str   = date.today().strftime("%d/%m/%Y")
+    def info_table(rows):
+        data = [[Paragraph(k, st('ik', fontSize=8, textColor=MUTED)),
+                 Paragraph(v, st('iv', fontName='Helvetica-Bold', fontSize=9))]
+                for k, v in rows]
+        t = Table(data, colWidths=[4.5*cm, W - 4.5*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0),(0,-1), LGRAY),
+            ('TOPPADDING',    (0,0),(-1,-1), 5),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 5),
+            ('LEFTPADDING',   (0,0),(-1,-1), 8),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 8),
+            ('LINEBELOW',     (0,0),(-1,-2), 0.5, MGRAY),
+            ('VALIGN',        (0,0),(-1,-1), 'MIDDLE'),
+        ]))
+        return t
 
-    # ── Helpers ───────────────────────────────────────────
-    def verdict_para(val):
-        if val is None: return Paragraph("— Non évalué", center)
-        if val:         return Paragraph("✓  Conforme",  ok_s)
-        return              Paragraph("✗  Non conforme", nok_s)
+    def criteria_section(title, rows_data):
+        rows = [r for r in rows_data if r is not None]
+        if not rows:
+            return []
+        header = [
+            Paragraph("Critere", st('th', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE)),
+            Paragraph("Valeur",  st('th2', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
+            Paragraph("Seuil",   st('th3', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
+            Paragraph("Unite",   st('th4', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
+            Paragraph("Resultat",st('th5', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
+        ]
+        data  = [header] + rows
+        col_w = [7*cm, 2.2*cm, 2.2*cm, 2.3*cm, 3.3*cm]
+        t = Table(data, colWidths=col_w, repeatRows=1)
+        style = [
+            ('BACKGROUND',    (0,0),(-1,0),  NAVY),
+            ('TOPPADDING',    (0,0),(-1,-1), 6),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 6),
+            ('LEFTPADDING',   (0,0),(-1,-1), 6),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 6),
+            ('LINEBELOW',     (0,1),(-1,-1), 0.5, MGRAY),
+            ('VALIGN',        (0,0),(-1,-1), 'MIDDLE'),
+        ]
+        for i in range(2, len(data), 2):
+            style.append(('BACKGROUND', (0,i),(-1,i), LGRAY))
+        t.setStyle(TableStyle(style))
+        return [t, Spacer(1, 0.4*cm)]
 
     def criteria_row(label, value, key, unit=""):
         if value is None:
             return None
         limit  = seuils.get(key, "—")
-        sign   = "≥" if key in CRITERIA_GREATER_EQUAL else "≤"
-        if isinstance(limit, (int, float)):
-            conform = value >= limit if key in CRITERIA_GREATER_EQUAL else value <= limit
+        sign   = ">=" if key in CRITERIA_GREATER_EQUAL else "<="
+        if isinstance(limit, (int,float)):
+            ok = value >= limit if key in CRITERIA_GREATER_EQUAL else value <= limit
         else:
-            conform = False
+            ok = False
+        res_style = st('res', fontName='Helvetica-Bold', fontSize=8,
+                       textColor=GREEN if ok else RED, alignment=TA_CENTER)
         return [
-            Paragraph(label, body),
-            Paragraph(f"<b>{value}</b>", s('v', fontName='Helvetica-Bold', alignment=TA_CENTER)),
-            Paragraph(f"{sign} {limit}", s('sl', textColor=MUTED, alignment=TA_CENTER)),
-            Paragraph(unit, s('u', fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
-            Paragraph("✓ Conforme" if conform else "✗ Non conforme",
-                      s('r', fontName='Helvetica-Bold',
-                        textColor=GREEN if conform else RED, alignment=TA_CENTER)),
+            Paragraph(label, st('cl', fontSize=8.5)),
+            Paragraph(f"<b>{value}</b>", st('cv', fontName='Helvetica-Bold', fontSize=9, alignment=TA_CENTER)),
+            Paragraph(f"{sign} {limit}", st('cs', fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
+            Paragraph(unit, st('cu', fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
+            Paragraph("Conforme" if ok else "Non conforme", res_style),
         ]
 
-    def section_header(title, num=None):
-        label = f"{num}. {title}" if num else title
-        return [
-            HRFlowable(width=W, thickness=1.5, color=GOLD, spaceAfter=5),
-            Paragraph(label.upper(), s('sh', fontName='Helvetica-Bold', fontSize=8,
-                                       textColor=GOLD, spaceBefore=4, spaceAfter=6, characterSpacing=1)),
-        ]
-
-    def criteria_table(rows_data):
-        rows = [r for r in rows_data if r is not None]
-        if not rows:
-            return []
-        header = [
-            Paragraph("Critère",  s('th', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE)),
-            Paragraph("Valeur",   s('th2', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
-            Paragraph("Seuil",    s('th3', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
-            Paragraph("Unité",    s('th4', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
-            Paragraph("Résultat", s('th5', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
-        ]
-        data = [header] + rows
-        col_w = [6.5*cm, 2*cm, 2*cm, 2.5*cm, 4*cm]
-        t = Table(data, colWidths=col_w)
-        style = [
-            ('BACKGROUND',   (0,0), (-1,0), NAVY),
-            ('TOPPADDING',   (0,0), (-1,-1), 6),
-            ('BOTTOMPADDING',(0,0), (-1,-1), 6),
-            ('LEFTPADDING',  (0,0), (-1,-1), 8),
-            ('RIGHTPADDING', (0,0), (-1,-1), 8),
-            ('LINEBELOW',    (0,0), (-1,-2), 0.5, MGRAY),
-            ('ROUNDEDCORNERS', [4,4,4,4]),
-        ]
-        for i in range(1, len(data)):
-            if i % 2 == 0:
-                style.append(('BACKGROUND', (0,i), (-1,i), LGRAY))
-        t.setStyle(TableStyle(style))
-        return [t, Spacer(1, 0.4*cm)]
-
-    def reco_box(icon, title, text, bg, border_color):
+    def reco_block(prefix, title, text, bg, left_color):
+        full_title = f"<b>{prefix}  {title}</b>"
         data = [
-            [Paragraph(f"<b>{icon} {title}</b>", s('rt', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT))],
-            [Paragraph(text, s('rb', fontSize=8.5, textColor=colors.HexColor('#555555'), leading=14))],
+            [Paragraph(full_title, st('rbt', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT, spaceAfter=3))],
+            [Paragraph(text, st('rbd', fontSize=8.5, textColor=colors.HexColor('#444455'), leading=13))],
         ]
         t = Table(data, colWidths=[W])
         t.setStyle(TableStyle([
-            ('BACKGROUND',    (0,0), (-1,-1), bg),
-            ('LINEBEFORE',    (0,0), (0,-1),  3, border_color),
-            ('TOPPADDING',    (0,0), (-1,-1), 7),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 7),
-            ('LEFTPADDING',   (0,0), (-1,-1), 12),
-            ('RIGHTPADDING',  (0,0), (-1,-1), 12),
+            ('BACKGROUND',    (0,0),(-1,-1), bg),
+            ('LINEBEFORE',    (0,0),(0,-1),  3, left_color),
+            ('TOPPADDING',    (0,0),(-1,-1), 8),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 8),
+            ('LEFTPADDING',   (0,0),(-1,-1), 12),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 12),
         ]))
-        return [t, Spacer(1, 0.3*cm)]
+        return [t, Spacer(1, 0.25*cm)]
 
-    # ── PAGE 1 : COUVERTURE ───────────────────────────────
+    # ═══════════════════════════════════════════════════
+    # PAGE 1 — COUVERTURE (canvas manuel via onFirstPage)
+    # ═══════════════════════════════════════════════════
+
+    def draw_cover(c, doc_obj):
+        c.saveState()
+        # Fond navy pleine page
+        c.setFillColor(NAVY)
+        c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+
+        # Accent coin haut droit
+        c.setFillColor(colors.HexColor('#C8A84B11'))
+        c.circle(PAGE_W, PAGE_H, 180, fill=1, stroke=0)
+
+        # Accent coin bas gauche
+        c.setFillColor(colors.HexColor('#C8A84B0A'))
+        c.circle(0, 0, 130, fill=1, stroke=0)
+
+        # Logo
+        c.setFont('Helvetica-Bold', 22)
+        c.setFillColor(WHITE)
+        c.drawString(ML, PAGE_H - 3.5*cm, "Conform")
+        c.setFillColor(GOLD)
+        lw = c.stringWidth("Conform", 'Helvetica-Bold', 22)
+        c.drawString(ML + lw, PAGE_H - 3.5*cm, "Expert")
+
+        # Eyebrow
+        c.setFont('Helvetica-Bold', 7.5)
+        c.setFillColor(GOLD)
+        c.drawString(ML, PAGE_H - 5*cm, "RAPPORT D'ANALYSE DE CONFORMITE THERMIQUE")
+
+        # Ligne décorative sous eyebrow
+        c.setStrokeColor(GOLD)
+        c.setLineWidth(1)
+        c.line(ML, PAGE_H - 5.3*cm, ML + 6*cm, PAGE_H - 5.3*cm)
+
+        # Titre projet
+        title = document.name
+        c.setFont('Helvetica-Bold', 24)
+        c.setFillColor(WHITE)
+        # Découper si trop long
+        max_w = PAGE_W - ML - MR - 1*cm
+        while c.stringWidth(title, 'Helvetica-Bold', 24) > max_w and len(title) > 10:
+            title = title[:-1]
+        if title != document.name:
+            title = title[:-3] + "..."
+        c.drawString(ML, PAGE_H - 7*cm, title)
+
+        # Sous-titre
+        c.setFont('Helvetica', 11)
+        c.setFillColor(colors.HexColor('#AAAACC'))
+        subtitle = f"{document.get_building_type_display()}  ·  {norme}  ·  {pays_label}"
+        c.drawString(ML, PAGE_H - 8.2*cm, subtitle)
+
+        # Verdict box
+        v_y   = PAGE_H - 10.5*cm
+        v_x   = ML
+        v_w   = 9*cm
+        v_h   = 1.5*cm
+        # Fond
+        c.setFillColor(verdict_bg)
+        c.roundRect(v_x, v_y, v_w, v_h, 20, fill=1, stroke=0)
+        # Bordure
+        c.setStrokeColor(verdict_col)
+        c.setLineWidth(1.5)
+        c.roundRect(v_x, v_y, v_w, v_h, 20, fill=0, stroke=1)
+        # Texte
+        c.setFont('Helvetica-Bold', 12)
+        c.setFillColor(verdict_col)
+        tw = c.stringWidth(verdict_txt, 'Helvetica-Bold', 12)
+        c.drawString(v_x + (v_w - tw)/2, v_y + 0.45*cm, verdict_txt)
+
+        # Ligne séparatrice dorée
+        c.setStrokeColor(colors.HexColor('#C8A84B44'))
+        c.setLineWidth(0.5)
+        c.line(ML, PAGE_H - 12.5*cm, PAGE_W - MR, PAGE_H - 12.5*cm)
+
+        # Grille méta
+        meta = [
+            ("REFERENCE",      f"DOC-{document.id:04d}"),
+            ("DATE DU RAPPORT", today_str),
+            ("CLIENT",         document.client_name or "—"),
+            ("NORME",          norme),
+            ("TYPE DE BATIMENT", document.get_building_type_display()),
+            ("PAYS",           pays_label),
+        ]
+        cols = 3
+        col_w2 = (PAGE_W - ML - MR) / cols
+        for i, (label, val) in enumerate(meta):
+            col = i % cols
+            row = i // cols
+            x = ML + col * col_w2
+            y = PAGE_H - 13.5*cm - row * 1.8*cm
+            c.setFont('Helvetica', 7)
+            c.setFillColor(MUTED)
+            c.drawString(x, y, label)
+            c.setFont('Helvetica-Bold', 10)
+            c.setFillColor(WHITE)
+            c.drawString(x, y - 0.5*cm, val)
+
+        # Footer couverture
+        c.setFillColor(colors.HexColor('#C8A84B33'))
+        c.setStrokeColor(colors.HexColor('#00000000'))
+        c.rect(0, 0, PAGE_W, 1.8*cm, fill=1, stroke=0)
+        c.setFont('Helvetica', 8)
+        c.setFillColor(colors.HexColor('#666677'))
+        c.drawString(ML, 0.65*cm, "ConformExpert  ·  Analyse documentaire independante")
+        c.setFillColor(GOLD)
+        txt_r = "Confidentiel  ·  Usage interne"
+        tw2 = c.stringWidth(txt_r, 'Helvetica', 8)
+        c.drawString(PAGE_W - MR - tw2, 0.65*cm, txt_r)
+
+        c.restoreState()
+
+    def draw_page(c, doc_obj):
+        """Footer sur les pages intérieures."""
+        c.saveState()
+        c.setStrokeColor(MGRAY)
+        c.setLineWidth(0.5)
+        c.line(ML, MB - 0.5*cm, PAGE_W - MR, MB - 0.5*cm)
+        c.setFont('Helvetica', 7.5)
+        c.setFillColor(MUTED)
+        c.drawString(ML, MB - 1*cm, f"ConformExpert  ·  Analyse independante {norme}  ·  {pays_label}")
+        page_num = str(doc_obj.page)
+        tw = c.stringWidth(f"Page {page_num}", 'Helvetica', 7.5)
+        c.drawString(PAGE_W - MR - tw, MB - 1*cm, f"Page {page_num}")
+        c.restoreState()
+
+    # ═══════════════════════════════════════════════════
+    # STORY (pages 2+)
+    # ═══════════════════════════════════════════════════
     story = []
 
-    # Fond navy pleine page simulé avec un grand tableau
-    verdict_color = GREEN if is_conform else (RED if is_conform is not None else MUTED)
-    verdict_bg    = GREEN_L if is_conform else (RED_L if is_conform is not None else LGRAY)
-    verdict_text  = "✓  Dossier Conforme" if is_conform else ("✗  Non Conforme" if is_conform is not None else "—  En cours d'analyse")
-
-    cover_data = [[
-        Paragraph(
-            f'<font color="#C8A84B" size="18"><b>Conform</b></font>'
-            f'<font color="white" size="18"><b>Expert</b></font>',
-            s('logo', fontName='Helvetica-Bold', fontSize=18, textColor=WHITE, leading=22)
-        )
-    ],[
-        Spacer(1, 1.5*cm)
-    ],[
-        Paragraph(
-            'RAPPORT D\'ANALYSE DE CONFORMITÉ THERMIQUE',
-            s('ey', fontName='Helvetica-Bold', fontSize=8, textColor=GOLD,
-              characterSpacing=1.5, leading=12)
-        )
-    ],[
-        Paragraph(
-            f'<font color="white" size="22"><b>{document.name}</b></font>',
-            s('ct', fontSize=22, textColor=WHITE, leading=28)
-        )
-    ],[
-        Paragraph(
-            f'<font color="#AAAACC">{document.get_building_type_display()} &nbsp;·&nbsp; {norme} &nbsp;·&nbsp; {pays_label}</font>',
-            s('cs', fontSize=11, textColor=MUTED, leading=16)
-        )
-    ],[
-        Spacer(1, 0.8*cm)
-    ],[
-        Table([[
-            Paragraph(verdict_text.replace("✓","OK").replace("✗","NON").replace("—","-"),
-                      s('vt', fontName='Helvetica-Bold', fontSize=12,
-                        textColor=verdict_color, alignment=TA_CENTER))
-        ]], colWidths=[12*cm],
-            style=TableStyle([
-                ('BACKGROUND',    (0,0),(-1,-1), verdict_bg),
-                ('BOX',           (0,0),(-1,-1), 1.5, verdict_color),
-                ('TOPPADDING',    (0,0),(-1,-1), 10),
-                ('BOTTOMPADDING', (0,0),(-1,-1), 10),
-                ('ROUNDEDCORNERS',[20,20,20,20]),
-            ]))
-    ],[
-        Spacer(1, 1*cm)
-    ],[
-        # Grille méta-données
-        Table([
-            [
-                Table([[Paragraph('RÉFÉRENCE', muted)],[Paragraph(f'DOC-{document.id:04d}', s('mv',fontName='Helvetica-Bold',textColor=WHITE,fontSize=10))]],
-                      style=TableStyle([('TOPPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),0),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),0)])),
-                Table([[Paragraph('DATE DU RAPPORT', muted)],[Paragraph(today_str, s('mv2',fontName='Helvetica-Bold',textColor=WHITE,fontSize=10))]],
-                      style=TableStyle([('TOPPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),0),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),0)])),
-                Table([[Paragraph('CLIENT', muted)],[Paragraph(document.client_name or '—', s('mv3',fontName='Helvetica-Bold',textColor=WHITE,fontSize=10))]],
-                      style=TableStyle([('TOPPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),0),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),0)])),
-            ]
-        ], colWidths=[5.6*cm, 5.6*cm, 5.8*cm],
-           style=TableStyle([('TOPPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),0),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),0)]))
-    ]]
-
-    cover_table = Table(cover_data, colWidths=[W])
-    cover_table.setStyle(TableStyle([
-        ('BACKGROUND',    (0,0), (-1,-1), NAVY),
-        ('TOPPADDING',    (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('LEFTPADDING',   (0,0), (-1,-1), 0),
-        ('RIGHTPADDING',  (0,0), (-1,-1), 0),
-        ('VALIGN',        (0,0), (-1,-1), 'MIDDLE'),
-    ]))
-
-    # Wrapper cover pleine page
-    cover_page = Table([[cover_table]], colWidths=[PAGE_W - 4*cm])
-    cover_page.setStyle(TableStyle([
-        ('BACKGROUND',    (0,0), (-1,-1), NAVY),
-        ('TOPPADDING',    (0,0), (-1,-1), 2.5*cm),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1.5*cm),
-        ('LEFTPADDING',   (0,0), (-1,-1), 2.2*cm),
-        ('RIGHTPADDING',  (0,0), (-1,-1), 2.2*cm),
-    ]))
-    story.append(cover_page)
-
-    # Pied de couverture
-    footer_cover = Table([[
-        Paragraph('ConformExpert · Analyse documentaire indépendante', s('fcl', fontSize=8, textColor=colors.HexColor('#666677'))),
-        Paragraph('Confidentiel · Usage interne', s('fcr', fontSize=8, textColor=GOLD, alignment=TA_RIGHT)),
-    ]], colWidths=[W/2, W/2])
-    footer_cover.setStyle(TableStyle([
-        ('BACKGROUND',    (0,0),(-1,-1), NAVY),
-        ('TOPPADDING',    (0,0),(-1,-1), 8),
-        ('BOTTOMPADDING', (0,0),(-1,-1), 8),
-        ('LINEABOVE',     (0,0),(-1,-1), 0.5, colors.HexColor('#C8A84B33')),
-        ('LEFTPADDING',   (0,0),(-1,-1), 0),
-        ('RIGHTPADDING',  (0,0),(-1,-1), 0),
-    ]))
-    story.append(footer_cover)
+    # Page blanche qui sert de couverture (dessinée via onFirstPage)
+    story.append(Spacer(1, PAGE_H - MT - MB))
     story.append(PageBreak())
 
-    # ── PAGE 2 : SOMMAIRE ─────────────────────────────────
-    story += section_header("Sommaire")
-    story.append(Paragraph(f"Rapport d'analyse — {document.name}", muted))
-    story.append(Spacer(1, 0.4*cm))
+    # ── PAGE 2 : SOMMAIRE ──
+    story += section_title("", "Sommaire")
+    story.append(Paragraph(f"Rapport d'analyse — {document.name}",
+                           st('ts', fontSize=8.5, textColor=MUTED, spaceAfter=12)))
 
     toc_items = [
-        ("1. Résumé exécutif & verdict global", "3"),
-        ("2. Informations du dossier", "3"),
-        (f"3. Analyse {norme} — Critères de conformité", "4"),
-        ("4. Recommandations & points d'attention", "5"),
+        ("1.  Resume executif & verdict global", "3"),
+        ("2.  Informations du dossier",           "3"),
+        (f"3.  Analyse {norme} — Criteres de conformite", "4"),
+        ("4.  Recommandations & points d'attention", "5"),
     ]
     if document.admin_notes:
-        toc_items.append(("5. Notes & observations de l'expert", "5"))
-    toc_items.append(("6. Mentions légales & disclaimer", "6"))
+        toc_items.append(("5.  Notes & observations de l'expert", "5"))
+    toc_items.append(("6.  Mentions legales & disclaimer", "6"))
 
-    for label, page in toc_items:
+    for label, pg in toc_items:
         row = Table([[
-            Paragraph(label, s('tl', fontSize=10, fontName='Helvetica')),
-            Paragraph(page,  s('tp', fontSize=9,  fontName='Helvetica-Bold', textColor=GOLD, alignment=TA_RIGHT)),
+            Paragraph(label, st('tl', fontSize=10)),
+            Paragraph(pg, st('tp', fontName='Helvetica-Bold', fontSize=9,
+                             textColor=GOLD, alignment=TA_RIGHT)),
         ]], colWidths=[W - 1.5*cm, 1.5*cm])
         row.setStyle(TableStyle([
-            ('TOPPADDING',    (0,0),(-1,-1), 7),
-            ('BOTTOMPADDING', (0,0),(-1,-1), 7),
-            ('LINEBELOW',     (0,0),(-1,-1), 0.5, MGRAY),
+            ('TOPPADDING',    (0,0),(-1,-1), 8),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 8),
             ('LEFTPADDING',   (0,0),(-1,-1), 0),
             ('RIGHTPADDING',  (0,0),(-1,-1), 0),
+            ('LINEBELOW',     (0,0),(-1,-1), 0.5, MGRAY),
         ]))
         story.append(row)
 
     story.append(PageBreak())
 
-    # ── PAGE 3 : RÉSUMÉ + INFOS ───────────────────────────
-    story += section_header("Résumé exécutif & verdict global", 1)
+    # ── PAGE 3 : RÉSUMÉ + INFOS ──
+    story += section_title("1", "Resume executif & verdict global")
 
     # Verdict banner
-    verdict_banner = Table([[
-        Table([[
-            Paragraph(f'VERDICT — {norme}',
-                      s('vbl', fontName='Helvetica-Bold', fontSize=8, textColor=GOLD, characterSpacing=1)),
-            Paragraph(verdict_text.replace("✓","Conforme").replace("✗","Non Conforme").replace("—","En cours"),
-                      s('vbv', fontName='Helvetica-Bold', fontSize=14, textColor=WHITE, leading=20)),
-        ]], colWidths=[W - 1*cm]),
-    ]], colWidths=[W])
-    verdict_banner.setStyle(TableStyle([
+    vb_data = [[
+        Paragraph(f"VERDICT  —  {norme}",
+                  st('vbl', fontName='Helvetica-Bold', fontSize=8, textColor=GOLD,
+                     characterSpacing=0.8, spaceAfter=4)),
+        Paragraph(verdict_txt,
+                  st('vbv', fontName='Helvetica-Bold', fontSize=16,
+                     textColor=verdict_col, alignment=TA_RIGHT)),
+    ]]
+    vb = Table(vb_data, colWidths=[W*0.55, W*0.45])
+    vb.setStyle(TableStyle([
         ('BACKGROUND',    (0,0),(-1,-1), NAVY),
         ('TOPPADDING',    (0,0),(-1,-1), 14),
         ('BOTTOMPADDING', (0,0),(-1,-1), 14),
         ('LEFTPADDING',   (0,0),(-1,-1), 16),
         ('RIGHTPADDING',  (0,0),(-1,-1), 16),
-        ('ROUNDEDCORNERS',[6,6,6,6]),
+        ('VALIGN',        (0,0),(-1,-1), 'MIDDLE'),
     ]))
-    story.append(verdict_banner)
+    story.append(vb)
     story.append(Spacer(1, 0.6*cm))
 
-    story += section_header("Informations du dossier", 2)
-    info_rows = [
-        ["Référence",        f"DOC-{document.id:04d}"],
-        ["Norme analysée",   norme],
-        ["Pays",             pays_label],
-        ["Type de bâtiment", document.get_building_type_display()],
-        ["Zone climatique",  f"Zone {document.climate_zone}" if document.climate_zone else "—"],
-        ["Date de dépôt",    document.upload_date.strftime("%d/%m/%Y")],
-        ["Date du rapport",  today_str],
-        ["Client",           document.client_name or "—"],
-        ["Email client",     document.client_email or "—"],
+    story += section_title("2", "Informations du dossier")
+    rows_info = [
+        ("Reference",        f"DOC-{document.id:04d}"),
+        ("Norme analysee",   norme),
+        ("Pays",             pays_label),
+        ("Type de batiment", document.get_building_type_display()),
+        ("Zone climatique",  f"Zone {document.climate_zone}" if document.climate_zone else "—"),
+        ("Date de depot",    document.upload_date.strftime("%d/%m/%Y")),
+        ("Date du rapport",  today_str),
+        ("Client",           document.client_name or "—"),
+        ("Email client",     document.client_email or "—"),
     ]
-    info_table = Table(
-        [[Paragraph(r[0], muted), Paragraph(r[1], bold)] for r in info_rows],
-        colWidths=[4.5*cm, 12.5*cm]
-    )
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND',    (0,0), (0,-1), LGRAY),
-        ('TOPPADDING',    (0,0), (-1,-1), 6),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('LEFTPADDING',   (0,0), (-1,-1), 8),
-        ('RIGHTPADDING',  (0,0), (-1,-1), 8),
-        ('LINEBELOW',     (0,0), (-1,-2), 0.5, MGRAY),
-    ]))
-    story.append(info_table)
+    story.append(info_table(rows_info))
     story.append(PageBreak())
 
-    # ── PAGE 4 : CRITÈRES ─────────────────────────────────
-    story += section_header(f"{norme} — Critères de conformité", 3)
+    # ── PAGE 4 : CRITÈRES ──
+    story += section_title("3", f"{norme} — Criteres de conformite")
 
     if norme == 'RT2012':
-        story += criteria_table([
-            criteria_row("Bbio — Besoins bioclimatiques",           document.rt2012_bbio,         "rt2012_bbio"),
-            criteria_row("Cep — Consommation énergie primaire",     document.rt2012_cep,           "rt2012_cep",  "kWh ep/m².an"),
-            criteria_row("Tic — Température intérieure conv.",       document.rt2012_tic,           "rt2012_tic",  "°C"),
-            criteria_row("Étanchéité à l'air",                      document.rt2012_airtightness,  "rt2012_airtightness", "m³/h.m²"),
-            criteria_row("ENR — Énergies renouvelables",             document.rt2012_enr,           "rt2012_enr"),
+        story += criteria_section("RT2012", [
+            criteria_row("Bbio — Besoins bioclimatiques",          document.rt2012_bbio,         "rt2012_bbio"),
+            criteria_row("Cep — Consommation energie primaire",    document.rt2012_cep,           "rt2012_cep",  "kWh ep/m2.an"),
+            criteria_row("Tic — Temperature interieure conv.",     document.rt2012_tic,           "rt2012_tic",  "degC"),
+            criteria_row("Etancheite a l'air",                     document.rt2012_airtightness,  "rt2012_airtightness", "m3/h.m2"),
+            criteria_row("ENR — Energies renouvelables",           document.rt2012_enr,           "rt2012_enr"),
         ])
     elif norme == 'RE2020':
-        story += criteria_table([
-            criteria_row("Cep,nr — Énergie non renouvelable",        document.re2020_energy_efficiency, "re2020_energy_efficiency", "kWh/m².an"),
-            criteria_row("Ic énergie — Émissions CO₂ exploitation",  document.re2020_carbon_emissions,  "re2020_carbon_emissions",  "kgCO2eq/m².an"),
-            criteria_row("DH — Degrés-heures (confort été)",         document.re2020_thermal_comfort,   "re2020_thermal_comfort",   "DH"),
+        story += criteria_section("RE2020", [
+            criteria_row("Cep,nr — Energie non renouvelable",      document.re2020_energy_efficiency, "re2020_energy_efficiency", "kWh/m2.an"),
+            criteria_row("Ic energie — Emissions CO2 exploitation",document.re2020_carbon_emissions,  "re2020_carbon_emissions",  "kgCO2/m2.an"),
+            criteria_row("DH — Degres-heures (confort ete)",       document.re2020_thermal_comfort,   "re2020_thermal_comfort",   "DH"),
         ])
     elif norme == 'PEB':
-        story += criteria_table([
-            criteria_row("Espec — Énergie spécifique",               document.peb_espec,      "peb_espec",      "kWh/m².an"),
-            criteria_row("Ew — Indicateur global de performance",     document.peb_ew,         "peb_ew"),
-            criteria_row("U mur — Coefficient thermique",             document.peb_u_mur,      "peb_u_mur",      "W/m².K"),
-            criteria_row("U toit — Coefficient thermique",            document.peb_u_toit,     "peb_u_toit",     "W/m².K"),
-            criteria_row("U plancher — Coefficient thermique",        document.peb_u_plancher, "peb_u_plancher", "W/m².K"),
+        story += criteria_section("PEB", [
+            criteria_row("Espec — Energie specifique",             document.peb_espec,      "peb_espec",      "kWh/m2.an"),
+            criteria_row("Ew — Indicateur global de performance",  document.peb_ew,         "peb_ew"),
+            criteria_row("U mur",                                  document.peb_u_mur,      "peb_u_mur",      "W/m2.K"),
+            criteria_row("U toit",                                 document.peb_u_toit,     "peb_u_toit",     "W/m2.K"),
+            criteria_row("U plancher",                             document.peb_u_plancher, "peb_u_plancher", "W/m2.K"),
         ])
     elif norme == 'MINERGIE':
-        story += criteria_table([
-            criteria_row("Qh — Chaleur de chauffage annuelle",        document.minergie_qh,   "minergie_qh",   "kWh/m².an"),
-            criteria_row("Qtot — Énergie totale pondérée",            document.minergie_qtot, "minergie_qtot", "kWh/m².an"),
-            criteria_row("n50 — Taux de renouvellement d'air",        document.minergie_n50,  "minergie_n50",  "h⁻¹"),
+        story += criteria_section("MINERGIE", [
+            criteria_row("Qh — Chaleur de chauffage annuelle",     document.minergie_qh,   "minergie_qh",   "kWh/m2.an"),
+            criteria_row("Qtot — Energie totale ponderee",         document.minergie_qtot, "minergie_qtot", "kWh/m2.an"),
+            criteria_row("n50 — Taux de renouvellement d'air",     document.minergie_n50,  "minergie_n50",  "h-1"),
         ])
     elif norme == 'SIA380':
-        story += criteria_table([
-            criteria_row("Qh — Chaleur de chauffage (SIA 380/1)",     document.sia380_qh, "sia380_qh", "kWh/m².an"),
+        story += criteria_section("SIA380", [
+            criteria_row("Qh — Chaleur de chauffage (SIA 380/1)", document.sia380_qh, "sia380_qh", "kWh/m2.an"),
         ])
     elif norme in ('CNEB2015', 'CNEB2020'):
-        story += criteria_table([
-            criteria_row("Intensité énergétique",                     document.cneb_ei,           "cneb_ei",           "kWh/m².an"),
-            criteria_row("U mur — Valeur thermique enveloppe",        document.cneb_u_mur,        "cneb_u_mur",        "W/m².K"),
-            criteria_row("U toit — Valeur thermique toiture",         document.cneb_u_toit,       "cneb_u_toit",       "W/m².K"),
-            criteria_row("U fenêtre — Performance des vitrages",      document.cneb_u_fenetre,    "cneb_u_fenetre",    "W/m².K"),
-            criteria_row("Infiltration — Étanchéité à l'air",         document.cneb_infiltration, "cneb_infiltration", "L/s.m²"),
+        story += criteria_section(norme, [
+            criteria_row("Intensite energetique",                  document.cneb_ei,           "cneb_ei",           "kWh/m2.an"),
+            criteria_row("U mur — Valeur thermique enveloppe",     document.cneb_u_mur,        "cneb_u_mur",        "W/m2.K"),
+            criteria_row("U toit — Valeur thermique toiture",      document.cneb_u_toit,       "cneb_u_toit",       "W/m2.K"),
+            criteria_row("U fenetre — Performance des vitrages",   document.cneb_u_fenetre,    "cneb_u_fenetre",    "W/m2.K"),
+            criteria_row("Infiltration — Etancheite a l'air",      document.cneb_infiltration, "cneb_infiltration", "L/s.m2"),
         ])
     elif norme == 'LENOZ':
-        story += criteria_table([
-            criteria_row("Énergie primaire",                          document.lenoz_ep,     "lenoz_ep",     "kWh/m².an"),
-            criteria_row("Ew — Indicateur de performance globale",    document.lenoz_ew,     "lenoz_ew"),
-            criteria_row("U mur — Coefficient thermique",             document.lenoz_u_mur,  "lenoz_u_mur",  "W/m².K"),
-            criteria_row("U toit — Coefficient thermique",            document.lenoz_u_toit, "lenoz_u_toit", "W/m².K"),
+        story += criteria_section("LENOZ", [
+            criteria_row("Energie primaire",                       document.lenoz_ep,     "lenoz_ep",     "kWh/m2.an"),
+            criteria_row("Ew — Indicateur de performance",         document.lenoz_ew,     "lenoz_ew"),
+            criteria_row("U mur",                                  document.lenoz_u_mur,  "lenoz_u_mur",  "W/m2.K"),
+            criteria_row("U toit",                                 document.lenoz_u_toit, "lenoz_u_toit", "W/m2.K"),
         ])
 
     story.append(PageBreak())
 
-    # ── PAGE 5 : RECOMMANDATIONS ──────────────────────────
-    story += section_header("Recommandations & points d'attention", 4)
+    # ── PAGE 5 : RECOMMANDATIONS ──
+    story += section_title("4", "Recommandations & points d'attention")
 
     if is_conform is True:
-        story += reco_box("[OK]", f"Dossier conforme aux exigences {norme}",
-                          "L'ensemble des critères analysés respecte les seuils réglementaires en vigueur. Aucune action corrective n'est requise.",
-                          GREEN_L, GREEN)
+        story += reco_block(">>", f"Dossier conforme aux exigences {norme}",
+                            "L'ensemble des criteres analyses respecte les seuils reglementaires en vigueur. Aucune action corrective n'est requise pour l'obtention de la conformite.",
+                            GREEN_L, GREEN)
+    elif is_conform is None:
+        story += reco_block("--", "Analyse en cours",
+                            "Les donnees necessaires a l'evaluation complete n'ont pas encore ete renseignees. Les recommandations seront disponibles une fois l'analyse finalisee.",
+                            LGRAY, MUTED)
 
-    if is_conform is None:
-        story += reco_box("[...]", "Analyse en cours — donnees incompletes",
-                          "Les données nécessaires à l'évaluation complète n'ont pas encore été renseignées. Les recommandations seront disponibles une fois l'analyse finalisée.",
-                          LGRAY, MUTED)
-
-    # Recos par norme
+    # Recos détaillées selon norme
     if norme == 'RT2012':
-        if document.rt2012_bbio is not None and document.rt2012_bbio > seuils.get('rt2012_bbio', 9999):
-            story += reco_box("[!]", "Bbio — Besoins bioclimatiques non conformes",
-                              "Améliorer l'isolation de l'enveloppe, optimiser l'orientation et les surfaces vitrées, renforcer la compacité du bâtiment.",
-                              RED_L, RED)
-        if document.rt2012_cep is not None and document.rt2012_cep > seuils.get('rt2012_cep', 9999):
-            story += reco_box("[!]", "Cep — Consommation énergétique non conforme",
-                              "Optimiser les systèmes de chauffage/climatisation, installer des équipements haute efficacité, intégrer des énergies renouvelables.",
-                              RED_L, RED)
-        if document.rt2012_tic is not None and document.rt2012_tic > seuils.get('rt2012_tic', 9999):
-            story += reco_box("[~]", "Tic — Température intérieure conventionnelle élevée",
-                              "Renforcer la protection solaire, améliorer l'inertie thermique, prévoir une ventilation nocturne efficace.",
-                              colors.HexColor('#FFFBF0'), GOLD)
-        if document.rt2012_airtightness is not None and document.rt2012_airtightness > seuils.get('rt2012_airtightness', 9999):
-            story += reco_box("[>]", "Étanchéité à l'air insuffisante",
-                              "Revoir les jonctions et points singuliers de l'enveloppe, traiter les passages de réseaux, réaliser un test d'infiltrométrie.",
-                              RED_L, RED)
-
+        if document.rt2012_bbio and document.rt2012_bbio > seuils.get('rt2012_bbio', 9999):
+            story += reco_block("[!]", "Bbio — Besoins bioclimatiques non conformes",
+                                "Ameliorer l'isolation de l'enveloppe, optimiser l'orientation et les surfaces vitrees, renforcer la compacite du batiment.",
+                                RED_L, RED)
+        if document.rt2012_cep and document.rt2012_cep > seuils.get('rt2012_cep', 9999):
+            story += reco_block("[!]", "Cep — Consommation energetique non conforme",
+                                "Optimiser les systemes de chauffage, installer des equipements haute efficacite, integrer des energies renouvelables.",
+                                RED_L, RED)
+        if document.rt2012_tic and document.rt2012_tic > seuils.get('rt2012_tic', 9999):
+            story += reco_block("[~]", "Tic — Temperature interieure conventionnelle elevee",
+                                "Renforcer la protection solaire, ameliorer l'inertie thermique, prevoir une ventilation nocturne efficace.",
+                                colors.HexColor('#FFFBF0'), GOLD)
+        if document.rt2012_airtightness and document.rt2012_airtightness > seuils.get('rt2012_airtightness', 9999):
+            story += reco_block("[!]", "Etancheite a l'air insuffisante",
+                                "Revoir les jonctions et points singuliers de l'enveloppe, traiter les passages de reseaux, realiser un test d'infiltrometrie.",
+                                RED_L, RED)
     elif norme == 'RE2020':
-        if document.re2020_energy_efficiency is not None and document.re2020_energy_efficiency > seuils.get('re2020_energy_efficiency', 9999):
-            story += reco_box("[!]", "Cep,nr — Énergie non renouvelable excessive",
-                              "Privilégier des énergies décarbonées (PAC, solaire thermique), améliorer l'isolation et réduire les consommations auxiliaires.",
-                              RED_L, RED)
-        if document.re2020_carbon_emissions is not None and document.re2020_carbon_emissions > seuils.get('re2020_carbon_emissions', 9999):
-            story += reco_box("[CO2]", "Ic énergie — Émissions carbone non conformes",
-                              "Basculer vers des énergies renouvelables, remplacer les systèmes à combustibles fossiles, optimiser la consommation globale.",
-                              RED_L, RED)
-        if document.re2020_thermal_comfort is not None and document.re2020_thermal_comfort > seuils.get('re2020_thermal_comfort', 9999):
-            story += reco_box("[~]", "DH — Confort d'été insuffisant",
-                              "Installer des brise-soleils ou débords de toiture, augmenter l'inertie thermique, prévoir une ventilation nocturne.",
-                              colors.HexColor('#FFFBF0'), GOLD)
-
+        if document.re2020_energy_efficiency and document.re2020_energy_efficiency > seuils.get('re2020_energy_efficiency', 9999):
+            story += reco_block("[!]", "Cep,nr — Energie non renouvelable excessive",
+                                "Privilegier des energies decarbonees (PAC, solaire thermique), ameliorer l'isolation et reduire les consommations auxiliaires.",
+                                RED_L, RED)
+        if document.re2020_carbon_emissions and document.re2020_carbon_emissions > seuils.get('re2020_carbon_emissions', 9999):
+            story += reco_block("[!]", "Ic energie — Emissions carbone non conformes",
+                                "Basculer vers des energies renouvelables, remplacer les systemes a combustibles fossiles, optimiser la consommation globale.",
+                                RED_L, RED)
+        if document.re2020_thermal_comfort and document.re2020_thermal_comfort > seuils.get('re2020_thermal_comfort', 9999):
+            story += reco_block("[~]", "DH — Confort d'ete insuffisant",
+                                "Installer des brise-soleils, augmenter l'inertie thermique, prevoir une ventilation nocturne.",
+                                colors.HexColor('#FFFBF0'), GOLD)
     elif norme == 'PEB':
-        if document.peb_espec is not None and document.peb_espec > seuils.get('peb_espec', 9999):
-            story += reco_box("[!]", "Espec — Énergie spécifique non conforme (PEB)",
-                              "Améliorer l'isolation globale, optimiser les systèmes de chauffage et ventilation, recourir aux énergies renouvelables.",
-                              RED_L, RED)
-        if document.peb_u_mur is not None and document.peb_u_mur > seuils.get('peb_u_mur', 9999):
-            story += reco_box("[U]", "U mur — Isolation des parois insuffisante",
-                              "Renforcer l'isolation des murs par l'intérieur ou l'extérieur pour atteindre le coefficient U requis par la réglementation PEB.",
-                              RED_L, RED)
-
+        if document.peb_espec and document.peb_espec > seuils.get('peb_espec', 9999):
+            story += reco_block("[!]", "Espec — Energie specifique non conforme (PEB)",
+                                "Ameliorer l'isolation globale, optimiser les systemes de chauffage et ventilation, recourir aux energies renouvelables.",
+                                RED_L, RED)
+        if document.peb_u_mur and document.peb_u_mur > seuils.get('peb_u_mur', 9999):
+            story += reco_block("[!]", "U mur — Isolation des parois insuffisante",
+                                "Renforcer l'isolation des murs par l'interieur ou l'exterieur pour atteindre le coefficient U requis par la reglementation PEB.",
+                                RED_L, RED)
     elif norme == 'MINERGIE':
-        if document.minergie_qh is not None and document.minergie_qh > seuils.get('minergie_qh', 9999):
-            story += reco_box("[!]", "Qh — Besoins de chaleur trop élevés (Minergie)",
-                              "Améliorer l'isolation de l'enveloppe (murs, toiture, plancher), optimiser les vitrages et réduire les ponts thermiques.",
-                              RED_L, RED)
-        if document.minergie_n50 is not None and document.minergie_n50 > seuils.get('minergie_n50', 9999):
-            story += reco_box("[>]", "n50 — Étanchéité à l'air insuffisante (Minergie)",
-                              "Traiter les points singuliers (passages de réseaux, jonctions menuiseries), mettre en place une membrane d'étanchéité continue.",
-                              RED_L, RED)
-
+        if document.minergie_qh and document.minergie_qh > seuils.get('minergie_qh', 9999):
+            story += reco_block("[!]", "Qh — Besoins de chaleur trop eleves (Minergie)",
+                                "Ameliorer l'isolation de l'enveloppe, optimiser les vitrages et reduire les ponts thermiques.",
+                                RED_L, RED)
+        if document.minergie_n50 and document.minergie_n50 > seuils.get('minergie_n50', 9999):
+            story += reco_block("[!]", "n50 — Etancheite a l'air insuffisante (Minergie)",
+                                "Traiter les points singuliers, mettre en place une membrane d'etancheite continue.",
+                                RED_L, RED)
     elif norme in ('CNEB2015', 'CNEB2020'):
-        if document.cneb_ei is not None and document.cneb_ei > seuils.get('cneb_ei', 9999):
-            story += reco_box("[!]", f"Intensité énergétique non conforme ({norme})",
-                              "Réduire les besoins en chauffage et climatisation, améliorer l'enveloppe thermique, intégrer des systèmes à haute efficacité.",
-                              RED_L, RED)
-
+        if document.cneb_ei and document.cneb_ei > seuils.get('cneb_ei', 9999):
+            story += reco_block("[!]", f"Intensite energetique non conforme ({norme})",
+                                "Reduire les besoins en chauffage et climatisation, ameliorer l'enveloppe thermique, integrer des systemes a haute efficacite.",
+                                RED_L, RED)
     elif norme == 'LENOZ':
-        if document.lenoz_ep is not None and document.lenoz_ep > seuils.get('lenoz_ep', 9999):
-            story += reco_box("[!]", "Énergie primaire non conforme (LENOZ)",
-                              "Optimiser les systèmes énergétiques, intégrer des sources renouvelables et améliorer l'enveloppe thermique du bâtiment.",
-                              RED_L, RED)
+        if document.lenoz_ep and document.lenoz_ep > seuils.get('lenoz_ep', 9999):
+            story += reco_block("[!]", "Energie primaire non conforme (LENOZ)",
+                                "Optimiser les systemes energetiques, integrer des sources renouvelables et ameliorer l'enveloppe thermique.",
+                                RED_L, RED)
 
     # Notes admin
     if document.admin_notes:
-        story += section_header("Notes & observations de l'expert", 5)
-        notes_table = Table([[
-            Paragraph(document.admin_notes.replace('\n', '<br/>'),
-                      s('nt', fontSize=9, textColor=TEXT, leading=14))
+        story += section_title("5", "Notes & observations de l'expert")
+        notes_t = Table([[
+            Paragraph(document.admin_notes.replace('\n','<br/>'),
+                      st('nt', fontSize=9, leading=14))
         ]], colWidths=[W])
-        notes_table.setStyle(TableStyle([
+        notes_t.setStyle(TableStyle([
             ('BACKGROUND',    (0,0),(-1,-1), LGRAY),
             ('LINEBEFORE',    (0,0),(0,-1),  3, GOLD),
             ('TOPPADDING',    (0,0),(-1,-1), 10),
@@ -1227,32 +1260,31 @@ def download_report(request, document_id):
             ('LEFTPADDING',   (0,0),(-1,-1), 12),
             ('RIGHTPADDING',  (0,0),(-1,-1), 12),
         ]))
-        story.append(notes_table)
+        story.append(notes_t)
 
     story.append(PageBreak())
 
-    # ── PAGE 6 : MENTIONS LÉGALES ─────────────────────────
-    story += section_header("Mentions légales & disclaimer", 6)
+    # ── PAGE 6 : MENTIONS LÉGALES ──
+    story += section_title("6", "Mentions legales & disclaimer")
 
-    disclaimer_items = [
+    disc_items = [
         ("Nature du rapport",
-         "Ce rapport est établi sur la base des documents fournis par le client et constitue une analyse documentaire indépendante. Il ne se substitue pas à une attestation officielle de conformité délivrée par un organisme accrédité."),
-        ("Responsabilité",
-         "ConformExpert s'engage à fournir une analyse rigoureuse et objective des documents transmis. La conformité finale du bâtiment relève de la responsabilité du maître d'ouvrage et des professionnels en charge de la construction."),
-        ("Confidentialité",
-         "Ce document est strictement confidentiel et destiné exclusivement au client mentionné en page de couverture. Toute reproduction ou diffusion sans autorisation écrite de ConformExpert est interdite."),
-        ("Réglementations de référence",
-         "RT2012 : Arrêté du 26 octobre 2010 · RE2020 : Décret n°2021-1004 du 29 juillet 2021 · PEB : Directive européenne 2010/31/UE · Minergie / SIA380 : Normes SIA Suisse · CNEB : Code national de l'énergie pour les bâtiments (Canada) · LENOZ : Règlement grand-ducal du 23 juillet 2016 (Luxembourg)"),
+         "Ce rapport est etabli sur la base des documents fournis par le client et constitue une analyse documentaire independante. Il ne se substitue pas a une attestation officielle de conformite delivree par un organisme accredite."),
+        ("Responsabilite",
+         "ConformExpert s'engage a fournir une analyse rigoureuse et objective des documents transmis. La conformite finale du batiment releve de la responsabilite du maitre d'ouvrage et des professionnels en charge de la construction."),
+        ("Confidentialite",
+         "Ce document est strictement confidentiel et destine exclusivement au client mentionne en page de couverture. Toute reproduction ou diffusion sans autorisation ecrite de ConformExpert est interdite."),
+        ("Reglementations",
+         "RT2012 : Arrete du 26 octobre 2010  |  RE2020 : Decret n 2021-1004 du 29 juillet 2021  |  PEB : Directive europeenne 2010/31/UE  |  Minergie / SIA380 : Normes SIA Suisse  |  CNEB : Code national de l'energie pour les batiments (Canada)  |  LENOZ : Reglement grand-ducal du 23 juillet 2016 (Luxembourg)"),
         ("Contact",
-         "ConformExpert · contact@conformexpert.fr · Délai garanti 15 jours ouvrés"),
+         "ConformExpert  ·  contact@conformexpert.fr  ·  Delai garanti 15 jours ouvres"),
     ]
-
-    for title, text in disclaimer_items:
-        disc_table = Table([[
-            Paragraph(title, s('dt', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT)),
-            Paragraph(text,  s('dd', fontSize=8.5, textColor=colors.HexColor('#555555'), leading=13)),
+    for k, v in disc_items:
+        disc_t = Table([[
+            Paragraph(k, st('dk', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT)),
+            Paragraph(v, st('dv', fontSize=8.5, textColor=colors.HexColor('#444455'), leading=13)),
         ]], colWidths=[4*cm, W - 4*cm])
-        disc_table.setStyle(TableStyle([
+        disc_t.setStyle(TableStyle([
             ('BACKGROUND',    (0,0),(-1,-1), LGRAY),
             ('TOPPADDING',    (0,0),(-1,-1), 8),
             ('BOTTOMPADDING', (0,0),(-1,-1), 8),
@@ -1261,31 +1293,21 @@ def download_report(request, document_id):
             ('LINEBELOW',     (0,0),(-1,-1), 0.5, MGRAY),
             ('VALIGN',        (0,0),(-1,-1), 'TOP'),
         ]))
-        story.append(disc_table)
+        story.append(disc_t)
 
-    # ── BUILD ─────────────────────────────────────────────
-    def add_footer(canvas, doc_obj):
-        canvas.saveState()
-        canvas.setFont('Helvetica', 7.5)
-        canvas.setFillColor(MUTED)
-        canvas.drawString(2*cm, 1.2*cm, f"ConformExpert · Analyse indépendante {norme} · {pays_label}")
-        canvas.drawRightString(PAGE_W - 2*cm, 1.2*cm, f"Page {doc_obj.page}")
-        canvas.setStrokeColor(MGRAY)
-        canvas.setLineWidth(0.5)
-        canvas.line(2*cm, 1.5*cm, PAGE_W - 2*cm, 1.5*cm)
-        canvas.restoreState()
-
+    # ── BUILD ──
+    buffer = BytesIO()
     doc_pdf = SimpleDocTemplate(
         buffer, pagesize=A4,
-        leftMargin=2*cm, rightMargin=2*cm,
-        topMargin=2*cm, bottomMargin=2.5*cm,
-        title=f"Rapport ConformExpert – {document.name}"
+        leftMargin=ML, rightMargin=MR,
+        topMargin=MT, bottomMargin=MB,
+        title=f"Rapport ConformExpert - {document.name}"
     )
-    doc_pdf.build(story, onLaterPages=add_footer, onFirstPage=lambda c, d: None)
+    doc_pdf.build(story, onFirstPage=draw_cover, onLaterPages=draw_page)
 
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
-    safe_name = document.name.replace(' ', '_').replace('/', '-')
+    safe_name = document.name.replace(' ','_').replace('/','_')
     response['Content-Disposition'] = f'inline; filename="rapport_{safe_name}.pdf"'
     return response
 
