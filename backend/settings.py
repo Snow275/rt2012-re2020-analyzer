@@ -8,7 +8,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'changez-moi-en-production-utilisez-en
 
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = [
+    "web-production-f6c00.up.railway.app",
+    "conformexpert.cc",
+    "www.conformexpert.cc"
+]
 
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost').split(',')
 
