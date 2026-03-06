@@ -48,7 +48,7 @@ def _send_html_async(sujet, template_name, context, destinataire):
             import sendgrid
             from sendgrid.helpers.mail import Mail, To
             html = render_to_string(f'main/emails/{template_name}', context)
-            sg = sendgrid.SendGridAPIClient(api_key=django_settings.SENDGRID_API_KEY)
+            sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
             message = Mail(
                 from_email=django_settings.DEFAULT_FROM_EMAIL,
                 to_emails=destinataire,
