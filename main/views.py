@@ -326,7 +326,7 @@ def home(request):
 
     compliant_count = sum(
         1 for doc in documents
-        if doc.rt2012_is_conform is True or doc.re2020_is_conform is True
+        if doc.is_conform is True
     )
     compliance_rate = round((compliant_count / total_projects * 100), 1) if total_projects else 0
 
@@ -567,18 +567,62 @@ def edit_document(request, doc_id):
         ('en_cours', 'Analyse en cours'),
         ('termine',  'Analyse terminée'),
     ]
-    RT2012_FIELDS = [
-        ('rt2012_bbio',         'Bbio', ''),
-        ('rt2012_cep',          'Cep', 'kWh ep/m².an'),
-        ('rt2012_tic',          'Tic', '°C'),
-        ('rt2012_airtightness', 'Étanchéité', 'm³/h.m²'),
-        ('rt2012_enr',          'ENR', ''),
-    ]
-    RE2020_FIELDS = [
-        ('re2020_energy_efficiency', 'Cep,nr', 'kWh/m².an'),
-        ('re2020_carbon_emissions',  'Ic énergie CO₂', 'kgCO2eq/m².an'),
-        ('re2020_thermal_comfort',   'DH (confort été)', 'DH'),
-    ]
+
+    # Tous les champs éditables par norme
+    ALL_NORME_FIELDS = {
+        'RT2012': [
+            ('rt2012_bbio',         'Bbio', ''),
+            ('rt2012_cep',          'Cep', 'kWh ep/m².an'),
+            ('rt2012_tic',          'Tic', '°C'),
+            ('rt2012_airtightness', 'Étanchéité', 'm³/h.m²'),
+            ('rt2012_enr',          'ENR', ''),
+        ],
+        'RE2020': [
+            ('re2020_energy_efficiency', 'Cep,nr', 'kWh/m².an'),
+            ('re2020_carbon_emissions',  'Ic énergie CO₂', 'kgCO2eq/m².an'),
+            ('re2020_thermal_comfort',   'DH (confort été)', 'DH'),
+        ],
+        'PEB': [
+            ('peb_espec',     'Espec', 'kWh/m².an'),
+            ('peb_ew',        'Ew', ''),
+            ('peb_u_mur',     'U mur', 'W/m².K'),
+            ('peb_u_toit',    'U toit', 'W/m².K'),
+            ('peb_u_plancher','U plancher', 'W/m².K'),
+        ],
+        'MINERGIE': [
+            ('minergie_qh',   'Qh', 'kWh/m².an'),
+            ('minergie_qtot', 'Qtot', 'kWh/m².an'),
+            ('minergie_n50',  'n50', 'h⁻¹'),
+        ],
+        'SIA380': [
+            ('sia380_qh', 'Qh', 'kWh/m².an'),
+        ],
+        'CNEB2015': [
+            ('cneb_ei',          'Intensité énergétique', 'kWh/m².an'),
+            ('cneb_u_mur',       'U mur', 'W/m².K'),
+            ('cneb_u_toit',      'U toit', 'W/m².K'),
+            ('cneb_u_fenetre',   'U fenêtre', 'W/m².K'),
+            ('cneb_infiltration','Infiltration', 'L/s.m²'),
+        ],
+        'CNEB2020': [
+            ('cneb_ei',          'Intensité énergétique', 'kWh/m².an'),
+            ('cneb_u_mur',       'U mur', 'W/m².K'),
+            ('cneb_u_toit',      'U toit', 'W/m².K'),
+            ('cneb_u_fenetre',   'U fenêtre', 'W/m².K'),
+            ('cneb_infiltration','Infiltration', 'L/s.m²'),
+        ],
+        'LENOZ': [
+            ('lenoz_ep',    'Énergie primaire', 'kWh/m².an'),
+            ('lenoz_ew',    'Ew', ''),
+            ('lenoz_u_mur', 'U mur', 'W/m².K'),
+            ('lenoz_u_toit','U toit', 'W/m².K'),
+        ],
+    }
+
+    # Champs pour la norme du dossier courant (pour le template)
+    RT2012_FIELDS = ALL_NORME_FIELDS.get('RT2012', [])
+    RE2020_FIELDS = ALL_NORME_FIELDS.get('RE2020', [])
+    norme_fields  = ALL_NORME_FIELDS.get(document.norme, [])
 
     if request.method == 'POST':
         # Statut
@@ -587,22 +631,25 @@ def edit_document(request, doc_id):
         if new_status in dict(STATUS_CHOICES):
             document.status = new_status
 
-        # Valeurs RT2012
-        for field, _, _ in RT2012_FIELDS:
-            val = request.POST.get(field, '').strip()
-            if val:
-                setattr(document, field, float(val))
+        # Norme (permet de la changer depuis le formulaire)
+        new_norme = request.POST.get('norme', document.norme)
+        if new_norme in ALL_NORME_FIELDS:
+            document.norme = new_norme
 
-        # Valeurs RE2020
-        for field, _, _ in RE2020_FIELDS:
-            val = request.POST.get(field, '').strip()
-            if val:
-                setattr(document, field, float(val))
+        # Sauvegarder TOUS les champs de toutes les normes présents dans le POST
+        for fields in ALL_NORME_FIELDS.values():
+            for field, _, _ in fields:
+                val = request.POST.get(field, '').strip()
+                if val:
+                    try:
+                        setattr(document, field, float(val.replace(',', '.')))
+                    except ValueError:
+                        pass
 
         # Infos client
-        document.client_name = request.POST.get('client_name', '').strip()
+        document.client_name  = request.POST.get('client_name', '').strip()
         document.client_email = request.POST.get('client_email', '').strip()
-        document.admin_notes = request.POST.get('admin_notes', '').strip()
+        document.admin_notes  = request.POST.get('admin_notes', '').strip()
 
         document.save()
 
@@ -631,6 +678,9 @@ def edit_document(request, doc_id):
         'status_choices': STATUS_CHOICES,
         'rt2012_fields': RT2012_FIELDS,
         're2020_fields': RE2020_FIELDS,
+        'norme_fields': norme_fields,
+        'all_norme_fields': ALL_NORME_FIELDS,
+        'norme_choices': Document.NORME_CHOICES,
         'email_steps': [
             ('1', '#60a5fa', 'rgba(59,130,246,.12)', 'Confirmation reception', 'Confirmer la reception du dossier', 'reception'),
             ('2', '#c8a84b', 'rgba(200,168,75,.12)', 'Envoi du devis', "Devis avec bouton d'acceptation", 'devis'),
