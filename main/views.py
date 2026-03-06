@@ -884,32 +884,20 @@ def download_report(request, document_id):
         return [t, Spacer(1, 0.4*cm)]
 
     def reco_box(icon, title, text, bg, border_color):
-        inner = Table([[
-            Paragraph(icon, s('ri', fontSize=14)),
-            Table([[
-                Paragraph(title, s('rt', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT)),
-                Paragraph(text,  s('rb', fontSize=8.5, textColor=colors.HexColor('#555555'), leading=13)),
-            ]], colWidths=[W - 2.5*cm])
-        ]], colWidths=[0.8*cm, W - 1.5*cm])
-        inner.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('RIGHTPADDING', (0,0), (-1,-1), 0),
-            ('TOPPADDING', (0,0), (-1,-1), 0),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ]))
-        outer = Table([[inner]], colWidths=[W])
-        outer.setStyle(TableStyle([
+        data = [
+            [Paragraph(f"<b>{icon} {title}</b>", s('rt', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT))],
+            [Paragraph(text, s('rb', fontSize=8.5, textColor=colors.HexColor('#555555'), leading=14))],
+        ]
+        t = Table(data, colWidths=[W])
+        t.setStyle(TableStyle([
             ('BACKGROUND',    (0,0), (-1,-1), bg),
-            ('LINEAFTER',     (0,0), (0,-1),  3, border_color),
             ('LINEBEFORE',    (0,0), (0,-1),  3, border_color),
-            ('TOPPADDING',    (0,0), (-1,-1), 8),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-            ('LEFTPADDING',   (0,0), (-1,-1), 10),
-            ('RIGHTPADDING',  (0,0), (-1,-1), 10),
-            ('ROUNDEDCORNERS',[4,4,4,4]),
+            ('TOPPADDING',    (0,0), (-1,-1), 7),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 7),
+            ('LEFTPADDING',   (0,0), (-1,-1), 12),
+            ('RIGHTPADDING',  (0,0), (-1,-1), 12),
         ]))
-        return [outer, Spacer(1, 0.3*cm)]
+        return [t, Spacer(1, 0.3*cm)]
 
     # ── PAGE 1 : COUVERTURE ───────────────────────────────
     story = []
@@ -947,10 +935,10 @@ def download_report(request, document_id):
         Spacer(1, 0.8*cm)
     ],[
         Table([[
-            Paragraph(verdict_text,
-                      s('vt', fontName='Helvetica-Bold', fontSize=13,
+            Paragraph(verdict_text.replace("✓","OK").replace("✗","NON").replace("—","-"),
+                      s('vt', fontName='Helvetica-Bold', fontSize=12,
                         textColor=verdict_color, alignment=TA_CENTER))
-        ]], colWidths=[9*cm],
+        ]], colWidths=[12*cm],
             style=TableStyle([
                 ('BACKGROUND',    (0,0),(-1,-1), verdict_bg),
                 ('BOX',           (0,0),(-1,-1), 1.5, verdict_color),
@@ -1051,9 +1039,9 @@ def download_report(request, document_id):
         Table([[
             Paragraph(f'VERDICT — {norme}',
                       s('vbl', fontName='Helvetica-Bold', fontSize=8, textColor=GOLD, characterSpacing=1)),
-            Paragraph(verdict_text,
-                      s('vbv', fontName='Helvetica-Bold', fontSize=16, textColor=WHITE, leading=22)),
-        ]], colWidths=[W - 2*cm]),
+            Paragraph(verdict_text.replace("✓","Conforme").replace("✗","Non Conforme").replace("—","En cours"),
+                      s('vbv', fontName='Helvetica-Bold', fontSize=14, textColor=WHITE, leading=20)),
+        ]], colWidths=[W - 1*cm]),
     ]], colWidths=[W])
     verdict_banner.setStyle(TableStyle([
         ('BACKGROUND',    (0,0),(-1,-1), NAVY),
@@ -1150,77 +1138,77 @@ def download_report(request, document_id):
     story += section_header("Recommandations & points d'attention", 4)
 
     if is_conform is True:
-        story += reco_box("✅", f"Dossier conforme aux exigences {norme}",
+        story += reco_box("[OK]", f"Dossier conforme aux exigences {norme}",
                           "L'ensemble des critères analysés respecte les seuils réglementaires en vigueur. Aucune action corrective n'est requise.",
                           GREEN_L, GREEN)
 
     if is_conform is None:
-        story += reco_box("📋", "Analyse en cours — données incomplètes",
+        story += reco_box("[...]", "Analyse en cours — donnees incompletes",
                           "Les données nécessaires à l'évaluation complète n'ont pas encore été renseignées. Les recommandations seront disponibles une fois l'analyse finalisée.",
                           LGRAY, MUTED)
 
     # Recos par norme
     if norme == 'RT2012':
         if document.rt2012_bbio is not None and document.rt2012_bbio > seuils.get('rt2012_bbio', 9999):
-            story += reco_box("⚠", "Bbio — Besoins bioclimatiques non conformes",
+            story += reco_box("[!]", "Bbio — Besoins bioclimatiques non conformes",
                               "Améliorer l'isolation de l'enveloppe, optimiser l'orientation et les surfaces vitrées, renforcer la compacité du bâtiment.",
                               RED_L, RED)
         if document.rt2012_cep is not None and document.rt2012_cep > seuils.get('rt2012_cep', 9999):
-            story += reco_box("⚠", "Cep — Consommation énergétique non conforme",
+            story += reco_box("[!]", "Cep — Consommation énergétique non conforme",
                               "Optimiser les systèmes de chauffage/climatisation, installer des équipements haute efficacité, intégrer des énergies renouvelables.",
                               RED_L, RED)
         if document.rt2012_tic is not None and document.rt2012_tic > seuils.get('rt2012_tic', 9999):
-            story += reco_box("🌡", "Tic — Température intérieure conventionnelle élevée",
+            story += reco_box("[~]", "Tic — Température intérieure conventionnelle élevée",
                               "Renforcer la protection solaire, améliorer l'inertie thermique, prévoir une ventilation nocturne efficace.",
                               colors.HexColor('#FFFBF0'), GOLD)
         if document.rt2012_airtightness is not None and document.rt2012_airtightness > seuils.get('rt2012_airtightness', 9999):
-            story += reco_box("💨", "Étanchéité à l'air insuffisante",
+            story += reco_box("[>]", "Étanchéité à l'air insuffisante",
                               "Revoir les jonctions et points singuliers de l'enveloppe, traiter les passages de réseaux, réaliser un test d'infiltrométrie.",
                               RED_L, RED)
 
     elif norme == 'RE2020':
         if document.re2020_energy_efficiency is not None and document.re2020_energy_efficiency > seuils.get('re2020_energy_efficiency', 9999):
-            story += reco_box("⚠", "Cep,nr — Énergie non renouvelable excessive",
+            story += reco_box("[!]", "Cep,nr — Énergie non renouvelable excessive",
                               "Privilégier des énergies décarbonées (PAC, solaire thermique), améliorer l'isolation et réduire les consommations auxiliaires.",
                               RED_L, RED)
         if document.re2020_carbon_emissions is not None and document.re2020_carbon_emissions > seuils.get('re2020_carbon_emissions', 9999):
-            story += reco_box("🌍", "Ic énergie — Émissions carbone non conformes",
+            story += reco_box("[CO2]", "Ic énergie — Émissions carbone non conformes",
                               "Basculer vers des énergies renouvelables, remplacer les systèmes à combustibles fossiles, optimiser la consommation globale.",
                               RED_L, RED)
         if document.re2020_thermal_comfort is not None and document.re2020_thermal_comfort > seuils.get('re2020_thermal_comfort', 9999):
-            story += reco_box("🌡", "DH — Confort d'été insuffisant",
+            story += reco_box("[~]", "DH — Confort d'été insuffisant",
                               "Installer des brise-soleils ou débords de toiture, augmenter l'inertie thermique, prévoir une ventilation nocturne.",
                               colors.HexColor('#FFFBF0'), GOLD)
 
     elif norme == 'PEB':
         if document.peb_espec is not None and document.peb_espec > seuils.get('peb_espec', 9999):
-            story += reco_box("⚠", "Espec — Énergie spécifique non conforme (PEB)",
+            story += reco_box("[!]", "Espec — Énergie spécifique non conforme (PEB)",
                               "Améliorer l'isolation globale, optimiser les systèmes de chauffage et ventilation, recourir aux énergies renouvelables.",
                               RED_L, RED)
         if document.peb_u_mur is not None and document.peb_u_mur > seuils.get('peb_u_mur', 9999):
-            story += reco_box("🧱", "U mur — Isolation des parois insuffisante",
+            story += reco_box("[U]", "U mur — Isolation des parois insuffisante",
                               "Renforcer l'isolation des murs par l'intérieur ou l'extérieur pour atteindre le coefficient U requis par la réglementation PEB.",
                               RED_L, RED)
 
     elif norme == 'MINERGIE':
         if document.minergie_qh is not None and document.minergie_qh > seuils.get('minergie_qh', 9999):
-            story += reco_box("⚠", "Qh — Besoins de chaleur trop élevés (Minergie)",
+            story += reco_box("[!]", "Qh — Besoins de chaleur trop élevés (Minergie)",
                               "Améliorer l'isolation de l'enveloppe (murs, toiture, plancher), optimiser les vitrages et réduire les ponts thermiques.",
                               RED_L, RED)
         if document.minergie_n50 is not None and document.minergie_n50 > seuils.get('minergie_n50', 9999):
-            story += reco_box("💨", "n50 — Étanchéité à l'air insuffisante (Minergie)",
+            story += reco_box("[>]", "n50 — Étanchéité à l'air insuffisante (Minergie)",
                               "Traiter les points singuliers (passages de réseaux, jonctions menuiseries), mettre en place une membrane d'étanchéité continue.",
                               RED_L, RED)
 
     elif norme in ('CNEB2015', 'CNEB2020'):
         if document.cneb_ei is not None and document.cneb_ei > seuils.get('cneb_ei', 9999):
-            story += reco_box("⚠", f"Intensité énergétique non conforme ({norme})",
+            story += reco_box("[!]", f"Intensité énergétique non conforme ({norme})",
                               "Réduire les besoins en chauffage et climatisation, améliorer l'enveloppe thermique, intégrer des systèmes à haute efficacité.",
                               RED_L, RED)
 
     elif norme == 'LENOZ':
         if document.lenoz_ep is not None and document.lenoz_ep > seuils.get('lenoz_ep', 9999):
-            story += reco_box("⚠", "Énergie primaire non conforme (LENOZ)",
+            story += reco_box("[!]", "Énergie primaire non conforme (LENOZ)",
                               "Optimiser les systèmes énergétiques, intégrer des sources renouvelables et améliorer l'enveloppe thermique du bâtiment.",
                               RED_L, RED)
 
