@@ -37,7 +37,7 @@ def send_mail_async(sujet, corps, from_email, recipient_list):
 # EMAILS
 # ──────────────────────────────────────────────
 
-SITE_URL = "https://web-production-f6c00.up.railway.app"
+SITE_URL = "https://conformexpert.cc"
 
 
 def _send_html_async(sujet, template_name, context, destinataire):
