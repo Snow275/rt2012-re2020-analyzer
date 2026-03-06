@@ -14,23 +14,25 @@
   .header-meta { text-align: right; font-size: 8pt; color: #666; }
 
   .title-block { background: #0C1929; color: white; padding: 1.2rem 1.5rem; border-radius: 6px; margin-bottom: 1.5rem; }
+  .title-block .badge { font-size: 8pt; color: #C8A84B; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
   .title-block h1 { font-size: 16pt; font-weight: 700; margin-bottom: 4px; }
-  .title-block .subtitle { font-size: 9pt; color: #C8A84B; letter-spacing: 0.05em; text-transform: uppercase; }
   .title-block .meta { font-size: 8.5pt; color: #aaa; margin-top: 0.4rem; }
 
-  .verdicts { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
-  .verdict { flex: 1; padding: 0.8rem 1rem; border-radius: 6px; text-align: center; }
-  .verdict-label { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; color: #555; }
-  .verdict-value { font-size: 13pt; font-weight: 700; }
-  .conforme { background: #e8f8ee; border: 1.5px solid #27c93f; }
-  .conforme .verdict-value { color: #1a9e2e; }
+  /* Verdict unique centré */
+  .verdict-wrap { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+  .verdict { padding: 0.9rem 2.5rem; border-radius: 6px; text-align: center; min-width: 220px; }
+  .verdict-label { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; color: #555; }
+  .verdict-norme { font-size: 11pt; font-weight: 700; margin-bottom: 2px; color: #0C1929; }
+  .verdict-value { font-size: 14pt; font-weight: 700; }
+  .conforme    { background: #e8f8ee; border: 1.5px solid #27c93f; }
+  .conforme .verdict-value    { color: #1a9e2e; }
   .non-conforme { background: #fef0f0; border: 1.5px solid #e53935; }
   .non-conforme .verdict-value { color: #c62828; }
   .na { background: #f5f5f5; border: 1.5px solid #ccc; }
   .na .verdict-value { color: #888; }
 
-  .info-grid { display: flex; gap: 0.8rem; margin-bottom: 1.5rem; }
-  .info-box { flex: 1; background: #f8f8fc; border: 1px solid #e0e0e8; border-radius: 5px; padding: 0.7rem; }
+  .info-grid { display: flex; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .info-box { flex: 1; min-width: 120px; background: #f8f8fc; border: 1px solid #e0e0e8; border-radius: 5px; padding: 0.7rem; }
   .info-box .label { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 3px; }
   .info-box .value { font-size: 10pt; font-weight: 600; color: #0C1929; }
 
@@ -38,19 +40,24 @@
   .section-title { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #C8A84B; border-bottom: 1px solid #e0d4a0; padding-bottom: 4px; margin-bottom: 0.8rem; }
 
   table { width: 100%; border-collapse: collapse; }
-  th { background: #f0f0f5; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: #555; padding: 5px 8px; text-align: left; border-bottom: 1px solid #ddd; }
+  th { background: #0C1929; color: white; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 8px; text-align: left; }
   td { padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 9pt; }
+  tr:nth-child(even) td { background: #f8f8fc; }
   tr:last-child td { border-bottom: none; }
-  .val { font-weight: 600; text-align: right; }
+  .val   { font-weight: 600; text-align: right; }
   .seuil { color: #888; text-align: right; }
-  .ok  { color: #1a9e2e; font-weight: 700; text-align: center; }
-  .nok { color: #c62828; font-weight: 700; text-align: center; }
+  .ok    { color: #1a9e2e; font-weight: 700; text-align: center; }
+  .nok   { color: #c62828; font-weight: 700; text-align: center; }
+  .na-cell { color: #aaa; text-align: center; }
 
   .footer { margin-top: 2rem; padding-top: 0.8rem; border-top: 1px solid #ddd; font-size: 7.5pt; color: #999; display: flex; justify-content: space-between; }
+  .notes-block { background: #f8f8fc; border-left: 3px solid #C8A84B; padding: 0.8rem 1rem; border-radius: 0 5px 5px 0; font-size: 9pt; color: #333; margin-bottom: 1.5rem; }
+  .notes-block .notes-title { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.08em; color: #C8A84B; font-weight: 700; margin-bottom: 4px; }
 </style>
 </head>
 <body>
 
+<!-- ENTÊTE -->
 <div class="header">
   <div class="logo">Conform<span>Expert</span></div>
   <div class="header-meta">
@@ -60,8 +67,9 @@
   </div>
 </div>
 
+<!-- TITRE -->
 <div class="title-block">
-  <div class="subtitle">Analyse thermique indépendante — {{ document.get_building_type_display }} · Zone {{ document.climate_zone }}</div>
+  <div class="badge">Analyse indépendante · {{ document.get_norme_display }} · {{ document.get_pays_display }}</div>
   <h1>{{ document.name }}</h1>
   <div class="meta">
     {% if document.client_name %}Client : {{ document.client_name }}{% if document.client_email %} · {{ document.client_email }}{% endif %} · {% endif %}
@@ -69,26 +77,35 @@
   </div>
 </div>
 
-<div class="verdicts">
-  <div class="verdict {% if document.rt2012_is_conform is None %}na{% elif document.rt2012_is_conform %}conforme{% else %}non-conforme{% endif %}">
-    <div class="verdict-label">RT2012</div>
+<!-- VERDICT GLOBAL -->
+{% with conf=document.is_conform %}
+<div class="verdict-wrap">
+  <div class="verdict {% if conf is None %}na{% elif conf %}conforme{% else %}non-conforme{% endif %}">
+    <div class="verdict-label">Verdict global</div>
+    <div class="verdict-norme">{{ document.norme }}</div>
     <div class="verdict-value">
-      {% if document.rt2012_is_conform is None %}—
-      {% elif document.rt2012_is_conform %}Conforme
-      {% else %}Non conforme{% endif %}
-    </div>
-  </div>
-  <div class="verdict {% if document.re2020_is_conform is None %}na{% elif document.re2020_is_conform %}conforme{% else %}non-conforme{% endif %}">
-    <div class="verdict-label">RE2020</div>
-    <div class="verdict-value">
-      {% if document.re2020_is_conform is None %}—
-      {% elif document.re2020_is_conform %}Conforme
-      {% else %}Non conforme{% endif %}
+      {% if conf is None %}Non évalué
+      {% elif conf %}✓ Conforme
+      {% else %}✗ Non conforme{% endif %}
     </div>
   </div>
 </div>
+{% endwith %}
 
+<!-- INFOS DOSSIER -->
 <div class="info-grid">
+  <div class="info-box">
+    <div class="label">Référence</div>
+    <div class="value">DOC-{{ document.id|stringformat:"04d" }}</div>
+  </div>
+  <div class="info-box">
+    <div class="label">Norme</div>
+    <div class="value">{{ document.norme }}</div>
+  </div>
+  <div class="info-box">
+    <div class="label">Pays</div>
+    <div class="value">{{ document.get_pays_display }}</div>
+  </div>
   <div class="info-box">
     <div class="label">Type de bâtiment</div>
     <div class="value">{{ document.get_building_type_display }}</div>
@@ -101,114 +118,181 @@
     <div class="label">Date de dépôt</div>
     <div class="value">{{ document.upload_date|date:"d/m/Y" }}</div>
   </div>
-  <div class="info-box">
-    <div class="label">Référence</div>
-    <div class="value">DOC-{{ document.id|stringformat:"04d" }}</div>
-  </div>
 </div>
 
-{% if document.rt2012_bbio or document.rt2012_cep or document.rt2012_tic or document.rt2012_airtightness %}
+<!-- ══════════════════════════════════════════
+     SECTION RT2012
+═══════════════════════════════════════════ -->
+{% if document.norme == 'RT2012' %}
+{% if document.rt2012_bbio is not None or document.rt2012_cep is not None or document.rt2012_tic is not None or document.rt2012_airtightness is not None or document.rt2012_enr is not None %}
 <div class="section">
   <div class="section-title">RT2012 — Critères de conformité</div>
   <table>
-    <thead>
-      <tr>
-        <th>Critère</th>
-        <th style="text-align:right">Valeur</th>
-        <th style="text-align:right">Seuil</th>
-        <th style="text-align:center">Résultat</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Critère</th><th style="text-align:right">Valeur</th><th style="text-align:right">Seuil max.</th><th style="text-align:center">Résultat</th></tr></thead>
     <tbody>
       {% if document.rt2012_bbio is not None %}
-      <tr>
-        <td>Bbio (besoins bioclimatiques)</td>
-        <td class="val">{{ document.rt2012_bbio }}</td>
-        <td class="seuil">≤ {% get_seuil "rt2012_bbio" document.building_type document.climate_zone %}</td>
-        <td>{% check_conform document.rt2012_bbio "rt2012_bbio" document.building_type document.climate_zone as c %}{% if c %}<span class="ok">Conforme</span>{% else %}<span class="nok">Non conforme</span>{% endif %}</td>
-      </tr>
-      {% endif %}
+      <tr><td>Bbio (besoins bioclimatiques)</td><td class="val">{{ document.rt2012_bbio }}</td>
+        <td class="seuil">≤ {% get_seuil_norme "rt2012_bbio" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.rt2012_bbio "rt2012_bbio" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
       {% if document.rt2012_cep is not None %}
-      <tr>
-        <td>Cep (consommation énergie primaire)</td>
-        <td class="val">{{ document.rt2012_cep }} kWh ep/m².an</td>
-        <td class="seuil">≤ {% get_seuil "rt2012_cep" document.building_type document.climate_zone %}</td>
-        <td>{% check_conform document.rt2012_cep "rt2012_cep" document.building_type document.climate_zone as c %}{% if c %}<span class="ok">Conforme</span>{% else %}<span class="nok">Non conforme</span>{% endif %}</td>
-      </tr>
-      {% endif %}
+      <tr><td>Cep (consommation énergie primaire)</td><td class="val">{{ document.rt2012_cep }} kWh ep/m².an</td>
+        <td class="seuil">≤ {% get_seuil_norme "rt2012_cep" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.rt2012_cep "rt2012_cep" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
       {% if document.rt2012_tic is not None %}
-      <tr>
-        <td>Tic (température intérieure conventionnelle)</td>
-        <td class="val">{{ document.rt2012_tic }} °C</td>
-        <td class="seuil">≤ {% get_seuil "rt2012_tic" document.building_type document.climate_zone %} °C</td>
-        <td>{% check_conform document.rt2012_tic "rt2012_tic" document.building_type document.climate_zone as c %}{% if c %}<span class="ok">Conforme</span>{% else %}<span class="nok">Non conforme</span>{% endif %}</td>
-      </tr>
-      {% endif %}
+      <tr><td>Tic (température intérieure conventionnelle)</td><td class="val">{{ document.rt2012_tic }} °C</td>
+        <td class="seuil">≤ {% get_seuil_norme "rt2012_tic" document.building_type document.climate_zone document.pays document.norme %} °C</td>
+        <td>{% check_conform_norme document.rt2012_tic "rt2012_tic" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
       {% if document.rt2012_airtightness is not None %}
-      <tr>
-        <td>Etanchéité à l'air</td>
-        <td class="val">{{ document.rt2012_airtightness }} m3/h.m2</td>
-        <td class="seuil">≤ {% get_seuil "rt2012_airtightness" document.building_type document.climate_zone %}</td>
-        <td>{% check_conform document.rt2012_airtightness "rt2012_airtightness" document.building_type document.climate_zone as c %}{% if c %}<span class="ok">Conforme</span>{% else %}<span class="nok">Non conforme</span>{% endif %}</td>
-      </tr>
-      {% endif %}
+      <tr><td>Étanchéité à l'air</td><td class="val">{{ document.rt2012_airtightness }} m³/h.m²</td>
+        <td class="seuil">≤ {% get_seuil_norme "rt2012_airtightness" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.rt2012_airtightness "rt2012_airtightness" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
       {% if document.rt2012_enr is not None %}
-      <tr>
-        <td>ENR (énergies renouvelables)</td>
-        <td class="val">{{ document.rt2012_enr }}</td>
-        <td class="seuil">≥ {% get_seuil "rt2012_enr" document.building_type document.climate_zone %}</td>
-        <td>{% check_conform document.rt2012_enr "rt2012_enr" document.building_type document.climate_zone as c %}{% if c %}<span class="ok">Conforme</span>{% else %}<span class="nok">Non conforme</span>{% endif %}</td>
-      </tr>
-      {% endif %}
+      <tr><td>ENR (énergies renouvelables)</td><td class="val">{{ document.rt2012_enr }}</td>
+        <td class="seuil">≥ {% get_seuil_norme "rt2012_enr" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.rt2012_enr "rt2012_enr" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
     </tbody>
   </table>
 </div>
 {% endif %}
+{% endif %}
 
-{% if document.re2020_energy_efficiency or document.re2020_thermal_comfort or document.re2020_carbon_emissions %}
+<!-- ══════════════════════════════════════════
+     SECTION RE2020
+═══════════════════════════════════════════ -->
+{% if document.norme == 'RE2020' %}
+{% if document.re2020_energy_efficiency is not None or document.re2020_carbon_emissions is not None or document.re2020_thermal_comfort is not None %}
 <div class="section">
   <div class="section-title">RE2020 — Critères de conformité</div>
   <table>
-    <thead>
-      <tr>
-        <th>Critère</th>
-        <th style="text-align:right">Valeur</th>
-        <th style="text-align:right">Seuil</th>
-        <th style="text-align:center">Résultat</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Critère</th><th style="text-align:right">Valeur</th><th style="text-align:right">Seuil max.</th><th style="text-align:center">Résultat</th></tr></thead>
     <tbody>
       {% if document.re2020_energy_efficiency is not None %}
-      <tr>
-        <td>Cep,nr (énergie non renouvelable)</td>
-        <td class="val">{{ document.re2020_energy_efficiency }} kWh/m².an</td>
-        <td class="seuil">≤ {% get_seuil "re2020_energy_efficiency" document.building_type document.climate_zone %}</td>
-        <td>{% check_conform document.re2020_energy_efficiency "re2020_energy_efficiency" document.building_type document.climate_zone as c %}{% if c %}<span class="ok">Conforme</span>{% else %}<span class="nok">Non conforme</span>{% endif %}</td>
-      </tr>
-      {% endif %}
+      <tr><td>Cep,nr (énergie non renouvelable)</td><td class="val">{{ document.re2020_energy_efficiency }} kWh/m².an</td>
+        <td class="seuil">≤ {% get_seuil_norme "re2020_energy_efficiency" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.re2020_energy_efficiency "re2020_energy_efficiency" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
       {% if document.re2020_carbon_emissions is not None %}
-      <tr>
-        <td>Ic énergie (émissions CO2 exploitation)</td>
-        <td class="val">{{ document.re2020_carbon_emissions }} kgCO2eq/m².an</td>
-        <td class="seuil">≤ {% get_seuil "re2020_carbon_emissions" document.building_type document.climate_zone %}</td>
-        <td>{% check_conform document.re2020_carbon_emissions "re2020_carbon_emissions" document.building_type document.climate_zone as c %}{% if c %}<span class="ok">Conforme</span>{% else %}<span class="nok">Non conforme</span>{% endif %}</td>
-      </tr>
-      {% endif %}
+      <tr><td>Ic énergie (émissions CO₂ exploitation)</td><td class="val">{{ document.re2020_carbon_emissions }} kgCO2eq/m².an</td>
+        <td class="seuil">≤ {% get_seuil_norme "re2020_carbon_emissions" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.re2020_carbon_emissions "re2020_carbon_emissions" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
       {% if document.re2020_thermal_comfort is not None %}
-      <tr>
-        <td>DH (degrés-heures — confort été)</td>
-        <td class="val">{{ document.re2020_thermal_comfort }} DH</td>
-        <td class="seuil">≤ {% get_seuil "re2020_thermal_comfort" document.building_type document.climate_zone %}</td>
-        <td>{% check_conform document.re2020_thermal_comfort "re2020_thermal_comfort" document.building_type document.climate_zone as c %}{% if c %}<span class="ok">Conforme</span>{% else %}<span class="nok">Non conforme</span>{% endif %}</td>
-      </tr>
-      {% endif %}
+      <tr><td>DH (degrés-heures — confort été)</td><td class="val">{{ document.re2020_thermal_comfort }} DH</td>
+        <td class="seuil">≤ {% get_seuil_norme "re2020_thermal_comfort" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.re2020_thermal_comfort "re2020_thermal_comfort" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
     </tbody>
   </table>
 </div>
 {% endif %}
+{% endif %}
 
+<!-- ══════════════════════════════════════════
+     SECTION PEB (Belgique)
+═══════════════════════════════════════════ -->
+{% if document.norme == 'PEB' %}
+{% if document.peb_espec is not None or document.peb_ew is not None or document.peb_u_mur is not None %}
+<div class="section">
+  <div class="section-title">PEB — Critères de performance énergétique (Belgique)</div>
+  <table>
+    <thead><tr><th>Critère</th><th style="text-align:right">Valeur</th><th style="text-align:right">Seuil</th><th style="text-align:center">Résultat</th></tr></thead>
+    <tbody>
+      {% if document.peb_espec is not None %}
+      <tr><td>Espec (énergie spécifique)</td><td class="val">{{ document.peb_espec }} kWh/m².an</td>
+        <td class="seuil">≤ {% get_seuil_norme "peb_espec" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.peb_espec "peb_espec" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
+      {% if document.peb_ew is not None %}
+      <tr><td>Ew (indicateur global)</td><td class="val">{{ document.peb_ew }}</td>
+        <td class="seuil">≤ {% get_seuil_norme "peb_ew" document.building_type document.climate_zone document.pays document.norme %}</td>
+        <td>{% check_conform_norme document.peb_ew "peb_ew" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td>
+      </tr>{% endif %}
+      {% if document.peb_u_mur is not None %}<tr><td>U mur</td><td class="val">{{ document.peb_u_mur }} W/m².K</td><td class="seuil">≤ {% get_seuil_norme "peb_u_mur" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.peb_u_mur "peb_u_mur" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.peb_u_toit is not None %}<tr><td>U toit</td><td class="val">{{ document.peb_u_toit }} W/m².K</td><td class="seuil">≤ {% get_seuil_norme "peb_u_toit" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.peb_u_toit "peb_u_toit" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.peb_u_plancher is not None %}<tr><td>U plancher</td><td class="val">{{ document.peb_u_plancher }} W/m².K</td><td class="seuil">≤ {% get_seuil_norme "peb_u_plancher" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.peb_u_plancher "peb_u_plancher" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- ══════════════════════════════════════════
+     SECTION MINERGIE / SIA380 (Suisse)
+═══════════════════════════════════════════ -->
+{% if document.norme == 'MINERGIE' or document.norme == 'SIA380' %}
+{% if document.minergie_qh is not None or document.minergie_qtot is not None or document.minergie_n50 is not None or document.sia380_qh is not None %}
+<div class="section">
+  <div class="section-title">{{ document.norme }} — Critères de conformité (Suisse)</div>
+  <table>
+    <thead><tr><th>Critère</th><th style="text-align:right">Valeur</th><th style="text-align:right">Seuil</th><th style="text-align:center">Résultat</th></tr></thead>
+    <tbody>
+      {% if document.minergie_qh is not None %}<tr><td>Qh (chaleur de chauffage)</td><td class="val">{{ document.minergie_qh }} kWh/m².an</td><td class="seuil">≤ {% get_seuil_norme "minergie_qh" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.minergie_qh "minergie_qh" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.minergie_qtot is not None %}<tr><td>Qtot (énergie totale)</td><td class="val">{{ document.minergie_qtot }} kWh/m².an</td><td class="seuil">≤ {% get_seuil_norme "minergie_qtot" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.minergie_qtot "minergie_qtot" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.minergie_n50 is not None %}<tr><td>n50 (taux de renouvellement d'air)</td><td class="val">{{ document.minergie_n50 }} h⁻¹</td><td class="seuil">≤ {% get_seuil_norme "minergie_n50" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.minergie_n50 "minergie_n50" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.sia380_qh is not None %}<tr><td>Qh SIA 380 (chaleur de chauffage)</td><td class="val">{{ document.sia380_qh }} kWh/m².an</td><td class="seuil">≤ {% get_seuil_norme "sia380_qh" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.sia380_qh "sia380_qh" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- ══════════════════════════════════════════
+     SECTION CNEB (Canada)
+═══════════════════════════════════════════ -->
+{% if document.norme == 'CNEB2015' or document.norme == 'CNEB2020' %}
+{% if document.cneb_ei is not None or document.cneb_u_mur is not None or document.cneb_u_toit is not None %}
+<div class="section">
+  <div class="section-title">{{ document.norme }} — Critères de conformité (Canada)</div>
+  <table>
+    <thead><tr><th>Critère</th><th style="text-align:right">Valeur</th><th style="text-align:right">Seuil</th><th style="text-align:center">Résultat</th></tr></thead>
+    <tbody>
+      {% if document.cneb_ei is not None %}<tr><td>Intensité énergétique</td><td class="val">{{ document.cneb_ei }} kWh/m².an</td><td class="seuil">≤ {% get_seuil_norme "cneb_ei" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.cneb_ei "cneb_ei" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.cneb_u_mur is not None %}<tr><td>U mur</td><td class="val">{{ document.cneb_u_mur }} W/m².K</td><td class="seuil">≤ {% get_seuil_norme "cneb_u_mur" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.cneb_u_mur "cneb_u_mur" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.cneb_u_toit is not None %}<tr><td>U toit</td><td class="val">{{ document.cneb_u_toit }} W/m².K</td><td class="seuil">≤ {% get_seuil_norme "cneb_u_toit" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.cneb_u_toit "cneb_u_toit" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.cneb_u_fenetre is not None %}<tr><td>U fenêtre</td><td class="val">{{ document.cneb_u_fenetre }} W/m².K</td><td class="seuil">≤ {% get_seuil_norme "cneb_u_fenetre" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.cneb_u_fenetre "cneb_u_fenetre" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.cneb_infiltration is not None %}<tr><td>Infiltration</td><td class="val">{{ document.cneb_infiltration }} L/s.m²</td><td class="seuil">≤ {% get_seuil_norme "cneb_infiltration" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.cneb_infiltration "cneb_infiltration" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- ══════════════════════════════════════════
+     SECTION LENOZ (Luxembourg)
+═══════════════════════════════════════════ -->
+{% if document.norme == 'LENOZ' %}
+{% if document.lenoz_ep is not None or document.lenoz_ew is not None or document.lenoz_u_mur is not None %}
+<div class="section">
+  <div class="section-title">LENOZ — Critères de conformité (Luxembourg)</div>
+  <table>
+    <thead><tr><th>Critère</th><th style="text-align:right">Valeur</th><th style="text-align:right">Seuil</th><th style="text-align:center">Résultat</th></tr></thead>
+    <tbody>
+      {% if document.lenoz_ep is not None %}<tr><td>Énergie primaire</td><td class="val">{{ document.lenoz_ep }} kWh/m².an</td><td class="seuil">≤ {% get_seuil_norme "lenoz_ep" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.lenoz_ep "lenoz_ep" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.lenoz_ew is not None %}<tr><td>Ew (indicateur global)</td><td class="val">{{ document.lenoz_ew }}</td><td class="seuil">≤ {% get_seuil_norme "lenoz_ew" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.lenoz_ew "lenoz_ew" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.lenoz_u_mur is not None %}<tr><td>U mur</td><td class="val">{{ document.lenoz_u_mur }} W/m².K</td><td class="seuil">≤ {% get_seuil_norme "lenoz_u_mur" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.lenoz_u_mur "lenoz_u_mur" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+      {% if document.lenoz_u_toit is not None %}<tr><td>U toit</td><td class="val">{{ document.lenoz_u_toit }} W/m².K</td><td class="seuil">≤ {% get_seuil_norme "lenoz_u_toit" document.building_type document.climate_zone document.pays document.norme %}</td><td>{% check_conform_norme document.lenoz_u_toit "lenoz_u_toit" document.building_type document.climate_zone document.pays document.norme as c %}{% if c %}<span class="ok">✓ Conforme</span>{% else %}<span class="nok">✗ Non conforme</span>{% endif %}</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- NOTES ADMIN -->
+{% if document.admin_notes %}
+<div class="notes-block">
+  <div class="notes-title">Notes & observations</div>
+  {{ document.admin_notes|linebreaksbr }}
+</div>
+{% endif %}
+
+<!-- FOOTER -->
 <div class="footer">
-  <span>ConformExpert — Analyse documentaire indépendante RT2012 / RE2020</span>
+  <span>ConformExpert — Analyse documentaire indépendante · {{ document.norme }} · {{ document.get_pays_display }}</span>
   <span>contact@conformexpert.fr</span>
 </div>
 
