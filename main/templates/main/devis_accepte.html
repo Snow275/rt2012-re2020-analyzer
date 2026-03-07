@@ -1,0 +1,24 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+
+<div class="container" style="text-align:center;padding:80px 20px">
+
+<h1 style="font-family:'Playfair Display',serif">
+Votre devis a été accepté
+</h1>
+
+<p style="margin-top:20px">
+Merci pour votre validation.
+Nous avons bien reçu votre accord pour le devis lié au projet
+<strong>{{ devis.projet_nom }}</strong>.
+</p>
+
+<p style="margin-top:10px">
+Notre équipe va maintenant lancer l'analyse.
+Vous serez informé dès que le rapport sera prêt.
+</p>
+
+</div>
+
+{% endblock %}
