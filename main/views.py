@@ -88,7 +88,7 @@ def send_mail_validation_devis(document, devis=None):
         "email_devis.html",
         {'doc_id': f"{document.id:04d}", 'doc_name': document.name,
          'client_name': document.client_name or '',
-         'accepter_url': f"{SITE_URL}/suivi/{document.tracking_token}/?accepter_devis=1",
+         'accepter_url': f"{SITE_URL}/devis/accepter/{devis.id}/"
          'montant_ht': f"{montant_ht:.2f}", 'tva': f"{tva:.2f}",
          'montant_ttc': f"{montant_ht + tva:.2f}",
          'norme': devis.norme if devis else 'RT2012 / RE2020',
