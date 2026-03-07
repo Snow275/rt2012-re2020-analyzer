@@ -96,6 +96,25 @@ def send_mail_validation_devis(document, devis=None):
         document.client_email,
     )
 
+def accepter_devis(request, devis_id):
+
+    devis = get_object_or_404(Devis, id=devis_id)
+
+    # mise à jour statut
+    devis.status = "accepte"
+    devis.save()
+
+    # notification pour toi
+    send_mail(
+        "Devis accepté",
+        f"Le devis {devis.reference} pour le projet {devis.projet} vient d'être accepté.",
+        settings.DEFAULT_FROM_EMAIL,
+        ["contact@conformexpert.cc"]
+    )
+
+    return render(request, "devis_accepte.html", {
+        "devis": devis
+    })
 
 def send_mail_analyse_commence(document):
     if not document.client_email:
