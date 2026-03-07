@@ -1,24 +1,14 @@
-{% extends 'main/base.html' %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>Devis accepté</title>
+</head>
+<body>
 
-{% block content %}
+<h1>Votre devis a bien été accepté</h1>
 
-<div class="container" style="text-align:center;padding:80px 20px">
+<p>Merci pour votre validation.</p>
+<p>Notre équipe va commencer l’analyse de votre dossier.</p>
 
-<h1 style="font-family:'Playfair Display',serif">
-Votre devis a été accepté
-</h1>
-
-<p style="margin-top:20px">
-Merci pour votre validation.
-Nous avons bien reçu votre accord pour le devis lié au projet
-<strong>{{ devis.projet_nom }}</strong>.
-</p>
-
-<p style="margin-top:10px">
-Notre équipe va maintenant lancer l'analyse.
-Vous serez informé dès que le rapport sera prêt.
-</p>
-
-</div>
-
-{% endblock %}
+</body>
+</html>
