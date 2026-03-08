@@ -100,20 +100,22 @@ def accepter_devis(request, devis_id):
 
     devis = get_object_or_404(Devis, id=devis_id)
 
-    # mise à jour statut
     devis.status = "accepte"
     devis.save()
 
-    # notification pour toi
-    send_mail(
-        "Devis accepté",
-        f"Le devis {devis.reference} pour le projet {devis.projet} vient d'être accepté.",
-        settings.DEFAULT_FROM_EMAIL,
-        ["contact@conformexpert.cc"]
-    )
+    try:
+        send_mail(
+            "Devis accepté",
+            f"Le devis {devis.reference} pour le projet {devis.projet} vient d'être accepté.",
+            settings.DEFAULT_FROM_EMAIL,
+            ["contact@conformexpert.cc"],
+            fail_silently=False
+        )
+    except Exception as e:
+        print("Erreur envoi mail :", e)
 
     return render(request, "main/devis_accepte.html", {
-    "devis": devis
+        "devis": devis
     })
 
 def send_mail_analyse_commence(document):
