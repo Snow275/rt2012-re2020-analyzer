@@ -112,8 +112,8 @@ def accepter_devis(request, devis_id):
         ["contact@conformexpert.cc"]
     )
 
-    return render(request, "devis_accepte.html", {
-        "devis": devis
+    return render(request, "main/devis_accepte.html", {
+    "devis": devis
     })
 
 def send_mail_analyse_commence(document):
