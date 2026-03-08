@@ -100,7 +100,7 @@ def accepter_devis(request, devis_id):
 
     devis = get_object_or_404(Devis, id=devis_id)
 
-    devis.status = "accepte"
+    devis.statut = "accepte"
     devis.save()
 
     try:
