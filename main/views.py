@@ -103,16 +103,17 @@ def accepter_devis(request, devis_id):
     devis.statut = "accepte"
     devis.save()
 
-    try:
-        send_mail(
-            "Devis accepté",
-            f"Le devis {devis.reference} pour le projet {devis.projet} vient d'être accepté.",
-            settings.DEFAULT_FROM_EMAIL,
-            ["contact@conformexpert.cc"],
-            fail_silently=False
-        )
-    except Exception as e:
-        print("Erreur envoi mail :", e)
+    # notification admin
+    _send_html_async(
+        "Devis accepté",
+        "email_notification_admin.html",
+        {
+            "client": devis.client_nom,
+            "projet": devis.projet_nom,
+            "montant": devis.montant,
+        },
+        "contact@conformexpert.cc"
+    )
 
     return render(request, "main/devis_accepte.html", {
         "devis": devis
