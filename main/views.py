@@ -127,6 +127,30 @@ def accepter_devis(request, devis_id):
         "devis": devis
     })
 
+def refuser_devis(request, devis_id):
+
+    devis = get_object_or_404(Devis, id=devis_id)
+
+    if devis.statut != "refuse":
+        devis.statut = "refuse"
+        devis.save()
+
+        _send_html_async(
+            "Devis refusé",
+            "email_notification_admin.html",
+            {
+                "client": devis.client_nom,
+                "projet": devis.projet_nom,
+                "montant": devis.montant,
+                "status": "refusé"
+            },
+            "contact@conformexpert.cc"
+        )
+
+    return render(request, "main/devis_refuse.html", {
+        "devis": devis
+    })
+
 def send_mail_analyse_commence(document):
     if not document.client_email:
         return
