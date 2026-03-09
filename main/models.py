@@ -4,6 +4,12 @@ class Standard(models.Model):
     TYPE_CHOICES = (
         ("RE2020", "RE2020"),
         ("RT2012", "RT2012"),
+        ('PEB','PEB'),
+        ('Minergie','Minergie'),
+        ('SIA 380','SIA 380'),
+        ('CNEB 2015','CNEB 2015'),
+        ('CNEB 2020','CNEB 2020'),
+        ('Lenoz','Lenoz'),
     )
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
@@ -187,7 +193,7 @@ class Devis(models.Model):
     # Projet
     projet_nom   = models.CharField(max_length=255, blank=True, default='')
     type_batiment = models.CharField(max_length=20, choices=TYPE_CHOICES, default='maison')
-    norme        = models.CharField(max_length=20, choices=[('RT2012','RT2012'),('RE2020','RE2020'),('Les deux','Les deux')], default='RE2020')
+    norme = models.CharField(max_length=50, choices=[('RE2020','RE2020'), ('RT2012','RT2012'), ('Les deux','Les deux'), ('PEB','PEB'), ('Minergie','Minergie'), ('SIA 380','SIA 380'), ('CNEB 2015','CNEB 2015'), ('CNEB 2020','CNEB 2020'), ('Lenoz','Lenoz')])
 
     # Devis
     montant      = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
