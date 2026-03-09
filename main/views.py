@@ -100,20 +100,28 @@ def accepter_devis(request, devis_id):
 
     devis = get_object_or_404(Devis, id=devis_id)
 
-    devis.statut = "accepte"
-    devis.save()
+    # éviter double clic
+    if devis.statut != "accepte":
+        devis.statut = "accepte"
+        devis.save()
 
-    # notification admin
-    _send_html_async(
-        "Devis accepté",
-        "email_notification_admin.html",
-        {
-            "client": devis.client_nom,
-            "projet": devis.projet_nom,
-            "montant": devis.montant,
-        },
-        "contact@conformexpert.cc"
-    )
+        # si un dossier est lié → passer en analyse
+        if devis.document:
+            devis.document.status = "en_cours"
+            devis.document.save()
+
+        # notification admin
+        _send_html_async(
+            "Devis accepté",
+            "email_notification_admin.html",
+            {
+                "client": devis.client_nom,
+                "projet": devis.projet_nom,
+                "montant": devis.montant,
+                "reference": f"DEV-{devis.id:04d}",
+            },
+            "contact@conformexpert.cc"
+        )
 
     return render(request, "main/devis_accepte.html", {
         "devis": devis
