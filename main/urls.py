@@ -35,6 +35,7 @@ urlpatterns = [
     path('devis/<int:devis_id>/editer/', views.devis_edit, name='devis_edit'),
     path('devis/<int:devis_id>/supprimer/', views.devis_delete, name='devis_delete'),
     path("devis/accepter/<int:devis_id>/", views.accepter_devis, name="accepter_devis"),
+    path("devis/refuser/<int:devis_id>/", views.refuser_devis, name="refuser_devis"),
 
     # ── API ─────────────────────────────────────────
     path('api/documents/', views.api_document_list, name='api_document_list'),
