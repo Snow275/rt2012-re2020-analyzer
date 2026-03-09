@@ -81,18 +81,27 @@ def send_mail_reception(document):
 def send_mail_validation_devis(document, devis=None):
     if not document.client_email:
         return
+
     montant_ht = float(devis.montant) if devis and devis.montant else 0
     tva = round(montant_ht * 0.20, 2)
+
     _send_html_async(
         f"[ConformExpert] Votre devis — {document.name}",
         "email_devis.html",
-        {'doc_id': f"{document.id:04d}", 'doc_name': document.name,
-         'client_name': document.client_name or '',
-         'accepter_url': f"{SITE_URL}/devis/accepter/{devis.id}/",
-         'montant_ht': f"{montant_ht:.2f}", 'tva': f"{tva:.2f}",
-         'montant_ttc': f"{montant_ht + tva:.2f}",
-         'norme': devis.norme if devis else 'RT2012 / RE2020',
-         'notes': devis.notes if devis else ''},
+        {
+            'doc_id': f"{document.id:04d}",
+            'doc_name': document.name,
+            'client_name': document.client_name or '',
+
+            'accepter_url': f"{SITE_URL}/devis/accepter/{devis.id}/",
+            'refuser_url': f"{SITE_URL}/devis/refuser/{devis.id}/",
+
+            'montant_ht': f"{montant_ht:.2f}",
+            'tva': f"{tva:.2f}",
+            'montant_ttc': f"{montant_ht + tva:.2f}",
+            'norme': devis.norme if devis else 'RT2012 / RE2020',
+            'notes': devis.notes if devis else ''
+        },
         document.client_email,
     )
 
