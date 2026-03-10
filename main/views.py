@@ -307,7 +307,7 @@ Texte du document :
 {text[:8000]}"""
 
             payload = json.dumps({
-                "model": "claude-sonnet-4-20250514",
+                "model": "claude-sonnet-4-5",
                 "max_tokens": 1000,
                 "messages": [{"role": "user", "content": prompt}]
             }).encode('utf-8')
@@ -714,7 +714,7 @@ Si tout est à jour, "modifications" sera [] et "a_jour" sera true."""
 
     try:
         payload = json.dumps({
-            "model": "claude-sonnet-4-20250514",
+            "model": "claude-sonnet-4-5",
             "max_tokens": 1500,
             "messages": [{"role": "user", "content": prompt}]
         }).encode('utf-8')
