@@ -1,6 +1,74 @@
 {% extends 'main/base.html' %}
 {% load conformity_tags %}
-{% block title %}Paramètres{% endblock %}
+{% block title %}Paramètres<script>
+function verifierSeuils(norme) {
+  const btnText = document.getElementById('btn-text-' + norme);
+  const btnIcon = document.getElementById('btn-icon-' + norme);
+  const btn     = document.getElementById('btn-' + norme);
+  const result  = document.getElementById('result-' + norme);
+
+  btnText.textContent = 'Vérification en cours…';
+  btnIcon.textContent = '⏳';
+  btn.disabled = true;
+  result.style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('norme', norme);
+  formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+  fetch('/verifier-seuils/', { method: 'POST', body: formData })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false;
+    btnIcon.textContent = '🔍';
+    btnText.textContent = 'Vérifier avec Claude';
+
+    if (data.error) {
+      result.style.cssText = 'display:block;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;background:rgba(255,69,58,.08);border:1px solid rgba(255,69,58,.2);color:#FF453A';
+      result.innerHTML = '⚠️ ' + data.error;
+      return;
+    }
+
+    const r = data.resultat;
+    const ok = r.a_jour;
+
+    result.style.cssText = ok
+      ? 'display:block;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;line-height:1.6;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.15)'
+      : 'display:block;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;line-height:1.6;background:rgba(229,169,58,.06);border:1px solid rgba(229,169,58,.2)';
+
+    let html = `<div style="font-weight:600;margin-bottom:.4rem;color:${ok ? '#27C93F' : '#E5A93A'}">${ok ? '✓ Seuils à jour' : '⚠ Modifications détectées'}</div>`;
+    html += `<div style="color:var(--gray-2);margin-bottom:.6rem">${r.resume}</div>`;
+
+    if (r.modifications && r.modifications.length > 0) {
+      html += '<div style="display:flex;flex-direction:column;gap:.4rem;margin-top:.6rem">';
+      r.modifications.forEach(m => {
+        html += `<div style="padding:.5rem .7rem;background:rgba(0,0,0,.2);border-radius:6px">
+          <span style="color:var(--gray-2)">${m.critere}</span>
+          <span style="color:var(--muted);margin:0 .4rem">·</span>
+          <span style="font-family:monospace;color:#FF453A;text-decoration:line-through">${m.valeur_actuelle}</span>
+          <span style="margin:0 .4rem">→</span>
+          <span style="font-family:monospace;color:#27C93F">${m.valeur_officielle}</span>
+          ${m.commentaire ? `<div style="font-size:.76rem;color:var(--muted);margin-top:.2rem">${m.commentaire}</div>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+    }
+
+    if (r.source) html += `<div style="margin-top:.6rem;font-size:.75rem;color:var(--muted)">📋 ${r.source}</div>`;
+    if (r.date_derniere_mise_a_jour) html += `<div style="font-size:.75rem;color:var(--muted)">📅 Mise à jour : ${r.date_derniere_mise_a_jour}</div>`;
+
+    result.innerHTML = html;
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btnIcon.textContent = '🔍';
+    btnText.textContent = 'Vérifier avec Claude';
+    result.style.cssText = 'display:block;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;background:rgba(255,69,58,.08);border:1px solid rgba(255,69,58,.2);color:#FF453A';
+    result.innerHTML = '⚠️ Erreur : ' + err.message;
+  });
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -27,7 +95,7 @@
           <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:0">{{ norme_label }}</h3>
         </div>
         <div style="padding:1.4rem 1.8rem">
-          <div style="display:flex;flex-direction:column;gap:.6rem">
+          <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem">
             {% for label, val, unit in fields_seuils %}
             <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--navy-3);border-radius:6px">
               <span style="font-size:.82rem;color:var(--gray-2)">{{ label }}{% if unit %} <span style="font-size:.7rem;color:var(--muted)">({{ unit }})</span>{% endif %}</span>
@@ -35,6 +103,19 @@
             </div>
             {% endfor %}
           </div>
+
+          <!-- Bouton vérification Claude -->
+          <button
+            onclick="verifierSeuils('{{ norme_code }}')"
+            id="btn-{{ norme_code }}"
+            style="width:100%;padding:.6rem 1rem;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);color:var(--gold);border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:500;display:flex;align-items:center;justify-content:center;gap:.5rem"
+            onmouseover="this.style.background='rgba(200,168,75,.15)'"
+            onmouseout="this.style.background='rgba(200,168,75,.08)'">
+            <span id="btn-icon-{{ norme_code }}">🔍</span>
+            <span id="btn-text-{{ norme_code }}">Vérifier avec Claude</span>
+          </button>
+          <div id="result-{{ norme_code }}" style="display:none;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;line-height:1.6"></div>
+
         </div>
       </div>
       {% endfor %}
