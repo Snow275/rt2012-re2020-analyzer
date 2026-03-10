@@ -6,7 +6,13 @@
   <div class="ph-inner">
     <span class="s-label">Suivi de dossier</span>
     <h1>{{ document.name }}</h1>
-    <p>Référence : DOC-{{ document.id|stringformat:"04d" }} · Reçu le {{ document.upload_date|date:"d F Y" }}</p>
+    <p>
+      {% if document.date_debut_analyse %}
+        Délai : <span style="color:var(--gold);font-weight:500">{{ document.date_livraison|date:"d M Y" }}</span>
+      {% else %}
+        Reçu le {{ document.upload_date|date:"d M" }}
+      {% endif %}
+    </p>
   </div>
 </div>
 
@@ -32,11 +38,17 @@
           <div>
             <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-1);margin-bottom:.3rem">Statut actuel</div>
             {% if document.status == 'recu' %}
-              <span class="badge badge-gray" style="font-size:.88rem;padding:.4rem 1rem">📥 Dossier reçu</span>
+              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(136,150,164,.12);border:1px solid rgba(136,150,164,.25);color:#C2CDD6;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">
+                📥 Dossier reçu
+              </span>
             {% elif document.status == 'en_cours' %}
-              <span class="badge badge-warning" style="font-size:.88rem;padding:.4rem 1rem">🔍 Analyse en cours</span>
+              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(229,169,58,.12);border:1px solid rgba(229,169,58,.3);color:#E5A93A;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">
+                🔍 En cours
+              </span>
             {% else %}
-              <span class="badge badge-success" style="font-size:.88rem;padding:.4rem 1rem">✓ Analyse terminée</span>
+              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(39,201,63,.12);border:1px solid rgba(39,201,63,.3);color:#27C93F;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">
+                ✓ Analyse terminée
+              </span>
             {% endif %}
           </div>
           <div style="text-align:right">
@@ -128,27 +140,15 @@
       {% if document.status == 'termine' %}
       <div class="card" style="padding:2rem;border-color:rgba(200,168,75,.2)">
         <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem">Résumé de l'analyse</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-          <div style="background:var(--navy-3);border-radius:8px;padding:1.2rem;text-align:center">
-            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">RT2012</div>
-            {% if document.rt2012_is_conform is None %}
-              <span style="color:var(--muted);font-size:.85rem">Non analysé</span>
-            {% elif document.rt2012_is_conform %}
-              <span class="badge badge-success">✓ Conforme</span>
-            {% else %}
-              <span class="badge badge-danger">✗ Non conforme</span>
-            {% endif %}
-          </div>
-          <div style="background:var(--navy-3);border-radius:8px;padding:1.2rem;text-align:center">
-            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">RE2020</div>
-            {% if document.re2020_is_conform is None %}
-              <span style="color:var(--muted);font-size:.85rem">Non analysé</span>
-            {% elif document.re2020_is_conform %}
-              <span class="badge badge-success">✓ Conforme</span>
-            {% else %}
-              <span class="badge badge-danger">✗ Non conforme</span>
-            {% endif %}
-          </div>
+        <div style="background:var(--navy-3);border-radius:8px;padding:1.2rem;text-align:center">
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">{{ document.norme }}</div>
+          {% if document.is_conform is None %}
+            <span style="color:var(--muted);font-size:.85rem">Non analysé</span>
+          {% elif document.is_conform %}
+            <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(39,201,63,.12);border:1px solid rgba(39,201,63,.3);color:#27C93F;font-size:.85rem;font-weight:500;padding:.3rem .9rem;border-radius:50px">✓ Conforme</span>
+          {% else %}
+            <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,69,58,.12);border:1px solid rgba(255,69,58,.3);color:#FF453A;font-size:.85rem;font-weight:500;padding:.3rem .9rem;border-radius:50px">✗ Non conforme</span>
+          {% endif %}
         </div>
       </div>
       {% else %}
