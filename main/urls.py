@@ -21,6 +21,7 @@ urlpatterns = [
     path('historique/', views.history, name='history'),
     path('parametres/', views.settings_view, name='settings'),
     path('parametres/re2020/', views.update_re2020, name='update_re2020'),
+    path('verifier-seuils/', views.verifier_seuils, name='verifier_seuils'),
     path('dossier/<int:doc_id>/editer/', views.edit_document, name='edit_document'),
     path('dossier/<int:doc_id>/email/<str:email_type>/', views.send_email_manual, name='send_email_manual'),
     path('dossier/<int:doc_id>/upload-rapport/', views.upload_rapport_pdf, name='upload_rapport_pdf'),
