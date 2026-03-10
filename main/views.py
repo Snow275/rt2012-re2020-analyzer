@@ -646,6 +646,7 @@ def update_re2020(request):
     return redirect('settings')
 
 
+@csrf_exempt
 def verifier_seuils(request):
     import json, os, urllib.request, urllib.error
 
