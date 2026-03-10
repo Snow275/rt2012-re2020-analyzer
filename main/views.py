@@ -734,7 +734,12 @@ Si tout est à jour, "modifications" sera [] et "a_jour" sera true."""
             raw = result['content'][0]['text'].strip().replace('```json','').replace('```','').strip()
             return JsonResponse({'success': True, 'norme': norme, 'resultat': json.loads(raw)})
 
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8')
+        print(f"ANTHROPIC API ERROR {e.code}: {body}")
+        return JsonResponse({'error': f'API {e.code}: {body}'}, status=500)
     except Exception as e:
+        print(f"VERIFIER_SEUILS ERROR: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 
