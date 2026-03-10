@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0004_initial'),
+        ('main', '0003_multi_pays'),  
     ]
 
     operations = [
