@@ -254,78 +254,111 @@ def extract_text_from_pdf(upload_path):
     return text
 
 
-def parse_pdf_text(text):
+def parse_pdf_text(text, norme=None):
     """
-    Extrait les valeurs numériques du texte PDF selon la norme détectée.
-    Supporte : RT2012, RE2020, PEB, MINERGIE, SIA380, CNEB2015/2020, LENOZ.
-    Chaque pattern cherche sur tout le texte avec des variantes souples.
+    Extrait les valeurs thermiques du texte PDF via l'API Claude.
+    Fallback sur regex si l'API est indisponible.
     """
-    data = {}
-    t = text  # on cherche sur tout le texte
+    import json
+    import os
+    import urllib.request
 
-    # ── FRANCE RT2012 ──────────────────────────────────────
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+
+    if ANTHROPIC_API_KEY:
+        try:
+            prompt = f"""Tu es un expert en réglementation thermique. Voici le texte extrait d'un document thermique (rapport STD, DPE, notice, attestation RT/RE).
+
+Extrais UNIQUEMENT les valeurs numériques suivantes si elles sont présentes dans le texte.
+Réponds UNIQUEMENT en JSON valide, sans explication, sans markdown.
+
+Valeurs à extraire :
+- rt2012_bbio (Bbio)
+- rt2012_cep (Cep)
+- rt2012_tic (Tic)
+- rt2012_airtightness (étanchéité à l'air / perméabilité)
+- rt2012_enr (ENR)
+- re2020_energy_efficiency (Cep,nr)
+- re2020_thermal_comfort (DH degrés-heures)
+- re2020_carbon_emissions (Ic énergie / émissions CO2)
+- peb_espec (Espec)
+- peb_ew (Ew)
+- peb_u_mur (U mur)
+- peb_u_toit (U toit)
+- peb_u_plancher (U plancher)
+- minergie_qh (Qh chaleur)
+- minergie_qtot (Qtot)
+- minergie_n50 (n50)
+- sia380_qh (Qh SIA)
+- cneb_ei (intensité énergétique)
+- cneb_u_mur
+- cneb_u_toit
+- cneb_u_fenetre
+- cneb_infiltration
+- lenoz_ep (énergie primaire)
+- lenoz_ew
+- lenoz_u_mur
+- lenoz_u_toit
+
+Si une valeur n'est pas trouvée, ne l'inclus pas dans le JSON.
+Exemple de réponse : {{"rt2012_bbio": 45.2, "rt2012_cep": 72.0}}
+
+Texte du document :
+{text[:8000]}"""
+
+            payload = json.dumps({
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 1000,
+                "messages": [{"role": "user", "content": prompt}]
+            }).encode('utf-8')
+
+            req = urllib.request.Request(
+                "https://api.anthropic.com/v1/messages",
+                data=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": ANTHROPIC_API_KEY,
+                    "anthropic-version": "2023-06-01",
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                result = json.loads(resp.read().decode('utf-8'))
+                raw = result['content'][0]['text'].strip()
+                # Nettoyer éventuels backticks
+                raw = raw.replace('```json', '').replace('```', '').strip()
+                data = json.loads(raw)
+                # S'assurer que toutes les valeurs sont des floats
+                return {k: float(v) for k, v in data.items() if v is not None}
+
+        except Exception as e:
+            print(f"Erreur API Claude, fallback regex: {e}")
+
+    # ── FALLBACK REGEX ─────────────────────────────────────
+    data = {}
+    t = text
+
     for pattern, key in [
         (r'Bbio\s*[=:]\s*([\d.,]+)',        'rt2012_bbio'),
         (r'Cep\s*[=:]\s*([\d.,]+)',         'rt2012_cep'),
         (r'Tic\s*[=:]\s*([\d.,]+)',         'rt2012_tic'),
-        (r'[Ee]tanch[e\xe9]it[e\xe9]\s*[=:]\s*([\d.,]+)', 'rt2012_airtightness'),
+        (r'[Ee]tanch[eé]it[eé]\s*[=:]\s*([\d.,]+)', 'rt2012_airtightness'),
         (r'ENR\s*[=:]\s*([\d.,]+)',         'rt2012_enr'),
-    ]:
-        m = re.search(pattern, t, re.IGNORECASE)
-        if m:
-            data[key] = float(m.group(1).replace(',', '.'))
-
-    # ── FRANCE RE2020 ──────────────────────────────────────
-    for pattern, key in [
-        (r'Cep,?nr\s*[=:]\s*([\d.,]+)',             're2020_energy_efficiency'),
-        (r'DH\s*[=:]\s*([\d.,]+)',                  're2020_thermal_comfort'),
+        (r'Cep,?nr\s*[=:]\s*([\d.,]+)',     're2020_energy_efficiency'),
+        (r'DH\s*[=:]\s*([\d.,]+)',          're2020_thermal_comfort'),
         (r'Ic.{0,10}[ée]nergie\s*[=:]\s*([\d.,]+)', 're2020_carbon_emissions'),
-        (r'Ic.{0,10}construction\s*[=:]\s*([\d.,]+)','re2020_ic_construction'),
-    ]:
-        m = re.search(pattern, t, re.IGNORECASE)
-        if m:
-            data[key] = float(m.group(1).replace(',', '.'))
-
-    # ── BELGIQUE PEB ───────────────────────────────────────
-    for pattern, key in [
-        (r'Espec\s*[=:]\s*([\d.,]+)',   'peb_espec'),
-        (r'\bEw\b\s*[=:]\s*([\d.,]+)', 'peb_ew'),
-        (r'U\s*mur\s*[=:]\s*([\d.,]+)', 'peb_u_mur'),
-        (r'U\s*toit\s*[=:]\s*([\d.,]+)','peb_u_toit'),
+        (r'Espec\s*[=:]\s*([\d.,]+)',       'peb_espec'),
+        (r'\bEw\b\s*[=:]\s*([\d.,]+)',    'peb_ew'),
+        (r'U\s*mur\s*[=:]\s*([\d.,]+)',    'peb_u_mur'),
+        (r'U\s*toit\s*[=:]\s*([\d.,]+)',   'peb_u_toit'),
         (r'U\s*plancher\s*[=:]\s*([\d.,]+)','peb_u_plancher'),
-    ]:
-        m = re.search(pattern, t, re.IGNORECASE)
-        if m:
-            data[key] = float(m.group(1).replace(',', '.'))
-
-    # ── SUISSE MINERGIE / SIA380 ───────────────────────────
-    for pattern, key in [
-        (r'Qh\s*[=:]\s*([\d.,]+)',   'minergie_qh'),
-        (r'Qtot\s*[=:]\s*([\d.,]+)', 'minergie_qtot'),
-        (r'n50\s*[=:]\s*([\d.,]+)',  'minergie_n50'),
-    ]:
-        m = re.search(pattern, t, re.IGNORECASE)
-        if m:
-            data[key] = float(m.group(1).replace(',', '.'))
-
-    # ── CANADA CNEB2015 / CNEB2020 ─────────────────────────
-    for pattern, key in [
+        (r'Qh\s*[=:]\s*([\d.,]+)',          'minergie_qh'),
+        (r'Qtot\s*[=:]\s*([\d.,]+)',        'minergie_qtot'),
+        (r'n50\s*[=:]\s*([\d.,]+)',         'minergie_n50'),
         (r'[Ii]ntensit[eé].{0,20}[=:]\s*([\d.,]+)', 'cneb_ei'),
-        (r'U\s*mur\s*[=:]\s*([\d.,]+)',            'cneb_u_mur'),
-        (r'U\s*toit\s*[=:]\s*([\d.,]+)',           'cneb_u_toit'),
         (r'U\s*fen[eê]tre\s*[=:]\s*([\d.,]+)',     'cneb_u_fenetre'),
         (r'[Ii]nfiltration\s*[=:]\s*([\d.,]+)',     'cneb_infiltration'),
-    ]:
-        m = re.search(pattern, t, re.IGNORECASE)
-        if m:
-            data[key] = float(m.group(1).replace(',', '.'))
-
-    # ── LUXEMBOURG LENOZ ───────────────────────────────────
-    for pattern, key in [
         (r'[Ee]nergie\s+primaire\s*[=:]\s*([\d.,]+)', 'lenoz_ep'),
-        (r'\bEw\b\s*[=:]\s*([\d.,]+)',               'lenoz_ew'),
-        (r'U\s*mur\s*[=:]\s*([\d.,]+)',               'lenoz_u_mur'),
-        (r'U\s*toit\s*[=:]\s*([\d.,]+)',              'lenoz_u_toit'),
     ]:
         m = re.search(pattern, t, re.IGNORECASE)
         if m:
