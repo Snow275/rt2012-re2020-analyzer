@@ -1046,7 +1046,9 @@ footer {
     <li><a href="#tarifs">Tarifs</a></li>
     <li><a href="#suivi">Suivi</a></li>
     <li><a href="{% url 'import' %}" class="nav-cta">Déposer un dossier</a></li>
+    {% if user.is_authenticated and user.is_staff %}
     <li style="margin-left:.5rem"><a href="{% url 'home' %}" style="font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gray-2)'">Dashboard</a></li>
+    {% endif %}
 </ul>
 </nav>
 
