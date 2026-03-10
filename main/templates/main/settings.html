@@ -1,6 +1,63 @@
 {% extends 'main/base.html' %}
 {% load conformity_tags %}
-{% block title %}Paramètres<script>
+{% block title %}Paramètres{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="ph-inner">
+    <span class="s-label">Paramètres</span>
+    <h1>Configuration des seuils</h1>
+    <p>Valeurs de référence utilisées pour les analyses de conformité — par pays et norme.</p>
+  </div>
+</div>
+
+<div class="container">
+
+  {% for pays_code, pays_label, normes in seuils_par_pays %}
+  <div style="margin-bottom:2.5rem">
+    <h2 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--gray-1);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem">
+      <span>{{ pays_label }}</span>
+      <span style="display:inline-block;width:32px;height:1px;background:rgba(255,255,255,.1)"></span>
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem">
+      {% for norme_code, norme_label, fields_seuils in normes %}
+      <div class="card fade-up" style="overflow:hidden">
+        <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.05)">
+          <div style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.25rem">Référentiel</div>
+          <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:0">{{ norme_label }}</h3>
+        </div>
+        <div style="padding:1.4rem 1.8rem">
+          <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem">
+            {% for label, val, unit in fields_seuils %}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--navy-3);border-radius:6px">
+              <span style="font-size:.82rem;color:var(--gray-2)">{{ label }}{% if unit %} <span style="font-size:.7rem;color:var(--muted)">({{ unit }})</span>{% endif %}</span>
+              <span style="font-family:monospace;color:var(--gold);font-size:.88rem">{{ val }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Bouton vérification Claude -->
+          <button
+            onclick="verifierSeuils('{{ norme_code }}')"
+            id="btn-{{ norme_code }}"
+            style="width:100%;padding:.6rem 1rem;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);color:var(--gold);border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:500;display:flex;align-items:center;justify-content:center;gap:.5rem"
+            onmouseover="this.style.background='rgba(200,168,75,.15)'"
+            onmouseout="this.style.background='rgba(200,168,75,.08)'">
+            <span id="btn-icon-{{ norme_code }}">🔍</span>
+            <span id="btn-text-{{ norme_code }}">Vérifier avec Claude</span>
+          </button>
+          <div id="result-{{ norme_code }}" style="display:none;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;line-height:1.6"></div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<script>
 function verifierSeuils(norme) {
   const btnText = document.getElementById('btn-text-' + norme);
   const btnIcon = document.getElementById('btn-icon-' + norme);
@@ -68,60 +125,4 @@ function verifierSeuils(norme) {
   });
 }
 </script>
-{% endblock %}
-
-{% block content %}
-<div class="page-header">
-  <div class="ph-inner">
-    <span class="s-label">Paramètres</span>
-    <h1>Configuration des seuils</h1>
-    <p>Valeurs de référence utilisées pour les analyses de conformité — par pays et norme.</p>
-  </div>
-</div>
-
-<div class="container">
-
-  {% for pays_code, pays_label, normes in seuils_par_pays %}
-  <div style="margin-bottom:2.5rem">
-    <h2 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--gray-1);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem">
-      <span>{{ pays_label }}</span>
-      <span style="display:inline-block;width:32px;height:1px;background:rgba(255,255,255,.1)"></span>
-    </h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem">
-      {% for norme_code, norme_label, fields_seuils in normes %}
-      <div class="card fade-up" style="overflow:hidden">
-        <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.05)">
-          <div style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.25rem">Référentiel</div>
-          <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:0">{{ norme_label }}</h3>
-        </div>
-        <div style="padding:1.4rem 1.8rem">
-          <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem">
-            {% for label, val, unit in fields_seuils %}
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--navy-3);border-radius:6px">
-              <span style="font-size:.82rem;color:var(--gray-2)">{{ label }}{% if unit %} <span style="font-size:.7rem;color:var(--muted)">({{ unit }})</span>{% endif %}</span>
-              <span style="font-family:monospace;color:var(--gold);font-size:.88rem">{{ val }}</span>
-            </div>
-            {% endfor %}
-          </div>
-
-          <!-- Bouton vérification Claude -->
-          <button
-            onclick="verifierSeuils('{{ norme_code }}')"
-            id="btn-{{ norme_code }}"
-            style="width:100%;padding:.6rem 1rem;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);color:var(--gold);border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:500;display:flex;align-items:center;justify-content:center;gap:.5rem"
-            onmouseover="this.style.background='rgba(200,168,75,.15)'"
-            onmouseout="this.style.background='rgba(200,168,75,.08)'">
-            <span id="btn-icon-{{ norme_code }}">🔍</span>
-            <span id="btn-text-{{ norme_code }}">Vérifier avec Claude</span>
-          </button>
-          <div id="result-{{ norme_code }}" style="display:none;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;line-height:1.6"></div>
-
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endfor %}
-
-</div>
 {% endblock %}
