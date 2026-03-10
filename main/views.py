@@ -647,6 +647,95 @@ def update_re2020(request):
 
 
 @login_required(login_url='/login/')
+def verifier_seuils(request):
+    import json, os, urllib.request, urllib.error
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode invalide'}, status=405)
+
+    norme = request.POST.get('norme', 'RE2020')
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+
+    if not ANTHROPIC_API_KEY:
+        return JsonResponse({'error': 'Clé API Anthropic manquante — ajoutez ANTHROPIC_API_KEY dans vos variables Railway'}, status=500)
+
+    NORME_CONTEXTE = {
+        'RT2012':   'la réglementation thermique RT 2012 française (arrêté du 26 octobre 2010)',
+        'RE2020':   'la réglementation environnementale RE 2020 française (décret du 29 juillet 2021)',
+        'PEB':      'la performance énergétique des bâtiments PEB en Belgique',
+        'MINERGIE': 'le label Minergie en Suisse',
+        'SIA380':   'la norme SIA 380/1 suisse',
+        'CNEB2015': "le Code National de l'Énergie pour les Bâtiments CNEB 2015 au Canada",
+        'CNEB2020': "le Code National de l'Énergie pour les Bâtiments CNEB 2020 au Canada",
+        'LENOZ':    'le label LENOZ au Luxembourg',
+    }
+
+    VALEURS_ACTUELLES = {
+        'RT2012':   {'Bbio max (maison)': 60, 'Bbio max (collectif)': 80, 'Cep max': 50, 'Tic max H2': 27, 'Étanchéité maison': 0.6, 'ENR min': 1.0},
+        'RE2020':   {'Cep,nr max (maison)': 100, 'DH max H2': 1250, 'Ic énergie max': 160, 'Ic construction max': 640},
+        'PEB':      {'Espec max': 100, 'U mur max': 0.24, 'U toit max': 0.20, 'U plancher max': 0.30},
+        'MINERGIE': {'Qh max (maison)': 60, 'Qtot max': 38, 'n50 max': 0.6},
+        'SIA380':   {'Qh max (maison)': 90},
+        'CNEB2015': {'EI max (maison)': 170, 'U mur max': 0.24, 'U toit max': 0.18, 'U fenêtre max': 1.8, 'Infiltration max': 0.30},
+        'CNEB2020': {'EI max (maison)': 150, 'U mur max': 0.21, 'U toit max': 0.16, 'U fenêtre max': 1.6, 'Infiltration max': 0.25},
+        'LENOZ':    {'EP max (maison)': 90, 'Ew max': 100, 'U mur max': 0.22, 'U toit max': 0.17},
+    }
+
+    valeurs = VALEURS_ACTUELLES.get(norme, {})
+    contexte = NORME_CONTEXTE.get(norme, norme)
+
+    prompt = f"""Tu es un expert en réglementation thermique et énergétique des bâtiments.
+
+Vérifie si les seuils suivants pour {contexte} sont toujours officiellement valides en {__import__('datetime').date.today().year}.
+
+Valeurs actuellement dans notre système :
+{json.dumps(valeurs, ensure_ascii=False, indent=2)}
+
+Réponds UNIQUEMENT en JSON valide avec cette structure exacte, sans markdown ni explication :
+{{
+  "a_jour": true,
+  "date_derniere_mise_a_jour": "mois et année",
+  "modifications": [
+    {{
+      "critere": "nom du critère",
+      "valeur_actuelle": 100,
+      "valeur_officielle": 90,
+      "commentaire": "explication courte"
+    }}
+  ],
+  "resume": "phrase courte résumant le statut",
+  "source": "texte officiel de référence"
+}}
+
+Si tout est à jour, "modifications" sera [] et "a_jour" sera true."""
+
+    try:
+        payload = json.dumps({
+            "model": "claude-sonnet-4-20250514",
+            "max_tokens": 1500,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+            },
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+            raw = result['content'][0]['text'].strip().replace('```json','').replace('```','').strip()
+            return JsonResponse({'success': True, 'norme': norme, 'resultat': json.loads(raw)})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required(login_url='/login/')
 def delete_document(request, doc_id):
     if request.method == 'POST':
         document = get_object_or_404(Document, id=doc_id)
