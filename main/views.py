@@ -646,9 +646,11 @@ def update_re2020(request):
     return redirect('settings')
 
 
-@login_required(login_url='/login/')
 def verifier_seuils(request):
     import json, os, urllib.request, urllib.error
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Session expirée — veuillez vous reconnecter'}, status=401)
 
     if request.method != 'POST':
         return JsonResponse({'error': 'Méthode invalide'}, status=405)
