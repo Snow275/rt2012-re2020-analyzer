@@ -27,6 +27,7 @@ urlpatterns = [
     path('dossier/<int:doc_id>/upload-rapport/', views.upload_rapport_pdf, name='upload_rapport_pdf'),
     path('dossier/<int:doc_id>/rapport-word/', views.download_rapport_word, name='download_rapport_word'),
     path('dossier/<int:doc_id>/supprimer/', views.delete_document, name='delete_document'),
+    path('dossier/<int:doc_id>/rapport-ia/', views.generer_rapport_ia, name='generer_rapport_ia'),
     # Téléchargement rapport admin
     path('download_report/<int:document_id>/', views.download_report, name='download_report_admin'),
 
