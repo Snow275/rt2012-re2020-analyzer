@@ -1514,9 +1514,10 @@ def download_report(request, document_id):
 @login_required(login_url='/login/')
 def generer_rapport_ia(request, doc_id):
     """
-    Lit le PDF uploadé par le client, l'envoie à Claude avec le contexte
-    du dossier (norme, pays, bâtiment, valeurs mesurées) et retourne
-    un rapport structuré en JSON.
+    Analyse le dossier avec Claude.
+    - Si le PDF est disponible sur le disque → envoi en vision PDF (meilleur résultat)
+    - Sinon → fallback sur les valeurs déjà extraites en BDD (Railway perd les fichiers
+      entre déploiements ; ce fallback évite l'erreur "No such file or directory")
     """
     import json, os, base64, urllib.request, urllib.error
 
@@ -1529,14 +1530,16 @@ def generer_rapport_ia(request, doc_id):
     if not ANTHROPIC_API_KEY:
         return JsonResponse({'error': 'Clé API Anthropic manquante (ANTHROPIC_API_KEY)'}, status=500)
 
-    # ── 1. Lire le PDF uploadé par le client ─────────────────────────────────
-    pdf_path = document.upload.path
+    # ── 1. Tenter de lire le PDF (optionnel) ──────────────────────────────────
+    pdf_b64 = None
     try:
-        with open(pdf_path, 'rb') as f:
-            pdf_bytes = f.read()
-        pdf_b64 = base64.standard_b64encode(pdf_bytes).decode('utf-8')
+        if document.upload and document.upload.name:
+            with open(document.upload.path, 'rb') as f:
+                pdf_b64 = base64.standard_b64encode(f.read()).decode('utf-8')
+            print(f"PDF chargé : {document.upload.name}")
     except Exception as e:
-        return JsonResponse({'error': f'Impossible de lire le PDF : {e}'}, status=500)
+        print(f"PDF indisponible (fallback BDD) : {e}")
+        # On continue — le rapport sera généré à partir des valeurs en BDD
 
     # ── 2. Contexte du dossier ────────────────────────────────────────────────
     norme = document.norme
@@ -1546,7 +1549,7 @@ def generer_rapport_ia(request, doc_id):
     zone = document.climate_zone or 'H2'
     ref = f"DOC-{document.id:04d}"
 
-    # Valeurs déjà extraites (si dispo)
+    # Valeurs déjà extraites en BDD
     valeurs_connues = {}
     champs_norme = {
         'RT2012': [
@@ -1591,7 +1594,6 @@ def generer_rapport_ia(request, doc_id):
 
     valeurs_str = '\n'.join([f"  - {k} : {v}" for k, v in valeurs_connues.items()]) or "  (aucune valeur encore saisie)"
 
-    # Seuils réglementaires selon norme
     SEUILS_LABELS = {
         'RT2012': "Bbio ≤ 60 | Cep ≤ 50 kWh ep/m².an | Tic ≤ 27°C | Étanchéité ≤ 0,6 m³/h.m² (maison) ou 1,0 (ERP)",
         'RE2020': "Cep,nr ≤ 100 kWh/m².an | Ic énergie ≤ 160 kgCO2/m².an | DH ≤ 1250 (zone H2)",
@@ -1605,6 +1607,8 @@ def generer_rapport_ia(request, doc_id):
     seuils_str = SEUILS_LABELS.get(norme, "Voir réglementation applicable")
 
     # ── 3. Prompt système ────────────────────────────────────────────────────
+    source_donnees = "le PDF joint ET les valeurs extraites ci-dessous" if pdf_b64 else "les valeurs extraites ci-dessous (PDF non disponible sur le serveur)"
+
     system_prompt = f"""Tu es ConformExpert, un expert en réglementation thermique et énergétique des bâtiments.
 Tu analyses des documents techniques (notices thermiques, attestations, CCTP, études STD) et tu génères des rapports de conformité professionnels, précis et adaptés à la réglementation applicable.
 
@@ -1615,12 +1619,13 @@ Contexte du dossier :
 - Norme applicable : {norme}
 - Pays / Zone : {pays_label} — Zone climatique {zone}
 - Type de bâtiment : {batiment_label}
-- Valeurs déjà extraites :
+- Source des données : {source_donnees}
+- Valeurs extraites :
 {valeurs_str}
 - Seuils réglementaires {norme} :
   {seuils_str}
 
-Tu dois analyser le PDF joint et générer un rapport structuré.
+Tu dois générer un rapport structuré complet.
 Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication, sans balises.
 
 Structure JSON attendue :
@@ -1672,46 +1677,60 @@ Structure JSON attendue :
   "mentions_legales": "Ce rapport est établi sur la base des documents fournis et constitue une analyse documentaire indépendante. Il ne se substitue pas à une attestation officielle de conformité."
 }}
 
-Si une valeur n'est pas trouvable dans le document, utilise les valeurs déjà extraites fournies ci-dessus.
-Si aucune donnée n'est disponible pour un critère, omets ce critère du tableau.
+Si une valeur n'est pas disponible pour un critère, omets ce critère du tableau.
 Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {norme}."""
 
-    # ── 4. Appel API Claude (vision PDF) ─────────────────────────────────────
+    # ── 4. Construction du message Claude ─────────────────────────────────────
+    # Avec PDF → vision document ; sans PDF → analyse textuelle des valeurs BDD
+    if pdf_b64:
+        user_content = [
+            {
+                "type": "document",
+                "source": {
+                    "type": "base64",
+                    "media_type": "application/pdf",
+                    "data": pdf_b64,
+                }
+            },
+            {
+                "type": "text",
+                "text": f"Analyse ce document thermique pour le dossier {ref} ({norme} — {pays_label}) et génère le rapport JSON complet selon les instructions."
+            }
+        ]
+        headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
+    else:
+        user_content = [
+            {
+                "type": "text",
+                "text": (
+                    f"Le PDF original n'est pas disponible sur le serveur. "
+                    f"Génère le rapport JSON complet pour le dossier {ref} ({norme} — {pays_label}) "
+                    f"en te basant exclusivement sur les valeurs extraites et les seuils fournis dans le contexte."
+                )
+            }
+        ]
+        headers_extra = {}
+
+    # ── 5. Appel API Claude ───────────────────────────────────────────────────
     try:
         payload = json.dumps({
             "model": "claude-sonnet-4-5",
             "max_tokens": 4000,
             "system": system_prompt,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "document",
-                            "source": {
-                                "type": "base64",
-                                "media_type": "application/pdf",
-                                "data": pdf_b64,
-                            }
-                        },
-                        {
-                            "type": "text",
-                            "text": f"Analyse ce document thermique pour le dossier {ref} ({norme} — {pays_label}) et génère le rapport JSON complet selon les instructions."
-                        }
-                    ]
-                }
-            ]
+            "messages": [{"role": "user", "content": user_content}]
         }).encode('utf-8')
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+        }
+        headers.update(headers_extra)
 
         req = urllib.request.Request(
             "https://api.anthropic.com/v1/messages",
             data=payload,
-            headers={
-                "Content-Type": "application/json",
-                "x-api-key": ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "anthropic-beta": "pdfs-2024-09-25",
-            },
+            headers=headers,
             method="POST"
         )
 
