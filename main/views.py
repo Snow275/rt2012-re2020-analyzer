@@ -533,6 +533,10 @@ def tracking(request, token):
         'devis_accepte': devis_accepte,
     })
 
+def rapport_ia_client(request, token):
+    document = get_object_or_404(Document, tracking_token=token, status='termine')
+    return render(request, 'main/rapport_ia_client.html', {'document': document})
+
 
 @login_required(login_url='/login/')
 def results(request):
