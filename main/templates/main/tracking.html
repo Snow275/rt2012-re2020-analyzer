@@ -18,7 +18,6 @@
 
 <div class="container">
 
-  <!-- Bannière acceptation devis -->
   {% if devis_accepte %}
   <div style="background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
     <span style="font-size:1.5rem">✅</span>
@@ -38,17 +37,11 @@
           <div>
             <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-1);margin-bottom:.3rem">Statut actuel</div>
             {% if document.status == 'recu' %}
-              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(136,150,164,.12);border:1px solid rgba(136,150,164,.25);color:#C2CDD6;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">
-                📥 Dossier reçu
-              </span>
+              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(136,150,164,.12);border:1px solid rgba(136,150,164,.25);color:#C2CDD6;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">📥 Dossier reçu</span>
             {% elif document.status == 'en_cours' %}
-              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(229,169,58,.12);border:1px solid rgba(229,169,58,.3);color:#E5A93A;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">
-                🔍 En cours
-              </span>
+              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(229,169,58,.12);border:1px solid rgba(229,169,58,.3);color:#E5A93A;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">🔍 En cours</span>
             {% else %}
-              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(39,201,63,.12);border:1px solid rgba(39,201,63,.3);color:#27C93F;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">
-                ✓ Analyse terminée
-              </span>
+              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(39,201,63,.12);border:1px solid rgba(39,201,63,.3);color:#27C93F;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">✓ Analyse terminée</span>
             {% endif %}
           </div>
           <div style="text-align:right">
@@ -57,18 +50,15 @@
           </div>
         </div>
 
-        <!-- Progress bar -->
         <div style="margin-bottom:1.5rem">
           <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.5rem">
-            <span>Avancement</span>
-            <span>{{ progress_pct }}%</span>
+            <span>Avancement</span><span>{{ progress_pct }}%</span>
           </div>
           <div style="height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden">
             <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-lt));width:{{ progress_pct }}%;transition:width .6s ease"></div>
           </div>
         </div>
 
-        <!-- Steps -->
         <div style="display:flex;flex-direction:column;gap:.8rem">
           {% for step_label, step_state in step_list %}
           <div style="display:flex;align-items:center;gap:.8rem">
@@ -81,26 +71,31 @@
             <span style="font-size:.84rem;
               {% if step_state == 'done' %}color:var(--gray-2)
               {% elif step_state == 'active' %}color:var(--white);font-weight:500
-              {% else %}color:var(--muted){% endif %}">
-              {{ step_label }}
-            </span>
+              {% else %}color:var(--muted){% endif %}">{{ step_label }}</span>
           </div>
           {% endfor %}
         </div>
       </div>
 
+      <!-- Boutons si terminé -->
       {% if document.status == 'termine' %}
+
+      <a href="{% url 'rapport_ia_client' document.tracking_token %}"
+        style="display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;padding:.9rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,#C8A84B,#e0c070);color:#0C1929;font-weight:700;font-size:.92rem;text-decoration:none;margin-bottom:.8rem;box-sizing:border-box">
+        🤖 Consulter le rapport IA
+      </a>
+
       {% if document.rapport_pdf %}
-      <a href="{{ document.rapport_pdf.url }}" target="_blank" class="btn btn-gold" style="width:100%;justify-content:center">
+      <a href="{{ document.rapport_pdf.url }}" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:.85rem">
         📄 Télécharger le rapport PDF
       </a>
       {% else %}
-      <a href="{% url 'download_report' document.id %}" target="_blank" class="btn btn-gold" style="width:100%;justify-content:center">
+      <a href="{% url 'download_report' document.id %}" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;font-size:.85rem">
         📄 Télécharger le rapport PDF
       </a>
       {% endif %}
+
       {% endif %}
-      
 
       {% if document.status == 'recu' and not devis_accepte %}
       <div class="card" style="padding:1.5rem;margin-top:1.5rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.2)">
@@ -140,7 +135,7 @@
       {% if document.status == 'termine' %}
       <div class="card" style="padding:2rem;border-color:rgba(200,168,75,.2)">
         <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem">Résumé de l'analyse</h3>
-        <div style="background:var(--navy-3);border-radius:8px;padding:1.2rem;text-align:center">
+        <div style="background:var(--navy-3);border-radius:8px;padding:1.2rem;text-align:center;margin-bottom:1rem">
           <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">{{ document.norme }}</div>
           {% if document.is_conform is None %}
             <span style="color:var(--muted);font-size:.85rem">Non analysé</span>
@@ -150,6 +145,9 @@
             <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,69,58,.12);border:1px solid rgba(255,69,58,.3);color:#FF453A;font-size:.85rem;font-weight:500;padding:.3rem .9rem;border-radius:50px">✗ Non conforme</span>
           {% endif %}
         </div>
+        <p style="font-size:.82rem;color:var(--gray-1);text-align:center;line-height:1.6">
+          Le rapport IA contient l'analyse complète,<br>les recommandations et le plan d'action détaillé.
+        </p>
       </div>
       {% else %}
       <div class="card" style="padding:2rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
