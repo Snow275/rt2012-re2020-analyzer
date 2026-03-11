@@ -1515,7 +1515,6 @@ def download_report(request, document_id):
 # ──────────────────────────────────────────────────────────────────────────────
 
 @csrf_exempt
-@login_required(login_url='/login/')
 def generer_rapport_ia(request, doc_id):
     """
     Analyse le dossier avec Claude.
