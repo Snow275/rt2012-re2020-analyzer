@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.landing, name='landing'),
     path('deposer/', views.import_document, name='import'),
     path('suivi/<str:token>/', views.tracking, name='tracking'),
+    path('suivi/<str:token>/rapport-ia/', views.rapport_ia_client, name='rapport_ia_client'),
     path('contact/', views.contact, name='contact'),
     path('faq/', views.faq, name='faq'),
     # Téléchargement rapport public (via lien de suivi)
