@@ -387,15 +387,16 @@
 
   // Appel au chargement
   fetch(`/dossier/${DOC_ID}/rapport-ia/`, {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': getCsrf(),
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: '',
+    method: 'GET',
   })
-  .then(res => res.json())
-  .then(data => {
+  .then(res => res.json().then(data => ({ status: res.status, data })))
+  .then(({ status, data }) => {
+    $('ia-loading').style.display = 'none';
+    if (status === 404) {
+      $('ia-error').textContent = '⏳ Le rapport IA n'a pas encore été généré pour ce dossier. Il sera disponible prochainement.';
+      $('ia-error').style.display = 'block';
+      return;
+    }
     if (!data.success) throw new Error(data.error || 'Erreur inconnue');
     afficherRapport(data.rapport);
   })
