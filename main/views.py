@@ -1520,32 +1520,38 @@ def download_report(request, document_id):
 @csrf_exempt
 def generer_rapport_ia(request, doc_id):
     """
-    Analyse le dossier avec Claude.
-    - Si le PDF est disponible sur le disque → envoi en vision PDF (meilleur résultat)
-    - Sinon → fallback sur les valeurs déjà extraites en BDD (Railway perd les fichiers
-      entre déploiements ; ce fallback évite l'erreur "No such file or directory")
+    Endpoint AJAX rapport IA.
+    - GET  : retourne le rapport déjà sauvegardé (si existant)
+    - POST : génère via Claude, sauvegarde en BDD, retourne le JSON
+    - POST ?force=1 : force la régénération même si déjà sauvegardé
     """
     import json, os, base64, urllib.request, urllib.error
 
-    if request.method != 'POST':
+    document = get_object_or_404(Document, id=doc_id)
+
+    # ── GET ou POST sans force → retourner le rapport sauvegardé si présent ──
+    force = request.GET.get('force') == '1'
+    if not force and document.rapport_ia_json:
+        try:
+            return JsonResponse({'success': True, 'rapport': json.loads(document.rapport_ia_json), 'cached': True})
+        except Exception:
+            pass  # JSON corrompu → on régénère
+
+    if request.method not in ('POST', 'GET'):
         return JsonResponse({'error': 'Méthode invalide'}, status=405)
 
-    document = get_object_or_404(Document, id=doc_id)
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
-
     if not ANTHROPIC_API_KEY:
         return JsonResponse({'error': 'Clé API Anthropic manquante (ANTHROPIC_API_KEY)'}, status=500)
 
-    # ── 1. Tenter de lire le PDF (optionnel) ──────────────────────────────────
+    # ── 1. Tenter de lire le PDF ──────────────────────────────────────────────
     pdf_b64 = None
     try:
         if document.upload and document.upload.name:
             with open(document.upload.path, 'rb') as f:
                 pdf_b64 = base64.standard_b64encode(f.read()).decode('utf-8')
-            print(f"PDF chargé : {document.upload.name}")
     except Exception as e:
         print(f"PDF indisponible (fallback BDD) : {e}")
-        # On continue — le rapport sera généré à partir des valeurs en BDD
 
     # ── 2. Contexte du dossier ────────────────────────────────────────────────
     norme = document.norme
@@ -1555,8 +1561,6 @@ def generer_rapport_ia(request, doc_id):
     zone = document.climate_zone or 'H2'
     ref = f"DOC-{document.id:04d}"
 
-    # Valeurs déjà extraites en BDD
-    valeurs_connues = {}
     champs_norme = {
         'RT2012': [
             ('rt2012_bbio', 'Bbio', ''), ('rt2012_cep', 'Cep', 'kWh ep/m².an'),
@@ -1593,6 +1597,8 @@ def generer_rapport_ia(request, doc_id):
             ('lenoz_u_mur', 'U mur', 'W/m².K'), ('lenoz_u_toit', 'U toit', 'W/m².K'),
         ],
     }
+
+    valeurs_connues = {}
     for field, label, unit in champs_norme.get(norme, []):
         val = getattr(document, field, None)
         if val is not None:
@@ -1611,8 +1617,6 @@ def generer_rapport_ia(request, doc_id):
         'LENOZ': "EP ≤ 90 kWh/m².an | Ew ≤ 100 | U mur ≤ 0,22 | U toit ≤ 0,17 W/m².K",
     }
     seuils_str = SEUILS_LABELS.get(norme, "Voir réglementation applicable")
-
-    # ── 3. Prompt système ────────────────────────────────────────────────────
     source_donnees = "le PDF joint ET les valeurs extraites ci-dessous" if pdf_b64 else "les valeurs extraites ci-dessous (PDF non disponible sur le serveur)"
 
     system_prompt = f"""Tu es ConformExpert, un expert en réglementation thermique et énergétique des bâtiments.
@@ -1686,34 +1690,16 @@ Structure JSON attendue :
 Si une valeur n'est pas disponible pour un critère, omets ce critère du tableau.
 Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {norme}."""
 
-    # ── 4. Construction du message Claude ─────────────────────────────────────
-    # Avec PDF → vision document ; sans PDF → analyse textuelle des valeurs BDD
+    # ── 4. Message Claude ─────────────────────────────────────────────────────
     if pdf_b64:
         user_content = [
-            {
-                "type": "document",
-                "source": {
-                    "type": "base64",
-                    "media_type": "application/pdf",
-                    "data": pdf_b64,
-                }
-            },
-            {
-                "type": "text",
-                "text": f"Analyse ce document thermique pour le dossier {ref} ({norme} — {pays_label}) et génère le rapport JSON complet selon les instructions."
-            }
+            {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_b64}},
+            {"type": "text", "text": f"Analyse ce document thermique pour le dossier {ref} ({norme} — {pays_label}) et génère le rapport JSON complet selon les instructions."}
         ]
         headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
     else:
         user_content = [
-            {
-                "type": "text",
-                "text": (
-                    f"Le PDF original n'est pas disponible sur le serveur. "
-                    f"Génère le rapport JSON complet pour le dossier {ref} ({norme} — {pays_label}) "
-                    f"en te basant exclusivement sur les valeurs extraites et les seuils fournis dans le contexte."
-                )
-            }
+            {"type": "text", "text": f"Le PDF original n'est pas disponible sur le serveur. Génère le rapport JSON complet pour le dossier {ref} ({norme} — {pays_label}) en te basant exclusivement sur les valeurs extraites et les seuils fournis dans le contexte."}
         ]
         headers_extra = {}
 
@@ -1735,28 +1721,36 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
 
         req = urllib.request.Request(
             "https://api.anthropic.com/v1/messages",
-            data=payload,
-            headers=headers,
-            method="POST"
+            data=payload, headers=headers, method="POST"
         )
-
         with urllib.request.urlopen(req, timeout=120) as resp:
             result = json.loads(resp.read().decode('utf-8'))
-            raw = result['content'][0]['text'].strip()
-            raw = raw.replace('```json', '').replace('```', '').strip()
+            raw = result['content'][0]['text'].strip().replace('```json', '').replace('```', '').strip()
             rapport = json.loads(raw)
-            return JsonResponse({'success': True, 'rapport': rapport})
+
+            # ── Sauvegarder en BDD ────────────────────────────────────────────
+            document.rapport_ia_json = json.dumps(rapport, ensure_ascii=False)
+            document.save(update_fields=['rapport_ia_json'])
+
+            return JsonResponse({'success': True, 'rapport': rapport, 'cached': False})
 
     except urllib.error.HTTPError as e:
         body = e.read().decode('utf-8')
         print(f"CLAUDE API ERROR {e.code}: {body}")
         return JsonResponse({'error': f'Erreur API Claude ({e.code}) : {body[:300]}'}, status=500)
     except json.JSONDecodeError as e:
-        print(f"JSON PARSE ERROR: {e} — raw: {raw[:500]}")
+        print(f"JSON PARSE ERROR: {e}")
         return JsonResponse({'error': f'Erreur parsing JSON : {str(e)}'}, status=500)
     except Exception as e:
         print(f"GENERER_RAPPORT_IA ERROR: {e}")
         return JsonResponse({'error': str(e)}, status=500)
+
+
+def rapport_ia_client(request, token):
+    """Page publique rapport IA — accessible via lien de suivi, sans login."""
+    document = get_object_or_404(Document, tracking_token=token, status='termine')
+    return render(request, 'main/rapport_ia_client.html', {'document': document})
+
 
 
 # ──────────────────────────────────────────────
