@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 from django.core.mail import send_mail, EmailMultiAlternatives
+from django.conf import settings
 from django.conf import settings as django_settings
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
@@ -37,7 +38,7 @@ def send_mail_async(sujet, corps, from_email, recipient_list):
 # EMAILS
 # ──────────────────────────────────────────────
 
-SITE_URL = "https://web-production-f6c00.up.railway.app"
+SITE_URL = "https://conformexpert.cc"
 
 
 def _send_html_async(sujet, template_name, context, destinataire):
@@ -48,7 +49,7 @@ def _send_html_async(sujet, template_name, context, destinataire):
             import sendgrid
             from sendgrid.helpers.mail import Mail, To
             html = render_to_string(f'main/emails/{template_name}', context)
-            sg = sendgrid.SendGridAPIClient(api_key=django_settings.SENDGRID_API_KEY)
+            sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
             message = Mail(
                 from_email=django_settings.DEFAULT_FROM_EMAIL,
                 to_emails=destinataire,
@@ -80,21 +81,84 @@ def send_mail_reception(document):
 def send_mail_validation_devis(document, devis=None):
     if not document.client_email:
         return
+
     montant_ht = float(devis.montant) if devis and devis.montant else 0
     tva = round(montant_ht * 0.20, 2)
+
     _send_html_async(
         f"[ConformExpert] Votre devis — {document.name}",
         "email_devis.html",
-        {'doc_id': f"{document.id:04d}", 'doc_name': document.name,
-         'client_name': document.client_name or '',
-         'accepter_url': f"{SITE_URL}/suivi/{document.tracking_token}/?accepter_devis=1",
-         'montant_ht': f"{montant_ht:.2f}", 'tva': f"{tva:.2f}",
-         'montant_ttc': f"{montant_ht + tva:.2f}",
-         'norme': devis.norme if devis else 'RT2012 / RE2020',
-         'notes': devis.notes if devis else ''},
+        {
+            'doc_id': f"{document.id:04d}",
+            'doc_name': document.name,
+            'client_name': document.client_name or '',
+
+            'accepter_url': f"{SITE_URL}/devis/accepter/{devis.id}/",
+            'refuser_url': f"{SITE_URL}/devis/refuser/{devis.id}/",
+
+            'montant_ht': f"{montant_ht:.2f}",
+            'tva': f"{tva:.2f}",
+            'montant_ttc': f"{montant_ht + tva:.2f}",
+            'norme': devis.norme if devis else 'RT2012 / RE2020',
+            'notes': devis.notes if devis else ''
+        },
         document.client_email,
     )
 
+def accepter_devis(request, devis_id):
+
+    devis = get_object_or_404(Devis, id=devis_id)
+
+    # éviter double clic
+    if devis.statut != "accepte":
+        devis.statut = "accepte"
+        devis.save()
+
+        # si un dossier est lié → passer en analyse
+        if devis.document:
+            devis.document.status = "en_cours"
+            devis.document.save()
+
+        # notification admin
+        _send_html_async(
+            "Devis accepté",
+            "email_notification_admin.html",
+            {
+                "client": devis.client_nom,
+                "projet": devis.projet_nom,
+                "montant": devis.montant,
+                "reference": f"DEV-{devis.id:04d}",
+            },
+            "contact@conformexpert.cc"
+        )
+
+    return render(request, "main/devis_accepte.html", {
+        "devis": devis
+    })
+
+def refuser_devis(request, devis_id):
+
+    devis = get_object_or_404(Devis, id=devis_id)
+
+    if devis.statut != "refuse":
+        devis.statut = "refuse"
+        devis.save()
+
+        _send_html_async(
+            "Devis refusé",
+            "email_notification_admin.html",
+            {
+                "client": devis.client_nom,
+                "projet": devis.projet_nom,
+                "montant": devis.montant,
+                "status": "refusé"
+            },
+            "contact@conformexpert.cc"
+        )
+
+    return render(request, "main/devis_refuse.html", {
+        "devis": devis
+    })
 
 def send_mail_analyse_commence(document):
     if not document.client_email:
@@ -190,57 +254,152 @@ def extract_text_from_pdf(upload_path):
     return text
 
 
-def parse_pdf_text(text):
+def parse_pdf_text(text, norme=None):
+    """
+    Extrait les valeurs thermiques du texte PDF via l'API Claude.
+    Fallback sur regex si l'API est indisponible.
+    """
+    import json
+    import os
+    import urllib.request
+
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+
+    if ANTHROPIC_API_KEY:
+        try:
+            prompt = f"""Tu es un expert en réglementation thermique. Voici le texte extrait d'un document thermique (rapport STD, DPE, notice, attestation RT/RE).
+
+Extrais UNIQUEMENT les valeurs numériques suivantes si elles sont présentes dans le texte.
+Réponds UNIQUEMENT en JSON valide, sans explication, sans markdown.
+
+Valeurs à extraire :
+- rt2012_bbio (Bbio)
+- rt2012_cep (Cep)
+- rt2012_tic (Tic)
+- rt2012_airtightness (étanchéité à l'air / perméabilité)
+- rt2012_enr (ENR)
+- re2020_energy_efficiency (Cep,nr)
+- re2020_thermal_comfort (DH degrés-heures)
+- re2020_carbon_emissions (Ic énergie / émissions CO2)
+- peb_espec (Espec)
+- peb_ew (Ew)
+- peb_u_mur (U mur)
+- peb_u_toit (U toit)
+- peb_u_plancher (U plancher)
+- minergie_qh (Qh chaleur)
+- minergie_qtot (Qtot)
+- minergie_n50 (n50)
+- sia380_qh (Qh SIA)
+- cneb_ei (intensité énergétique)
+- cneb_u_mur
+- cneb_u_toit
+- cneb_u_fenetre
+- cneb_infiltration
+- lenoz_ep (énergie primaire)
+- lenoz_ew
+- lenoz_u_mur
+- lenoz_u_toit
+
+Si une valeur n'est pas trouvée, ne l'inclus pas dans le JSON.
+Exemple de réponse : {{"rt2012_bbio": 45.2, "rt2012_cep": 72.0}}
+
+Texte du document :
+{text[:8000]}"""
+
+            payload = json.dumps({
+                "model": "claude-sonnet-4-5",
+                "max_tokens": 8192,
+                "messages": [{"role": "user", "content": prompt}]
+            }).encode('utf-8')
+
+            req = urllib.request.Request(
+                "https://api.anthropic.com/v1/messages",
+                data=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": ANTHROPIC_API_KEY,
+                    "anthropic-version": "2023-06-01",
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                result = json.loads(resp.read().decode('utf-8'))
+                raw = result['content'][0]['text'].strip()
+                # Nettoyer éventuels backticks
+                raw = raw.replace('```json', '').replace('```', '').strip()
+                data = json.loads(raw)
+                # S'assurer que toutes les valeurs sont des floats
+                return {k: float(v) for k, v in data.items() if v is not None}
+
+        except Exception as e:
+            print(f"Erreur API Claude, fallback regex: {e}")
+
+    # ── FALLBACK REGEX ─────────────────────────────────────
     data = {}
-    re2020_section = ""
-    rt2012_section = ""
+    t = text
 
-    if "RE2020" in text and "RT2012" in text:
-        re2020_section = text.split("RE2020")[1].split("RT2012")[0]
-        rt2012_section = text.split("RT2012")[1]
-    elif "RE2020" in text:
-        re2020_section = text.split("RE2020")[1]
-    elif "RT2012" in text:
-        rt2012_section = text.split("RT2012")[1]
-
-    # RE2020
     for pattern, key in [
-        (r'Cep\s*=\s*([\d.]+)', 'energy_efficiency'),
-        (r'DH\s*=\s*([\d.]+)', 'thermal_comfort'),
-        (r'Ic.?energie\s*=\s*([\d.]+)', 'carbon_emissions'),
-        (r'Eau\s*=\s*([\d.]+)', 'water_management'),
-        (r'Qai\s*=\s*([\d.]+)', 'indoor_air_quality'),
+        (r'Bbio\s*[=:]\s*([\d.,]+)',        'rt2012_bbio'),
+        (r'Cep\s*[=:]\s*([\d.,]+)',         'rt2012_cep'),
+        (r'Tic\s*[=:]\s*([\d.,]+)',         'rt2012_tic'),
+        (r'[Ee]tanch[eé]it[eé]\s*[=:]\s*([\d.,]+)', 'rt2012_airtightness'),
+        (r'ENR\s*[=:]\s*([\d.,]+)',         'rt2012_enr'),
+        (r'Cep,?nr\s*[=:]\s*([\d.,]+)',     're2020_energy_efficiency'),
+        (r'DH\s*[=:]\s*([\d.,]+)',          're2020_thermal_comfort'),
+        (r'Ic.{0,10}[ée]nergie\s*[=:]\s*([\d.,]+)', 're2020_carbon_emissions'),
+        (r'Espec\s*[=:]\s*([\d.,]+)',       'peb_espec'),
+        (r'\bEw\b\s*[=:]\s*([\d.,]+)',    'peb_ew'),
+        (r'U\s*mur\s*[=:]\s*([\d.,]+)',    'peb_u_mur'),
+        (r'U\s*toit\s*[=:]\s*([\d.,]+)',   'peb_u_toit'),
+        (r'U\s*plancher\s*[=:]\s*([\d.,]+)','peb_u_plancher'),
+        (r'Qh\s*[=:]\s*([\d.,]+)',          'minergie_qh'),
+        (r'Qtot\s*[=:]\s*([\d.,]+)',        'minergie_qtot'),
+        (r'n50\s*[=:]\s*([\d.,]+)',         'minergie_n50'),
+        (r'[Ii]ntensit[eé].{0,20}[=:]\s*([\d.,]+)', 'cneb_ei'),
+        (r'U\s*fen[eê]tre\s*[=:]\s*([\d.,]+)',     'cneb_u_fenetre'),
+        (r'[Ii]nfiltration\s*[=:]\s*([\d.,]+)',     'cneb_infiltration'),
+        (r'[Ee]nergie\s+primaire\s*[=:]\s*([\d.,]+)', 'lenoz_ep'),
     ]:
-        m = re.search(pattern, re2020_section, re.IGNORECASE)
+        m = re.search(pattern, t, re.IGNORECASE)
         if m:
-            data[key] = float(m.group(1))
-
-    # RT2012
-    for pattern, key in [
-        (r'Bbio\s*=\s*([\d.]+)', 'bbio'),
-        (r'Cep\s*=\s*([\d.]+)', 'cep_rt'),
-        (r'Tic\s*=\s*([\d.]+)', 'tic'),
-        (r'Etancheite\s*=\s*([\d.]+)', 'airtightness'),
-        (r'Enr\s*=\s*([\d.]+)', 'enr'),
-    ]:
-        m = re.search(pattern, rt2012_section, re.IGNORECASE)
-        if m:
-            data[key] = float(m.group(1))
+            data[key] = float(m.group(1).replace(',', '.'))
 
     return data
 
 
 def analyze_document(document, data):
-    document.re2020_energy_efficiency = data.get('energy_efficiency')
-    document.re2020_thermal_comfort = data.get('thermal_comfort')
-    document.re2020_carbon_emissions = data.get('carbon_emissions')
-    document.re2020_water_management = data.get('water_management')
-    document.re2020_indoor_air_quality = data.get('indoor_air_quality')
-    document.rt2012_bbio = data.get('bbio')
-    document.rt2012_cep = data.get('cep_rt')
-    document.rt2012_tic = data.get('tic')
-    document.rt2012_airtightness = data.get('airtightness')
-    document.rt2012_enr = data.get('enr')
+    # ── FR RT2012 ──
+    document.rt2012_bbio        = data.get('rt2012_bbio')
+    document.rt2012_cep         = data.get('rt2012_cep')
+    document.rt2012_tic         = data.get('rt2012_tic')
+    document.rt2012_airtightness= data.get('rt2012_airtightness')
+    document.rt2012_enr         = data.get('rt2012_enr')
+    # ── FR RE2020 ──
+    document.re2020_energy_efficiency = data.get('re2020_energy_efficiency')
+    document.re2020_thermal_comfort   = data.get('re2020_thermal_comfort')
+    document.re2020_carbon_emissions  = data.get('re2020_carbon_emissions')
+    # ── BE PEB ──
+    document.peb_espec      = data.get('peb_espec')
+    document.peb_ew         = data.get('peb_ew')
+    document.peb_u_mur      = data.get('peb_u_mur')
+    document.peb_u_toit     = data.get('peb_u_toit')
+    document.peb_u_plancher = data.get('peb_u_plancher')
+    # ── CH MINERGIE / SIA380 ──
+    document.minergie_qh   = data.get('minergie_qh')
+    document.minergie_qtot = data.get('minergie_qtot')
+    document.minergie_n50  = data.get('minergie_n50')
+    document.sia380_qh     = data.get('minergie_qh') or data.get('sia380_qh')
+    # ── CA CNEB ──
+    document.cneb_ei          = data.get('cneb_ei')
+    document.cneb_u_mur       = data.get('cneb_u_mur')
+    document.cneb_u_toit      = data.get('cneb_u_toit')
+    document.cneb_u_fenetre   = data.get('cneb_u_fenetre')
+    document.cneb_infiltration= data.get('cneb_infiltration')
+    # ── LU LENOZ ──
+    document.lenoz_ep    = data.get('lenoz_ep')
+    document.lenoz_ew    = data.get('lenoz_ew')
+    document.lenoz_u_mur = data.get('lenoz_u_mur')
+    document.lenoz_u_toit= data.get('lenoz_u_toit')
     # Ne pas changer le statut ici — il reste 'recu' jusqu'à validation manuelle
     document.save()
 
@@ -264,7 +423,7 @@ def home(request):
 
     compliant_count = sum(
         1 for doc in documents
-        if doc.rt2012_is_conform is True or doc.re2020_is_conform is True
+        if doc.is_conform is True
     )
     compliance_rate = round((compliant_count / total_projects * 100), 1) if total_projects else 0
 
@@ -374,6 +533,10 @@ def tracking(request, token):
         'devis_accepte': devis_accepte,
     })
 
+def rapport_ia_client(request, token):
+    document = get_object_or_404(Document, tracking_token=token, status='termine')
+    return render(request, 'main/rapport_ia_client.html', {'document': document})
+
 
 @login_required(login_url='/login/')
 def results(request):
@@ -421,6 +584,9 @@ def contact(request):
         form = ContactForm()
     return render(request, 'main/contact.html', {'form': form})
 
+def mentions_legales(request):
+    return render(request, 'main/mentions_legales.html')
+
 
 def faq(request):
     faq_items = [
@@ -442,11 +608,40 @@ def faq(request):
 
 @login_required(login_url='/login/')
 def settings_view(request):
-    re2020_req = fetch_re2020_requirements()
-    rt2012_req = fetch_rt2012_requirements()
+    from main.templatetags.conformity_tags import (
+        get_seuils, NORME_FIELDS, NORMES_PAR_PAYS
+    )
+
+    PAYS_LABELS = {
+        'FR': '🇫🇷 France',
+        'BE': '🇧🇪 Belgique',
+        'CH': '🇨🇭 Suisse',
+        'CA': '🇨🇦 Canada',
+        'LU': '🇱🇺 Luxembourg',
+    }
+    NORME_LABELS = {
+        'RT2012': 'RT 2012', 'RE2020': 'RE 2020', 'PEB': 'PEB',
+        'MINERGIE': 'Minergie', 'SIA380': 'SIA 380',
+        'CNEB2015': 'CNEB 2015', 'CNEB2020': 'CNEB 2020', 'LENOZ': 'LENOZ',
+    }
+
+    seuils_par_pays = []
+    for pays_code, normes in NORMES_PAR_PAYS.items():
+        normes_data = []
+        for norme_code in normes:
+            seuils = get_seuils('maison', 'H2', pays_code, norme_code)
+            fields = NORME_FIELDS.get(norme_code, [])
+            fields_seuils = []
+            for field, label, unit in fields:
+                val = seuils.get(field, '—')
+                if isinstance(val, float) and val == int(val):
+                    val = int(val)
+                fields_seuils.append((label, val, unit))
+            normes_data.append((norme_code, NORME_LABELS.get(norme_code, norme_code), fields_seuils))
+        seuils_par_pays.append((pays_code, PAYS_LABELS.get(pays_code, pays_code), normes_data))
+
     return render(request, 'main/settings.html', {
-        're2020_req': re2020_req,
-        'rt2012_req': rt2012_req,
+        'seuils_par_pays': seuils_par_pays,
     })
 
 
@@ -456,6 +651,103 @@ def update_re2020(request):
     else:
         messages.error(request, 'Méthode invalide.')
     return redirect('settings')
+
+
+@csrf_exempt
+def verifier_seuils(request):
+    import json, os, urllib.request, urllib.error
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Session expirée — veuillez vous reconnecter'}, status=401)
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode invalide'}, status=405)
+
+    norme = request.POST.get('norme', 'RE2020')
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+
+    if not ANTHROPIC_API_KEY:
+        return JsonResponse({'error': 'Clé API Anthropic manquante — ajoutez ANTHROPIC_API_KEY dans vos variables Railway'}, status=500)
+
+    NORME_CONTEXTE = {
+        'RT2012':   'la réglementation thermique RT 2012 française (arrêté du 26 octobre 2010)',
+        'RE2020':   'la réglementation environnementale RE 2020 française (décret du 29 juillet 2021)',
+        'PEB':      'la performance énergétique des bâtiments PEB en Belgique',
+        'MINERGIE': 'le label Minergie en Suisse',
+        'SIA380':   'la norme SIA 380/1 suisse',
+        'CNEB2015': "le Code National de l'Énergie pour les Bâtiments CNEB 2015 au Canada",
+        'CNEB2020': "le Code National de l'Énergie pour les Bâtiments CNEB 2020 au Canada",
+        'LENOZ':    'le label LENOZ au Luxembourg',
+    }
+
+    VALEURS_ACTUELLES = {
+        'RT2012':   {'Bbio max (maison)': 60, 'Bbio max (collectif)': 80, 'Cep max': 50, 'Tic max H2': 27, 'Étanchéité maison': 0.6, 'ENR min': 1.0},
+        'RE2020':   {'Cep,nr max (maison)': 100, 'DH max H2': 1250, 'Ic énergie max': 160, 'Ic construction max': 640},
+        'PEB':      {'Espec max': 100, 'U mur max': 0.24, 'U toit max': 0.20, 'U plancher max': 0.30},
+        'MINERGIE': {'Qh max (maison)': 60, 'Qtot max': 38, 'n50 max': 0.6},
+        'SIA380':   {'Qh max (maison)': 90},
+        'CNEB2015': {'EI max (maison)': 170, 'U mur max': 0.24, 'U toit max': 0.18, 'U fenêtre max': 1.8, 'Infiltration max': 0.30},
+        'CNEB2020': {'EI max (maison)': 150, 'U mur max': 0.21, 'U toit max': 0.16, 'U fenêtre max': 1.6, 'Infiltration max': 0.25},
+        'LENOZ':    {'EP max (maison)': 90, 'Ew max': 100, 'U mur max': 0.22, 'U toit max': 0.17},
+    }
+
+    valeurs = VALEURS_ACTUELLES.get(norme, {})
+    contexte = NORME_CONTEXTE.get(norme, norme)
+
+    prompt = f"""Tu es un expert en réglementation thermique et énergétique des bâtiments.
+
+Vérifie si les seuils suivants pour {contexte} sont toujours officiellement valides en {__import__('datetime').date.today().year}.
+
+Valeurs actuellement dans notre système :
+{json.dumps(valeurs, ensure_ascii=False, indent=2)}
+
+Réponds UNIQUEMENT en JSON valide avec cette structure exacte, sans markdown ni explication :
+{{
+  "a_jour": true,
+  "date_derniere_mise_a_jour": "mois et année",
+  "modifications": [
+    {{
+      "critere": "nom du critère",
+      "valeur_actuelle": 100,
+      "valeur_officielle": 90,
+      "commentaire": "explication courte"
+    }}
+  ],
+  "resume": "phrase courte résumant le statut",
+  "source": "texte officiel de référence"
+}}
+
+Si tout est à jour, "modifications" sera [] et "a_jour" sera true."""
+
+    try:
+        payload = json.dumps({
+            "model": "claude-sonnet-4-5",
+            "max_tokens": 1500,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+            },
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+            raw = result['content'][0]['text'].strip().replace('```json','').replace('```','').strip()
+            return JsonResponse({'success': True, 'norme': norme, 'resultat': json.loads(raw)})
+
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8')
+        print(f"ANTHROPIC API ERROR {e.code}: {body}")
+        return JsonResponse({'error': f'API {e.code}: {body}'}, status=500)
+    except Exception as e:
+        print(f"VERIFIER_SEUILS ERROR: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @login_required(login_url='/login/')
@@ -476,18 +768,62 @@ def edit_document(request, doc_id):
         ('en_cours', 'Analyse en cours'),
         ('termine',  'Analyse terminée'),
     ]
-    RT2012_FIELDS = [
-        ('rt2012_bbio',         'Bbio', ''),
-        ('rt2012_cep',          'Cep', 'kWh ep/m².an'),
-        ('rt2012_tic',          'Tic', '°C'),
-        ('rt2012_airtightness', 'Étanchéité', 'm³/h.m²'),
-        ('rt2012_enr',          'ENR', ''),
-    ]
-    RE2020_FIELDS = [
-        ('re2020_energy_efficiency', 'Cep,nr', 'kWh/m².an'),
-        ('re2020_carbon_emissions',  'Ic énergie CO₂', 'kgCO2eq/m².an'),
-        ('re2020_thermal_comfort',   'DH (confort été)', 'DH'),
-    ]
+
+    # Tous les champs éditables par norme
+    ALL_NORME_FIELDS = {
+        'RT2012': [
+            ('rt2012_bbio',         'Bbio', ''),
+            ('rt2012_cep',          'Cep', 'kWh ep/m².an'),
+            ('rt2012_tic',          'Tic', '°C'),
+            ('rt2012_airtightness', 'Étanchéité', 'm³/h.m²'),
+            ('rt2012_enr',          'ENR', ''),
+        ],
+        'RE2020': [
+            ('re2020_energy_efficiency', 'Cep,nr', 'kWh/m².an'),
+            ('re2020_carbon_emissions',  'Ic énergie CO₂', 'kgCO2eq/m².an'),
+            ('re2020_thermal_comfort',   'DH (confort été)', 'DH'),
+        ],
+        'PEB': [
+            ('peb_espec',     'Espec', 'kWh/m².an'),
+            ('peb_ew',        'Ew', ''),
+            ('peb_u_mur',     'U mur', 'W/m².K'),
+            ('peb_u_toit',    'U toit', 'W/m².K'),
+            ('peb_u_plancher','U plancher', 'W/m².K'),
+        ],
+        'MINERGIE': [
+            ('minergie_qh',   'Qh', 'kWh/m².an'),
+            ('minergie_qtot', 'Qtot', 'kWh/m².an'),
+            ('minergie_n50',  'n50', 'h⁻¹'),
+        ],
+        'SIA380': [
+            ('sia380_qh', 'Qh', 'kWh/m².an'),
+        ],
+        'CNEB2015': [
+            ('cneb_ei',          'Intensité énergétique', 'kWh/m².an'),
+            ('cneb_u_mur',       'U mur', 'W/m².K'),
+            ('cneb_u_toit',      'U toit', 'W/m².K'),
+            ('cneb_u_fenetre',   'U fenêtre', 'W/m².K'),
+            ('cneb_infiltration','Infiltration', 'L/s.m²'),
+        ],
+        'CNEB2020': [
+            ('cneb_ei',          'Intensité énergétique', 'kWh/m².an'),
+            ('cneb_u_mur',       'U mur', 'W/m².K'),
+            ('cneb_u_toit',      'U toit', 'W/m².K'),
+            ('cneb_u_fenetre',   'U fenêtre', 'W/m².K'),
+            ('cneb_infiltration','Infiltration', 'L/s.m²'),
+        ],
+        'LENOZ': [
+            ('lenoz_ep',    'Énergie primaire', 'kWh/m².an'),
+            ('lenoz_ew',    'Ew', ''),
+            ('lenoz_u_mur', 'U mur', 'W/m².K'),
+            ('lenoz_u_toit','U toit', 'W/m².K'),
+        ],
+    }
+
+    # Champs pour la norme du dossier courant (pour le template)
+    RT2012_FIELDS = ALL_NORME_FIELDS.get('RT2012', [])
+    RE2020_FIELDS = ALL_NORME_FIELDS.get('RE2020', [])
+    norme_fields  = ALL_NORME_FIELDS.get(document.norme, [])
 
     if request.method == 'POST':
         # Statut
@@ -496,22 +832,25 @@ def edit_document(request, doc_id):
         if new_status in dict(STATUS_CHOICES):
             document.status = new_status
 
-        # Valeurs RT2012
-        for field, _, _ in RT2012_FIELDS:
-            val = request.POST.get(field, '').strip()
-            if val:
-                setattr(document, field, float(val))
+        # Norme (permet de la changer depuis le formulaire)
+        new_norme = request.POST.get('norme', document.norme)
+        if new_norme in ALL_NORME_FIELDS:
+            document.norme = new_norme
 
-        # Valeurs RE2020
-        for field, _, _ in RE2020_FIELDS:
-            val = request.POST.get(field, '').strip()
-            if val:
-                setattr(document, field, float(val))
+        # Sauvegarder TOUS les champs de toutes les normes présents dans le POST
+        for fields in ALL_NORME_FIELDS.values():
+            for field, _, _ in fields:
+                val = request.POST.get(field, '').strip()
+                if val:
+                    try:
+                        setattr(document, field, float(val.replace(',', '.')))
+                    except ValueError:
+                        pass
 
         # Infos client
-        document.client_name = request.POST.get('client_name', '').strip()
+        document.client_name  = request.POST.get('client_name', '').strip()
         document.client_email = request.POST.get('client_email', '').strip()
-        document.admin_notes = request.POST.get('admin_notes', '').strip()
+        document.admin_notes  = request.POST.get('admin_notes', '').strip()
 
         document.save()
 
@@ -540,6 +879,9 @@ def edit_document(request, doc_id):
         'status_choices': STATUS_CHOICES,
         'rt2012_fields': RT2012_FIELDS,
         're2020_fields': RE2020_FIELDS,
+        'norme_fields': norme_fields,
+        'all_norme_fields': ALL_NORME_FIELDS,
+        'norme_choices': Document.NORME_CHOICES,
         'email_steps': [
             ('1', '#60a5fa', 'rgba(59,130,246,.12)', 'Confirmation reception', 'Confirmer la reception du dossier', 'reception'),
             ('2', '#c8a84b', 'rgba(200,168,75,.12)', 'Envoi du devis', "Devis avec bouton d'acceptation", 'devis'),
@@ -625,255 +967,585 @@ def download_report(request, document_id):
 
     from io import BytesIO
     from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import cm
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import cm, mm
     from reportlab.lib import colors
     from reportlab.platypus import (
-        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+        HRFlowable, PageBreak
     )
     from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from reportlab.pdfgen import canvas as pdfcanvas
+    from reportlab.platypus.flowables import Flowable
     from main.templatetags.conformity_tags import get_seuils, CRITERIA_GREATER_EQUAL
     from datetime import date
 
-    # ── Couleurs ──────────────────────────────────────
+    PAGE_W, PAGE_H = A4  # 595.27 x 841.89 points
+    ML = 2*cm; MR = 2*cm; MT = 2*cm; MB = 2.5*cm
+    W = PAGE_W - ML - MR  # ~17cm
+
+    # ── Couleurs ──
     NAVY   = colors.HexColor('#0C1929')
+    NAVY2  = colors.HexColor('#0F2035')
     GOLD   = colors.HexColor('#C8A84B')
+    GOLD_L = colors.HexColor('#F5EDD0')
     GREEN  = colors.HexColor('#1A9E2E')
+    GREEN_L= colors.HexColor('#E8F8EE')
     RED    = colors.HexColor('#C62828')
-    LGRAY  = colors.HexColor('#F5F5F8')
+    RED_L  = colors.HexColor('#FEF0F0')
+    LGRAY  = colors.HexColor('#F8F8FC')
     MGRAY  = colors.HexColor('#E0E0E8')
     WHITE  = colors.white
-    MUTED  = colors.HexColor('#666677')
+    MUTED  = colors.HexColor('#888899')
     TEXT   = colors.HexColor('#1A1A2E')
 
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=A4,
-        leftMargin=2*cm, rightMargin=2*cm,
-        topMargin=2.5*cm, bottomMargin=2*cm,
-        title=f"Rapport ConformExpert – {document.name}"
-    )
+    def st(name, **kw):
+        d = dict(fontName='Helvetica', fontSize=9, textColor=TEXT, leading=14, spaceAfter=0)
+        d.update(kw)
+        return ParagraphStyle(name, **d)
 
-    styles = getSampleStyleSheet()
-    body_style   = ParagraphStyle('body',   fontName='Helvetica', fontSize=9,  textColor=TEXT,  spaceAfter=4)
-    bold_style   = ParagraphStyle('bold',   fontName='Helvetica-Bold', fontSize=9, textColor=TEXT)
-    muted_style  = ParagraphStyle('muted',  fontName='Helvetica', fontSize=8,  textColor=MUTED, spaceAfter=4)
-    center_style = ParagraphStyle('center', fontName='Helvetica', fontSize=9,  textColor=TEXT,  alignment=TA_CENTER)
-    ok_style     = ParagraphStyle('ok',     fontName='Helvetica-Bold', fontSize=9, textColor=GREEN, alignment=TA_CENTER)
-    nok_style    = ParagraphStyle('nok',    fontName='Helvetica-Bold', fontSize=9, textColor=RED,   alignment=TA_CENTER)
+    seuils     = get_seuils(document.building_type, document.climate_zone, document.pays, document.norme)
+    is_conform = document.is_conform
+    norme      = document.norme
+    pays_map   = {'FR':'France','BE':'Belgique','CH':'Suisse','CA':'Canada','LU':'Luxembourg'}
+    pays_label = pays_map.get(document.pays, document.pays)
+    today_str  = date.today().strftime("%d/%m/%Y")
 
-    W = 17 * cm  # largeur utile
-    seuils = get_seuils(document.building_type, document.climate_zone)
+    if is_conform is True:
+        verdict_txt = "Conforme"
+        verdict_col = GREEN
+        verdict_bg  = GREEN_L
+    elif is_conform is False:
+        verdict_txt = "Non Conforme"
+        verdict_col = RED
+        verdict_bg  = RED_L
+    else:
+        verdict_txt = "En cours d'analyse"
+        verdict_col = MUTED
+        verdict_bg  = LGRAY
 
-    def verdict_para(value):
-        if value is None:
-            return Paragraph("—", center_style)
-        if value:
-            return Paragraph("✓  Conforme", ok_style)
-        return Paragraph("✗  Non conforme", nok_style)
-
-    def criteria_row(label, value, key, unit="", bg=WHITE):
-        if value is None:
-            return None
-        limit = seuils.get(key, "—")
-        sign = "≥" if key in CRITERIA_GREATER_EQUAL else "≤"
-        conform = (value >= limit if key in CRITERIA_GREATER_EQUAL else value <= limit) if isinstance(limit, (int, float)) else False
+    # ── Helpers styles ──
+    def section_title(num, title):
+        label = f"{num}.  {title.upper()}"
         return [
-            Paragraph(label, body_style),
-            Paragraph(f"<b>{value}</b>", ParagraphStyle('v', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT, alignment=TA_CENTER)),
-            Paragraph(f"{sign} {limit}", ParagraphStyle('s', fontName='Helvetica', fontSize=9, textColor=MUTED, alignment=TA_CENTER)),
-            Paragraph(unit, ParagraphStyle('u', fontName='Helvetica', fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
-            Paragraph("✓ Conforme" if conform else "✗ Non conforme",
-                      ParagraphStyle('r', fontName='Helvetica-Bold', fontSize=9,
-                                     textColor=GREEN if conform else RED, alignment=TA_CENTER)),
+            HRFlowable(width=W, thickness=1.5, color=GOLD, spaceAfter=5, spaceBefore=10),
+            Paragraph(label, st('sh', fontName='Helvetica-Bold', fontSize=8,
+                                textColor=GOLD, characterSpacing=0.8, spaceAfter=8)),
         ]
 
-    story = []
-
-    # ── BANDEAU TITRE ─────────────────────────────────
-    title_data = [[
-        Paragraph(
-            f'<font color="#C8A84B" size="8">ANALYSE INDÉPENDANTE · RT2012 / RE2020</font><br/>'
-            f'<font color="white" size="18"><b>{document.name}</b></font><br/>'
-            f'<font color="#AAAACC" size="9">{document.get_building_type_display()} · Zone {document.climate_zone} · Déposé le {document.upload_date.strftime("%d/%m/%Y")}</font>',
-            ParagraphStyle('title', fontName='Helvetica', fontSize=9, textColor=WHITE, leading=20)
-        )
-    ]]
-    title_table = Table(title_data, colWidths=[W])
-    title_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), NAVY),
-        ('TOPPADDING', (0, 0), (-1, -1), 14),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 14),
-        ('LEFTPADDING', (0, 0), (-1, -1), 16),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 16),
-        ('ROUNDEDCORNERS', [6, 6, 6, 6]),
-    ]))
-    story.append(title_table)
-    story.append(Spacer(1, 0.4*cm))
-
-    # ── VERDICTS ─────────────────────────────────────
-    verdict_data = [[
-        [Paragraph("RT2012", ParagraphStyle('vl', fontName='Helvetica', fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
-         verdict_para(document.rt2012_is_conform)],
-        [Paragraph("RE2020", ParagraphStyle('vl', fontName='Helvetica', fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
-         verdict_para(document.re2020_is_conform)],
-    ]]
-
-    rt_bg = colors.HexColor('#E8F8EE') if document.rt2012_is_conform else colors.HexColor('#FEF0F0') if document.rt2012_is_conform is not None else LGRAY
-    re_bg = colors.HexColor('#E8F8EE') if document.re2020_is_conform else colors.HexColor('#FEF0F0') if document.re2020_is_conform is not None else LGRAY
-
-    half = W / 2 - 0.2*cm
-    v_rt = Table([[Paragraph("RT2012", muted_style)], [verdict_para(document.rt2012_is_conform)]], colWidths=[half])
-    v_rt.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), rt_bg),
-        ('BOX', (0, 0), (-1, -1), 1, MGRAY),
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-    ]))
-    v_re = Table([[Paragraph("RE2020", muted_style)], [verdict_para(document.re2020_is_conform)]], colWidths=[half])
-    v_re.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), re_bg),
-        ('BOX', (0, 0), (-1, -1), 1, MGRAY),
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-    ]))
-    verdict_row = Table([[v_rt, v_re]], colWidths=[half + 0.2*cm, half])
-    verdict_row.setStyle(TableStyle([('LEFTPADDING', (0, 0), (-1, -1), 0), ('RIGHTPADDING', (0, 0), (-1, -1), 0)]))
-    story.append(verdict_row)
-    story.append(Spacer(1, 0.5*cm))
-
-    # ── INFOS DOSSIER ─────────────────────────────────
-    story.append(HRFlowable(width=W, thickness=1, color=GOLD, spaceAfter=6))
-    story.append(Paragraph("INFORMATIONS DU DOSSIER", ParagraphStyle('sh', fontName='Helvetica-Bold', fontSize=8, textColor=GOLD, spaceBefore=4, spaceAfter=6, characterSpacing=1)))
-    info_rows = [
-        ["Référence", f"DOC-{document.id:04d}"],
-        ["Projet", document.name],
-        ["Client", f"{document.client_name}" if document.client_name else "—"],
-        ["Type de bâtiment", document.get_building_type_display()],
-        ["Zone climatique", f"{document.climate_zone}"],
-        ["Date de dépôt", document.upload_date.strftime("%d/%m/%Y")],
-        ["Date du rapport", date.today().strftime("%d/%m/%Y")],
-    ]
-    info_table = Table(
-        [[Paragraph(r[0], muted_style), Paragraph(r[1], bold_style)] for r in info_rows],
-        colWidths=[4*cm, 13*cm]
-    )
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), LGRAY),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ('LEFTPADDING', (0, 0), (-1, -1), 8),
-        ('LINEBELOW', (0, 0), (-1, -2), 0.5, MGRAY),
-    ]))
-    story.append(info_table)
-    story.append(Spacer(1, 0.5*cm))
+    def info_table(rows):
+        data = [[Paragraph(k, st('ik', fontSize=8, textColor=MUTED)),
+                 Paragraph(v, st('iv', fontName='Helvetica-Bold', fontSize=9))]
+                for k, v in rows]
+        t = Table(data, colWidths=[4.5*cm, W - 4.5*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0),(0,-1), LGRAY),
+            ('TOPPADDING',    (0,0),(-1,-1), 5),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 5),
+            ('LEFTPADDING',   (0,0),(-1,-1), 8),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 8),
+            ('LINEBELOW',     (0,0),(-1,-2), 0.5, MGRAY),
+            ('VALIGN',        (0,0),(-1,-1), 'MIDDLE'),
+        ]))
+        return t
 
     def criteria_section(title, rows_data):
-        if not any(r is not None for r in rows_data):
-            return
-        story.append(HRFlowable(width=W, thickness=1, color=GOLD, spaceAfter=6))
-        story.append(Paragraph(title, ParagraphStyle('sh', fontName='Helvetica-Bold', fontSize=8, textColor=GOLD, spaceBefore=4, spaceAfter=6, characterSpacing=1)))
+        rows = [r for r in rows_data if r is not None]
+        if not rows:
+            return []
         header = [
-            Paragraph("Critère", ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE)),
-            Paragraph("Valeur", ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
-            Paragraph("Seuil", ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
-            Paragraph("Unité", ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
-            Paragraph("Résultat", ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
+            Paragraph("Critere", st('th', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE)),
+            Paragraph("Valeur",  st('th2', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
+            Paragraph("Seuil",   st('th3', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
+            Paragraph("Unite",   st('th4', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
+            Paragraph("Resultat",st('th5', fontName='Helvetica-Bold', fontSize=8, textColor=WHITE, alignment=TA_CENTER)),
         ]
-        table_data = [header] + [r for r in rows_data if r is not None]
-        col_w = [6.5*cm, 2*cm, 2*cm, 2.5*cm, 4*cm]
-        t = Table(table_data, colWidths=col_w)
+        data  = [header] + rows
+        col_w = [7*cm, 2.2*cm, 2.2*cm, 2.3*cm, 3.3*cm]
+        t = Table(data, colWidths=col_w, repeatRows=1)
         style = [
-            ('BACKGROUND', (0, 0), (-1, 0), NAVY),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('LINEBELOW', (0, 0), (-1, -2), 0.5, MGRAY),
+            ('BACKGROUND',    (0,0),(-1,0),  NAVY),
+            ('TOPPADDING',    (0,0),(-1,-1), 6),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 6),
+            ('LEFTPADDING',   (0,0),(-1,-1), 6),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 6),
+            ('LINEBELOW',     (0,1),(-1,-1), 0.5, MGRAY),
+            ('VALIGN',        (0,0),(-1,-1), 'MIDDLE'),
         ]
-        for i, r in enumerate([r for r in rows_data if r is not None], 1):
-            if i % 2 == 0:
-                style.append(('BACKGROUND', (0, i), (-1, i), LGRAY))
+        for i in range(2, len(data), 2):
+            style.append(('BACKGROUND', (0,i),(-1,i), LGRAY))
         t.setStyle(TableStyle(style))
-        story.append(t)
-        story.append(Spacer(1, 0.5*cm))
+        return [t, Spacer(1, 0.4*cm)]
 
-    # ── RT2012 ────────────────────────────────────────
-    criteria_section("RT2012 — CRITÈRES DE CONFORMITÉ", [
-        criteria_row("Bbio (besoins bioclimatiques)", document.rt2012_bbio, "rt2012_bbio"),
-        criteria_row("Cep (consommation énergie primaire)", document.rt2012_cep, "rt2012_cep", "kWh ep/m².an"),
-        criteria_row("Tic (température intérieure conv.)", document.rt2012_tic, "rt2012_tic", "°C"),
-        criteria_row("Etanchéité à l'air", document.rt2012_airtightness, "rt2012_airtightness", "m3/h.m2"),
-        criteria_row("ENR (énergies renouvelables)", document.rt2012_enr, "rt2012_enr"),
-    ])
+    def criteria_row(label, value, key, unit=""):
+        if value is None:
+            return None
+        limit  = seuils.get(key, "—")
+        sign   = ">=" if key in CRITERIA_GREATER_EQUAL else "<="
+        if isinstance(limit, (int,float)):
+            ok = value >= limit if key in CRITERIA_GREATER_EQUAL else value <= limit
+        else:
+            ok = False
+        res_style = st('res', fontName='Helvetica-Bold', fontSize=8,
+                       textColor=GREEN if ok else RED, alignment=TA_CENTER)
+        return [
+            Paragraph(label, st('cl', fontSize=8.5)),
+            Paragraph(f"<b>{value}</b>", st('cv', fontName='Helvetica-Bold', fontSize=9, alignment=TA_CENTER)),
+            Paragraph(f"{sign} {limit}", st('cs', fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
+            Paragraph(unit, st('cu', fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
+            Paragraph("Conforme" if ok else "Non conforme", res_style),
+        ]
 
-    # ── RE2020 ────────────────────────────────────────
-    criteria_section("RE2020 — CRITÈRES DE CONFORMITÉ", [
-        criteria_row("Cep,nr (énergie non renouvelable)", document.re2020_energy_efficiency, "re2020_energy_efficiency", "kWh/m².an"),
-        criteria_row("Ic énergie (émissions CO2 exploitation)", document.re2020_carbon_emissions, "re2020_carbon_emissions", "kgCO2eq/m².an"),
-        criteria_row("DH (degrés-heures – confort été)", document.re2020_thermal_comfort, "re2020_thermal_comfort", "DH"),
-    ])
+    def reco_block(prefix, title, text, bg, left_color):
+        full_title = f"<b>{prefix}  {title}</b>"
+        data = [
+            [Paragraph(full_title, st('rbt', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT, spaceAfter=3))],
+            [Paragraph(text, st('rbd', fontSize=8.5, textColor=colors.HexColor('#444455'), leading=13))],
+        ]
+        t = Table(data, colWidths=[W])
+        t.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0),(-1,-1), bg),
+            ('LINEBEFORE',    (0,0),(0,-1),  3, left_color),
+            ('TOPPADDING',    (0,0),(-1,-1), 8),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 8),
+            ('LEFTPADDING',   (0,0),(-1,-1), 12),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 12),
+        ]))
+        return [t, Spacer(1, 0.25*cm)]
 
-    # ── FOOTER ────────────────────────────────────────
-    story.append(Spacer(1, 0.3*cm))
-    story.append(HRFlowable(width=W, thickness=0.5, color=MGRAY, spaceAfter=6))
-    story.append(Paragraph(
-        "ConformExpert — Analyse documentaire indépendante RT2012 / RE2020 · contact@conformexpert.fr",
-        ParagraphStyle('footer', fontName='Helvetica', fontSize=7.5, textColor=MUTED, alignment=TA_CENTER)
-    ))
+    # ═══════════════════════════════════════════════════
+    # PAGE 1 — COUVERTURE (canvas manuel via onFirstPage)
+    # ═══════════════════════════════════════════════════
 
-    doc.build(story)
+    def draw_cover(c, doc_obj):
+        c.saveState()
+        # Fond navy pleine page
+        c.setFillColor(NAVY)
+        c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+
+        # Accent coin haut droit
+        c.setFillColor(colors.HexColor('#C8A84B11'))
+        c.circle(PAGE_W, PAGE_H, 180, fill=1, stroke=0)
+
+        # Accent coin bas gauche
+        c.setFillColor(colors.HexColor('#C8A84B0A'))
+        c.circle(0, 0, 130, fill=1, stroke=0)
+
+        # Logo
+        c.setFont('Helvetica-Bold', 22)
+        c.setFillColor(WHITE)
+        c.drawString(ML, PAGE_H - 3.5*cm, "Conform")
+        c.setFillColor(GOLD)
+        lw = c.stringWidth("Conform", 'Helvetica-Bold', 22)
+        c.drawString(ML + lw, PAGE_H - 3.5*cm, "Expert")
+
+        # Eyebrow
+        c.setFont('Helvetica-Bold', 7.5)
+        c.setFillColor(GOLD)
+        c.drawString(ML, PAGE_H - 5*cm, "RAPPORT D'ANALYSE DE CONFORMITE THERMIQUE")
+
+        # Ligne décorative sous eyebrow
+        c.setStrokeColor(GOLD)
+        c.setLineWidth(1)
+        c.line(ML, PAGE_H - 5.3*cm, ML + 6*cm, PAGE_H - 5.3*cm)
+
+        # Titre projet
+        title = document.name
+        c.setFont('Helvetica-Bold', 24)
+        c.setFillColor(WHITE)
+        # Découper si trop long
+        max_w = PAGE_W - ML - MR - 1*cm
+        while c.stringWidth(title, 'Helvetica-Bold', 24) > max_w and len(title) > 10:
+            title = title[:-1]
+        if title != document.name:
+            title = title[:-3] + "..."
+        c.drawString(ML, PAGE_H - 7*cm, title)
+
+        # Sous-titre
+        c.setFont('Helvetica', 11)
+        c.setFillColor(colors.HexColor('#AAAACC'))
+        subtitle = f"{document.get_building_type_display()}  ·  {norme}  ·  {pays_label}"
+        c.drawString(ML, PAGE_H - 8.2*cm, subtitle)
+
+        # Verdict box
+        v_y   = PAGE_H - 10.5*cm
+        v_x   = ML
+        v_w   = 9*cm
+        v_h   = 1.5*cm
+        # Fond
+        c.setFillColor(verdict_bg)
+        c.roundRect(v_x, v_y, v_w, v_h, 20, fill=1, stroke=0)
+        # Bordure
+        c.setStrokeColor(verdict_col)
+        c.setLineWidth(1.5)
+        c.roundRect(v_x, v_y, v_w, v_h, 20, fill=0, stroke=1)
+        # Texte
+        c.setFont('Helvetica-Bold', 12)
+        c.setFillColor(verdict_col)
+        tw = c.stringWidth(verdict_txt, 'Helvetica-Bold', 12)
+        c.drawString(v_x + (v_w - tw)/2, v_y + 0.45*cm, verdict_txt)
+
+        # Ligne séparatrice dorée
+        c.setStrokeColor(colors.HexColor('#C8A84B44'))
+        c.setLineWidth(0.5)
+        c.line(ML, PAGE_H - 12.5*cm, PAGE_W - MR, PAGE_H - 12.5*cm)
+
+        # Grille méta
+        meta = [
+            ("REFERENCE",      f"DOC-{document.id:04d}"),
+            ("DATE DU RAPPORT", today_str),
+            ("CLIENT",         document.client_name or "—"),
+            ("NORME",          norme),
+            ("TYPE DE BATIMENT", document.get_building_type_display()),
+            ("PAYS",           pays_label),
+        ]
+        cols = 3
+        col_w2 = (PAGE_W - ML - MR) / cols
+        for i, (label, val) in enumerate(meta):
+            col = i % cols
+            row = i // cols
+            x = ML + col * col_w2
+            y = PAGE_H - 13.5*cm - row * 1.8*cm
+            c.setFont('Helvetica', 7)
+            c.setFillColor(MUTED)
+            c.drawString(x, y, label)
+            c.setFont('Helvetica-Bold', 10)
+            c.setFillColor(WHITE)
+            c.drawString(x, y - 0.5*cm, val)
+
+        # Footer couverture
+        c.setFillColor(colors.HexColor('#C8A84B33'))
+        c.setStrokeColor(colors.HexColor('#00000000'))
+        c.rect(0, 0, PAGE_W, 1.8*cm, fill=1, stroke=0)
+        c.setFont('Helvetica', 8)
+        c.setFillColor(colors.HexColor('#666677'))
+        c.drawString(ML, 0.65*cm, "ConformExpert  ·  Analyse documentaire independante")
+        c.setFillColor(GOLD)
+        txt_r = "Confidentiel  ·  Usage interne"
+        tw2 = c.stringWidth(txt_r, 'Helvetica', 8)
+        c.drawString(PAGE_W - MR - tw2, 0.65*cm, txt_r)
+
+        c.restoreState()
+
+    def draw_page(c, doc_obj):
+        """Footer sur les pages intérieures."""
+        c.saveState()
+        c.setStrokeColor(MGRAY)
+        c.setLineWidth(0.5)
+        c.line(ML, MB - 0.5*cm, PAGE_W - MR, MB - 0.5*cm)
+        c.setFont('Helvetica', 7.5)
+        c.setFillColor(MUTED)
+        c.drawString(ML, MB - 1*cm, f"ConformExpert  ·  Analyse independante {norme}  ·  {pays_label}")
+        page_num = str(doc_obj.page)
+        tw = c.stringWidth(f"Page {page_num}", 'Helvetica', 7.5)
+        c.drawString(PAGE_W - MR - tw, MB - 1*cm, f"Page {page_num}")
+        c.restoreState()
+
+    # ═══════════════════════════════════════════════════
+    # STORY (pages 2+)
+    # ═══════════════════════════════════════════════════
+    story = []
+
+    # Page blanche qui sert de couverture (dessinée via onFirstPage)
+    story.append(Spacer(1, PAGE_H - MT - MB))
+    story.append(PageBreak())
+
+    # ── PAGE 2 : SOMMAIRE ──
+    story += section_title("", "Sommaire")
+    story.append(Paragraph(f"Rapport d'analyse — {document.name}",
+                           st('ts', fontSize=8.5, textColor=MUTED, spaceAfter=12)))
+
+    toc_items = [
+        ("1.  Resume executif & verdict global", "3"),
+        ("2.  Informations du dossier",           "3"),
+        (f"3.  Analyse {norme} — Criteres de conformite", "4"),
+        ("4.  Recommandations & points d'attention", "5"),
+    ]
+    if document.admin_notes:
+        toc_items.append(("5.  Notes & observations de l'expert", "5"))
+    toc_items.append(("6.  Mentions legales & disclaimer", "6"))
+
+    for label, pg in toc_items:
+        row = Table([[
+            Paragraph(label, st('tl', fontSize=10)),
+            Paragraph(pg, st('tp', fontName='Helvetica-Bold', fontSize=9,
+                             textColor=GOLD, alignment=TA_RIGHT)),
+        ]], colWidths=[W - 1.5*cm, 1.5*cm])
+        row.setStyle(TableStyle([
+            ('TOPPADDING',    (0,0),(-1,-1), 8),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 8),
+            ('LEFTPADDING',   (0,0),(-1,-1), 0),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 0),
+            ('LINEBELOW',     (0,0),(-1,-1), 0.5, MGRAY),
+        ]))
+        story.append(row)
+
+    story.append(PageBreak())
+
+    # ── PAGE 3 : RÉSUMÉ + INFOS ──
+    story += section_title("1", "Resume executif & verdict global")
+
+    # Verdict banner
+    vb_data = [[
+        Paragraph(f"VERDICT  —  {norme}",
+                  st('vbl', fontName='Helvetica-Bold', fontSize=8, textColor=GOLD,
+                     characterSpacing=0.8, spaceAfter=4)),
+        Paragraph(verdict_txt,
+                  st('vbv', fontName='Helvetica-Bold', fontSize=16,
+                     textColor=verdict_col, alignment=TA_RIGHT)),
+    ]]
+    vb = Table(vb_data, colWidths=[W*0.55, W*0.45])
+    vb.setStyle(TableStyle([
+        ('BACKGROUND',    (0,0),(-1,-1), NAVY),
+        ('TOPPADDING',    (0,0),(-1,-1), 14),
+        ('BOTTOMPADDING', (0,0),(-1,-1), 14),
+        ('LEFTPADDING',   (0,0),(-1,-1), 16),
+        ('RIGHTPADDING',  (0,0),(-1,-1), 16),
+        ('VALIGN',        (0,0),(-1,-1), 'MIDDLE'),
+    ]))
+    story.append(vb)
+    story.append(Spacer(1, 0.6*cm))
+
+    story += section_title("2", "Informations du dossier")
+    rows_info = [
+        ("Reference",        f"DOC-{document.id:04d}"),
+        ("Norme analysee",   norme),
+        ("Pays",             pays_label),
+        ("Type de batiment", document.get_building_type_display()),
+        ("Zone climatique",  f"Zone {document.climate_zone}" if document.climate_zone else "—"),
+        ("Date de depot",    document.upload_date.strftime("%d/%m/%Y")),
+        ("Date du rapport",  today_str),
+        ("Client",           document.client_name or "—"),
+        ("Email client",     document.client_email or "—"),
+    ]
+    story.append(info_table(rows_info))
+    story.append(PageBreak())
+
+    # ── PAGE 4 : CRITÈRES ──
+    story += section_title("3", f"{norme} — Criteres de conformite")
+
+    if norme == 'RT2012':
+        story += criteria_section("RT2012", [
+            criteria_row("Bbio — Besoins bioclimatiques",          document.rt2012_bbio,         "rt2012_bbio"),
+            criteria_row("Cep — Consommation energie primaire",    document.rt2012_cep,           "rt2012_cep",  "kWh ep/m2.an"),
+            criteria_row("Tic — Temperature interieure conv.",     document.rt2012_tic,           "rt2012_tic",  "degC"),
+            criteria_row("Etancheite a l'air",                     document.rt2012_airtightness,  "rt2012_airtightness", "m3/h.m2"),
+            criteria_row("ENR — Energies renouvelables",           document.rt2012_enr,           "rt2012_enr"),
+        ])
+    elif norme == 'RE2020':
+        story += criteria_section("RE2020", [
+            criteria_row("Cep,nr — Energie non renouvelable",      document.re2020_energy_efficiency, "re2020_energy_efficiency", "kWh/m2.an"),
+            criteria_row("Ic energie — Emissions CO2 exploitation",document.re2020_carbon_emissions,  "re2020_carbon_emissions",  "kgCO2/m2.an"),
+            criteria_row("DH — Degres-heures (confort ete)",       document.re2020_thermal_comfort,   "re2020_thermal_comfort",   "DH"),
+        ])
+    elif norme == 'PEB':
+        story += criteria_section("PEB", [
+            criteria_row("Espec — Energie specifique",             document.peb_espec,      "peb_espec",      "kWh/m2.an"),
+            criteria_row("Ew — Indicateur global de performance",  document.peb_ew,         "peb_ew"),
+            criteria_row("U mur",                                  document.peb_u_mur,      "peb_u_mur",      "W/m2.K"),
+            criteria_row("U toit",                                 document.peb_u_toit,     "peb_u_toit",     "W/m2.K"),
+            criteria_row("U plancher",                             document.peb_u_plancher, "peb_u_plancher", "W/m2.K"),
+        ])
+    elif norme == 'MINERGIE':
+        story += criteria_section("MINERGIE", [
+            criteria_row("Qh — Chaleur de chauffage annuelle",     document.minergie_qh,   "minergie_qh",   "kWh/m2.an"),
+            criteria_row("Qtot — Energie totale ponderee",         document.minergie_qtot, "minergie_qtot", "kWh/m2.an"),
+            criteria_row("n50 — Taux de renouvellement d'air",     document.minergie_n50,  "minergie_n50",  "h-1"),
+        ])
+    elif norme == 'SIA380':
+        story += criteria_section("SIA380", [
+            criteria_row("Qh — Chaleur de chauffage (SIA 380/1)", document.sia380_qh, "sia380_qh", "kWh/m2.an"),
+        ])
+    elif norme in ('CNEB2015', 'CNEB2020'):
+        story += criteria_section(norme, [
+            criteria_row("Intensite energetique",                  document.cneb_ei,           "cneb_ei",           "kWh/m2.an"),
+            criteria_row("U mur — Valeur thermique enveloppe",     document.cneb_u_mur,        "cneb_u_mur",        "W/m2.K"),
+            criteria_row("U toit — Valeur thermique toiture",      document.cneb_u_toit,       "cneb_u_toit",       "W/m2.K"),
+            criteria_row("U fenetre — Performance des vitrages",   document.cneb_u_fenetre,    "cneb_u_fenetre",    "W/m2.K"),
+            criteria_row("Infiltration — Etancheite a l'air",      document.cneb_infiltration, "cneb_infiltration", "L/s.m2"),
+        ])
+    elif norme == 'LENOZ':
+        story += criteria_section("LENOZ", [
+            criteria_row("Energie primaire",                       document.lenoz_ep,     "lenoz_ep",     "kWh/m2.an"),
+            criteria_row("Ew — Indicateur de performance",         document.lenoz_ew,     "lenoz_ew"),
+            criteria_row("U mur",                                  document.lenoz_u_mur,  "lenoz_u_mur",  "W/m2.K"),
+            criteria_row("U toit",                                 document.lenoz_u_toit, "lenoz_u_toit", "W/m2.K"),
+        ])
+
+    story.append(PageBreak())
+
+    # ── PAGE 5 : RECOMMANDATIONS ──
+    story += section_title("4", "Recommandations & points d'attention")
+
+    if is_conform is True:
+        story += reco_block(">>", f"Dossier conforme aux exigences {norme}",
+                            "L'ensemble des criteres analyses respecte les seuils reglementaires en vigueur. Aucune action corrective n'est requise pour l'obtention de la conformite.",
+                            GREEN_L, GREEN)
+    elif is_conform is None:
+        story += reco_block("--", "Analyse en cours",
+                            "Les donnees necessaires a l'evaluation complete n'ont pas encore ete renseignees. Les recommandations seront disponibles une fois l'analyse finalisee.",
+                            LGRAY, MUTED)
+
+    # Recos détaillées selon norme
+    if norme == 'RT2012':
+        if document.rt2012_bbio and document.rt2012_bbio > seuils.get('rt2012_bbio', 9999):
+            story += reco_block("[!]", "Bbio — Besoins bioclimatiques non conformes",
+                                "Ameliorer l'isolation de l'enveloppe, optimiser l'orientation et les surfaces vitrees, renforcer la compacite du batiment.",
+                                RED_L, RED)
+        if document.rt2012_cep and document.rt2012_cep > seuils.get('rt2012_cep', 9999):
+            story += reco_block("[!]", "Cep — Consommation energetique non conforme",
+                                "Optimiser les systemes de chauffage, installer des equipements haute efficacite, integrer des energies renouvelables.",
+                                RED_L, RED)
+        if document.rt2012_tic and document.rt2012_tic > seuils.get('rt2012_tic', 9999):
+            story += reco_block("[~]", "Tic — Temperature interieure conventionnelle elevee",
+                                "Renforcer la protection solaire, ameliorer l'inertie thermique, prevoir une ventilation nocturne efficace.",
+                                colors.HexColor('#FFFBF0'), GOLD)
+        if document.rt2012_airtightness and document.rt2012_airtightness > seuils.get('rt2012_airtightness', 9999):
+            story += reco_block("[!]", "Etancheite a l'air insuffisante",
+                                "Revoir les jonctions et points singuliers de l'enveloppe, traiter les passages de reseaux, realiser un test d'infiltrometrie.",
+                                RED_L, RED)
+    elif norme == 'RE2020':
+        if document.re2020_energy_efficiency and document.re2020_energy_efficiency > seuils.get('re2020_energy_efficiency', 9999):
+            story += reco_block("[!]", "Cep,nr — Energie non renouvelable excessive",
+                                "Privilegier des energies decarbonees (PAC, solaire thermique), ameliorer l'isolation et reduire les consommations auxiliaires.",
+                                RED_L, RED)
+        if document.re2020_carbon_emissions and document.re2020_carbon_emissions > seuils.get('re2020_carbon_emissions', 9999):
+            story += reco_block("[!]", "Ic energie — Emissions carbone non conformes",
+                                "Basculer vers des energies renouvelables, remplacer les systemes a combustibles fossiles, optimiser la consommation globale.",
+                                RED_L, RED)
+        if document.re2020_thermal_comfort and document.re2020_thermal_comfort > seuils.get('re2020_thermal_comfort', 9999):
+            story += reco_block("[~]", "DH — Confort d'ete insuffisant",
+                                "Installer des brise-soleils, augmenter l'inertie thermique, prevoir une ventilation nocturne.",
+                                colors.HexColor('#FFFBF0'), GOLD)
+    elif norme == 'PEB':
+        if document.peb_espec and document.peb_espec > seuils.get('peb_espec', 9999):
+            story += reco_block("[!]", "Espec — Energie specifique non conforme (PEB)",
+                                "Ameliorer l'isolation globale, optimiser les systemes de chauffage et ventilation, recourir aux energies renouvelables.",
+                                RED_L, RED)
+        if document.peb_u_mur and document.peb_u_mur > seuils.get('peb_u_mur', 9999):
+            story += reco_block("[!]", "U mur — Isolation des parois insuffisante",
+                                "Renforcer l'isolation des murs par l'interieur ou l'exterieur pour atteindre le coefficient U requis par la reglementation PEB.",
+                                RED_L, RED)
+    elif norme == 'MINERGIE':
+        if document.minergie_qh and document.minergie_qh > seuils.get('minergie_qh', 9999):
+            story += reco_block("[!]", "Qh — Besoins de chaleur trop eleves (Minergie)",
+                                "Ameliorer l'isolation de l'enveloppe, optimiser les vitrages et reduire les ponts thermiques.",
+                                RED_L, RED)
+        if document.minergie_n50 and document.minergie_n50 > seuils.get('minergie_n50', 9999):
+            story += reco_block("[!]", "n50 — Etancheite a l'air insuffisante (Minergie)",
+                                "Traiter les points singuliers, mettre en place une membrane d'etancheite continue.",
+                                RED_L, RED)
+    elif norme in ('CNEB2015', 'CNEB2020'):
+        if document.cneb_ei and document.cneb_ei > seuils.get('cneb_ei', 9999):
+            story += reco_block("[!]", f"Intensite energetique non conforme ({norme})",
+                                "Reduire les besoins en chauffage et climatisation, ameliorer l'enveloppe thermique, integrer des systemes a haute efficacite.",
+                                RED_L, RED)
+    elif norme == 'LENOZ':
+        if document.lenoz_ep and document.lenoz_ep > seuils.get('lenoz_ep', 9999):
+            story += reco_block("[!]", "Energie primaire non conforme (LENOZ)",
+                                "Optimiser les systemes energetiques, integrer des sources renouvelables et ameliorer l'enveloppe thermique.",
+                                RED_L, RED)
+
+    # Notes admin
+    if document.admin_notes:
+        story += section_title("5", "Notes & observations de l'expert")
+        notes_t = Table([[
+            Paragraph(document.admin_notes.replace('\n','<br/>'),
+                      st('nt', fontSize=9, leading=14))
+        ]], colWidths=[W])
+        notes_t.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0),(-1,-1), LGRAY),
+            ('LINEBEFORE',    (0,0),(0,-1),  3, GOLD),
+            ('TOPPADDING',    (0,0),(-1,-1), 10),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 10),
+            ('LEFTPADDING',   (0,0),(-1,-1), 12),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 12),
+        ]))
+        story.append(notes_t)
+
+    story.append(PageBreak())
+
+    # ── PAGE 6 : MENTIONS LÉGALES ──
+    story += section_title("6", "Mentions legales & disclaimer")
+
+    disc_items = [
+        ("Nature du rapport",
+         "Ce rapport est etabli sur la base des documents fournis par le client et constitue une analyse documentaire independante. Il ne se substitue pas a une attestation officielle de conformite delivree par un organisme accredite."),
+        ("Responsabilite",
+         "ConformExpert s'engage a fournir une analyse rigoureuse et objective des documents transmis. La conformite finale du batiment releve de la responsabilite du maitre d'ouvrage et des professionnels en charge de la construction."),
+        ("Confidentialite",
+         "Ce document est strictement confidentiel et destine exclusivement au client mentionne en page de couverture. Toute reproduction ou diffusion sans autorisation ecrite de ConformExpert est interdite."),
+        ("Reglementations",
+         "RT2012 : Arrete du 26 octobre 2010  |  RE2020 : Decret n 2021-1004 du 29 juillet 2021  |  PEB : Directive europeenne 2010/31/UE  |  Minergie / SIA380 : Normes SIA Suisse  |  CNEB : Code national de l'energie pour les batiments (Canada)  |  LENOZ : Reglement grand-ducal du 23 juillet 2016 (Luxembourg)"),
+        ("Contact",
+         "ConformExpert  ·  contact@conformexpert.fr  ·  Delai garanti 15 jours ouvres"),
+    ]
+    for k, v in disc_items:
+        disc_t = Table([[
+            Paragraph(k, st('dk', fontName='Helvetica-Bold', fontSize=9, textColor=TEXT)),
+            Paragraph(v, st('dv', fontSize=8.5, textColor=colors.HexColor('#444455'), leading=13)),
+        ]], colWidths=[4*cm, W - 4*cm])
+        disc_t.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0),(-1,-1), LGRAY),
+            ('TOPPADDING',    (0,0),(-1,-1), 8),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 8),
+            ('LEFTPADDING',   (0,0),(-1,-1), 10),
+            ('RIGHTPADDING',  (0,0),(-1,-1), 10),
+            ('LINEBELOW',     (0,0),(-1,-1), 0.5, MGRAY),
+            ('VALIGN',        (0,0),(-1,-1), 'TOP'),
+        ]))
+        story.append(disc_t)
+
+    # ── BUILD ──
+    buffer = BytesIO()
+    doc_pdf = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=ML, rightMargin=MR,
+        topMargin=MT, bottomMargin=MB,
+        title=f"Rapport ConformExpert - {document.name}"
+    )
+    doc_pdf.build(story, onFirstPage=draw_cover, onLaterPages=draw_page)
+
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
-    safe_name = document.name.replace(' ', '_').replace('/', '-')
+    safe_name = document.name.replace(' ','_').replace('/','_')
     response['Content-Disposition'] = f'inline; filename="rapport_{safe_name}.pdf"'
     return response
+
+# ──────────────────────────────────────────────────────────────────────────────
+# VUE À AJOUTER DANS views.py
+# Endpoint AJAX : POST /dossier/<doc_id>/rapport-ia/
+# ──────────────────────────────────────────────────────────────────────────────
+
 @csrf_exempt
 def generer_rapport_ia(request, doc_id):
     """
-    Endpoint AJAX rapport IA.
-    - GET  : retourne le rapport déjà sauvegardé (si existant)
-    - POST : génère via Claude, sauvegarde en BDD, retourne le JSON
-    - POST ?force=1 : force la régénération même si déjà sauvegardé
+    Analyse le dossier avec Claude.
+    - Si le PDF est disponible sur le disque → envoi en vision PDF (meilleur résultat)
+    - Sinon → fallback sur les valeurs déjà extraites en BDD (Railway perd les fichiers
+      entre déploiements ; ce fallback évite l'erreur "No such file or directory")
     """
     import json, os, base64, urllib.request, urllib.error
-
-    document = get_object_or_404(Document, id=doc_id)
-
-    # ── GET → retourner le cache uniquement, jamais générer ─────────────────
-    if request.method == 'GET':
-        if document.rapport_ia_json:
-            try:
-                return JsonResponse({'success': True, 'rapport': json.loads(document.rapport_ia_json), 'cached': True})
-            except Exception:
-                return JsonResponse({'error': 'Rapport corrompu en base'}, status=500)
-        else:
-            return JsonResponse({'error': 'Rapport non encore généré'}, status=404)
-
-    # ── POST sans force → retourner le cache si présent ──────────────────────
-    force = request.GET.get('force') == '1'
-    if not force and document.rapport_ia_json:
-        try:
-            return JsonResponse({'success': True, 'rapport': json.loads(document.rapport_ia_json), 'cached': True})
-        except Exception:
-            pass  # JSON corrompu → on régénère
 
     if request.method != 'POST':
         return JsonResponse({'error': 'Méthode invalide'}, status=405)
 
+    document = get_object_or_404(Document, id=doc_id)
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+
     if not ANTHROPIC_API_KEY:
         return JsonResponse({'error': 'Clé API Anthropic manquante (ANTHROPIC_API_KEY)'}, status=500)
 
-    # ── 1. Tenter de lire le PDF ──────────────────────────────────────────────
+    # ── 1. Tenter de lire le PDF (optionnel) ──────────────────────────────────
     pdf_b64 = None
     try:
         if document.upload and document.upload.name:
             with open(document.upload.path, 'rb') as f:
                 pdf_b64 = base64.standard_b64encode(f.read()).decode('utf-8')
+            print(f"PDF chargé : {document.upload.name}")
     except Exception as e:
         print(f"PDF indisponible (fallback BDD) : {e}")
+        # On continue — le rapport sera généré à partir des valeurs en BDD
 
     # ── 2. Contexte du dossier ────────────────────────────────────────────────
     norme = document.norme
@@ -883,6 +1555,8 @@ def generer_rapport_ia(request, doc_id):
     zone = document.climate_zone or 'H2'
     ref = f"DOC-{document.id:04d}"
 
+    # Valeurs déjà extraites en BDD
+    valeurs_connues = {}
     champs_norme = {
         'RT2012': [
             ('rt2012_bbio', 'Bbio', ''), ('rt2012_cep', 'Cep', 'kWh ep/m².an'),
@@ -919,8 +1593,6 @@ def generer_rapport_ia(request, doc_id):
             ('lenoz_u_mur', 'U mur', 'W/m².K'), ('lenoz_u_toit', 'U toit', 'W/m².K'),
         ],
     }
-
-    valeurs_connues = {}
     for field, label, unit in champs_norme.get(norme, []):
         val = getattr(document, field, None)
         if val is not None:
@@ -939,6 +1611,8 @@ def generer_rapport_ia(request, doc_id):
         'LENOZ': "EP ≤ 90 kWh/m².an | Ew ≤ 100 | U mur ≤ 0,22 | U toit ≤ 0,17 W/m².K",
     }
     seuils_str = SEUILS_LABELS.get(norme, "Voir réglementation applicable")
+
+    # ── 3. Prompt système ────────────────────────────────────────────────────
     source_donnees = "le PDF joint ET les valeurs extraites ci-dessous" if pdf_b64 else "les valeurs extraites ci-dessous (PDF non disponible sur le serveur)"
 
     system_prompt = f"""Tu es ConformExpert, un expert en réglementation thermique et énergétique des bâtiments.
@@ -959,11 +1633,6 @@ Contexte du dossier :
 
 Tu dois générer un rapport structuré complet.
 Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication, sans balises.
-REGLES ABSOLUES pour le JSON :
-- Pas de retour a la ligne litteral a l interieur des valeurs string, utilise un espace a la place
-- Pas de guillemets non echappes dans les valeurs string
-- Tout le JSON coherent du premier accolade au dernier
-- Jamais de caracteres de controle dans les strings
 
 Structure JSON attendue :
 {{
@@ -1017,16 +1686,34 @@ Structure JSON attendue :
 Si une valeur n'est pas disponible pour un critère, omets ce critère du tableau.
 Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {norme}."""
 
-    # ── 4. Message Claude ─────────────────────────────────────────────────────
+    # ── 4. Construction du message Claude ─────────────────────────────────────
+    # Avec PDF → vision document ; sans PDF → analyse textuelle des valeurs BDD
     if pdf_b64:
         user_content = [
-            {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_b64}},
-            {"type": "text", "text": f"Analyse ce document thermique pour le dossier {ref} ({norme} — {pays_label}) et génère le rapport JSON complet selon les instructions."}
+            {
+                "type": "document",
+                "source": {
+                    "type": "base64",
+                    "media_type": "application/pdf",
+                    "data": pdf_b64,
+                }
+            },
+            {
+                "type": "text",
+                "text": f"Analyse ce document thermique pour le dossier {ref} ({norme} — {pays_label}) et génère le rapport JSON complet selon les instructions."
+            }
         ]
         headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
     else:
         user_content = [
-            {"type": "text", "text": f"Le PDF original n'est pas disponible sur le serveur. Génère le rapport JSON complet pour le dossier {ref} ({norme} — {pays_label}) en te basant exclusivement sur les valeurs extraites et les seuils fournis dans le contexte."}
+            {
+                "type": "text",
+                "text": (
+                    f"Le PDF original n'est pas disponible sur le serveur. "
+                    f"Génère le rapport JSON complet pour le dossier {ref} ({norme} — {pays_label}) "
+                    f"en te basant exclusivement sur les valeurs extraites et les seuils fournis dans le contexte."
+                )
+            }
         ]
         headers_extra = {}
 
@@ -1034,7 +1721,7 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
     try:
         payload = json.dumps({
             "model": "claude-sonnet-4-5",
-            "max_tokens": 8192,
+            "max_tokens": 4000,
             "system": system_prompt,
             "messages": [{"role": "user", "content": user_content}]
         }).encode('utf-8')
@@ -1048,99 +1735,31 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
 
         req = urllib.request.Request(
             "https://api.anthropic.com/v1/messages",
-            data=payload, headers=headers, method="POST"
+            data=payload,
+            headers=headers,
+            method="POST"
         )
+
         with urllib.request.urlopen(req, timeout=120) as resp:
             result = json.loads(resp.read().decode('utf-8'))
-
-            stop_reason = result.get('stop_reason', '')
             raw = result['content'][0]['text'].strip()
-
-            # Log pour debug Railway
-            print(f"[generer_rapport_ia] stop_reason={stop_reason} | raw_len={len(raw)}")
-            print(f"[generer_rapport_ia] raw_preview={raw[:300]}")
-            print(f"[generer_rapport_ia] raw_end={raw[-200:]}")
-
-            # ── Nettoyer les balises markdown
             raw = raw.replace('```json', '').replace('```', '').strip()
-
-            # ── Extraire uniquement le bloc JSON (entre le 1er { et le dernier })
-            start = raw.find('{')
-            end = raw.rfind('}')
-            if start == -1 or end == -1 or end <= start:
-                raise ValueError(f"Aucun bloc JSON trouvé dans la réponse (len={len(raw)})")
-            raw = raw[start:end + 1]
-
-            # ── Tenter le parsing direct
-            try:
-                rapport = json.loads(raw)
-            except json.JSONDecodeError as parse_err:
-                # Fallback : nettoyer les retours à la ligne littéraux dans les strings
-                # Remplacer \n réels à l'intérieur des valeurs string par \\n
-                import re
-                # Remplacer les retours à la ligne non-échappés à l'intérieur des strings JSON
-                def fix_newlines_in_strings(s):
-                    result_chars = []
-                    in_string = False
-                    i = 0
-                    while i < len(s):
-                        c = s[i]
-                        if c == '\\' and in_string:
-                            result_chars.append(c)
-                            i += 1
-                            if i < len(s):
-                                result_chars.append(s[i])
-                            i += 1
-                            continue
-                        if c == '"':
-                            in_string = not in_string
-                            result_chars.append(c)
-                        elif c == '\n' and in_string:
-                            result_chars.append('\\n')
-                        elif c == '\r' and in_string:
-                            result_chars.append('\\r')
-                        elif c == '\t' and in_string:
-                            result_chars.append('\\t')
-                        else:
-                            result_chars.append(c)
-                        i += 1
-                    return ''.join(result_chars)
-
-                fixed = fix_newlines_in_strings(raw)
-                print(f"[generer_rapport_ia] Tentative fix newlines, re-parsing...")
-                rapport = json.loads(fixed)  # lève JSONDecodeError si toujours cassé
-
-            # ── Sauvegarder en BDD ────────────────────────────────────────────
-            document.rapport_ia_json = json.dumps(rapport, ensure_ascii=False)
-            document.save(update_fields=['rapport_ia_json'])
-
-            return JsonResponse({'success': True, 'rapport': rapport, 'cached': False})
+            rapport = json.loads(raw)
+            return JsonResponse({'success': True, 'rapport': rapport})
 
     except urllib.error.HTTPError as e:
         body = e.read().decode('utf-8')
         print(f"CLAUDE API ERROR {e.code}: {body}")
         return JsonResponse({'error': f'Erreur API Claude ({e.code}) : {body[:300]}'}, status=500)
     except json.JSONDecodeError as e:
-        print(f"JSON PARSE ERROR: {e}\nRaw début: {raw[:500] if 'raw' in dir() else 'N/A'}")
-        msg = str(e)
-        if 'max_tokens' in msg or 'tronqu' in msg:
-            msg = "Le rapport généré est trop long pour être parsé. Essayez de régénérer — si le problème persiste, contactez le support."
-        return JsonResponse({'error': f'Erreur parsing JSON : {msg}'}, status=500)
+        print(f"JSON PARSE ERROR: {e} — raw: {raw[:500]}")
+        return JsonResponse({'error': f'Erreur parsing JSON : {str(e)}'}, status=500)
     except Exception as e:
         print(f"GENERER_RAPPORT_IA ERROR: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
 
-def rapport_ia_client(request, token):
-    """Page publique rapport IA — accessible via lien de suivi, sans login."""
-    document = get_object_or_404(Document, tracking_token=token, status='termine')
-    return render(request, 'main/rapport_ia_client.html', {'document': document})
--e 
-
 # ──────────────────────────────────────────────
-# API REST
-# ──────────────────────────────────────────────
-
 # API REST
 # ──────────────────────────────────────────────
 
