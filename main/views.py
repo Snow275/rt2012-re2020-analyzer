@@ -584,6 +584,9 @@ def contact(request):
         form = ContactForm()
     return render(request, 'main/contact.html', {'form': form})
 
+def mentions_legales(request):
+    return render(request, 'main/mentions_legales.html')
+
 
 def faq(request):
     faq_items = [
