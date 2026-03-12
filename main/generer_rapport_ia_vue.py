@@ -10,7 +10,17 @@ def generer_rapport_ia(request, doc_id):
 
     document = get_object_or_404(Document, id=doc_id)
 
-    # ── GET ou POST sans force → retourner le rapport sauvegardé si présent ──
+    # ── GET → retourner le cache uniquement, jamais générer ─────────────────
+    if request.method == 'GET':
+        if document.rapport_ia_json:
+            try:
+                return JsonResponse({'success': True, 'rapport': json.loads(document.rapport_ia_json), 'cached': True})
+            except Exception:
+                return JsonResponse({'error': 'Rapport corrompu en base'}, status=500)
+        else:
+            return JsonResponse({'error': 'Rapport non encore généré'}, status=404)
+
+    # ── POST sans force → retourner le cache si présent ──────────────────────
     force = request.GET.get('force') == '1'
     if not force and document.rapport_ia_json:
         try:
@@ -18,7 +28,7 @@ def generer_rapport_ia(request, doc_id):
         except Exception:
             pass  # JSON corrompu → on régénère
 
-    if request.method not in ('POST', 'GET'):
+    if request.method != 'POST':
         return JsonResponse({'error': 'Méthode invalide'}, status=405)
 
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
