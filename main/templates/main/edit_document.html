@@ -483,6 +483,7 @@
 <script>
 const DOC_ID = {{ document.id }};
 const RAPPORT_SAUVEGARDE = {{ document.rapport_ia_json|default:"null"|safe }};
+let rapportDejaRendu = false;
 
 // ── Onglets ───────────────────────────────────────────────
 function showTab(name) {
@@ -499,11 +500,20 @@ function showTab(name) {
       btn.style.fontWeight   = 'normal';
     }
   });
-  // Si on ouvre l'onglet IA et qu'un rapport est déjà en base → l'afficher directement
-  if (name === 'rapport-ia' && RAPPORT_SAUVEGARDE) {
+  // Si on ouvre l'onglet IA et qu'un rapport est en base et pas encore rendu
+  if (name === 'rapport-ia' && RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
     afficherRapport(RAPPORT_SAUVEGARDE);
+    rapportDejaRendu = true;
   }
 }
+
+// ── Au chargement : si rapport en base, le rendre immédiatement ──────────────
+document.addEventListener('DOMContentLoaded', function() {
+  if (RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
+    afficherRapport(RAPPORT_SAUVEGARDE);
+    rapportDejaRendu = true;
+  }
+});
 
 // ── Modale devis ──────────────────────────────────────────
 function ouvrirModalDevis() { document.getElementById('modal-devis').style.display = 'flex'; }
