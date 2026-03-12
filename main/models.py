@@ -30,9 +30,31 @@ class Document(models.Model):
         ('erp',       'ERP (établissement public)'),
     )
     ZONE_CHOICES = (
+        # France
         ('H1', 'H1 — Nord / altitude (climat froid)'),
         ('H2', 'H2 — Centre / Ouest (climat tempéré)'),
         ('H3', 'H3 — Sud / littoral méditerranéen'),
+        # Belgique
+        ('BE-I',   'Zone I — Côtière (Belgique)'),
+        ('BE-II',  'Zone II — Centrale (Belgique)'),
+        ('BE-III', 'Zone III — Ardennaise (Belgique)'),
+        # Suisse
+        ('CH-I',   'Zone I — Genève / Tessin'),
+        ('CH-II',  'Zone II — Plateau'),
+        ('CH-III', 'Zone III — Préalpes'),
+        ('CH-IV',  'Zone IV — Alpes'),
+        ('CH-V',   'Zone V — Haute montagne'),
+        ('CH-VI',  'Zone VI — Très haute altitude'),
+        # Canada
+        ('CA-4',  'Zone 4 — Vancouver / Victoria'),
+        ('CA-5',  'Zone 5 — Toronto / Montréal'),
+        ('CA-6',  'Zone 6 — Ottawa / Québec'),
+        ('CA-7',  'Zone 7a — Winnipeg / Edmonton'),
+        ('CA-7b', 'Zone 7b — Territoires du Nord'),
+        ('CA-8',  'Zone 8 — Grand Nord'),
+        # Luxembourg
+        ('LU-A', 'Zone A — Vallée de la Moselle'),
+        ('LU-B', 'Zone B — Plateau central'),
     )
     PAYS_CHOICES = (
         ('FR', '🇫🇷 France'),
@@ -66,8 +88,6 @@ class Document(models.Model):
     rapport_pdf = models.FileField(upload_to="rapports/", null=True, blank=True)
     pays = models.CharField(max_length=5, choices=PAYS_CHOICES, default="FR")
     norme = models.CharField(max_length=10, choices=NORME_CHOICES, default="RE2020")
-    date_debut_analyse = models.DateField(null=True, blank=True)
-    rapport_ia_json = models.TextField(blank=True, default="")
 
     # Champs RE2020
     re2020_energy_efficiency = models.FloatField(null=True, blank=True)
