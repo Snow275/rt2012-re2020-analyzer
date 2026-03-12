@@ -30,7 +30,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--white);
 
 /* NAV */
 nav{position:fixed;inset:0 0 auto;z-index:999;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 4vw;background:rgba(12,25,41,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(200,168,75,.12)}
-.nav-logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--white);text-decoration:none}
+.nav-logo{display:flex;align-items:center;gap:.5rem;text-decoration:none;font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--white)}
+.nav-logo img{height:32px;width:32px;border-radius:6px;flex-shrink:0}
 .nav-logo span{color:var(--gold)}
 .nav-links{display:flex;align-items:center;gap:2rem;list-style:none}
 .nav-links a{font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s}
@@ -132,7 +133,10 @@ footer a{color:var(--gold);text-decoration:none}
 <body>
 
 <nav>
-  <a href="{% url 'landing' %}" class="nav-logo">Conform<span>Expert</span></a>
+  <a href="{% url 'landing' %}" class="nav-logo">
+    <img src="{% static 'main/img/logo.svg' %}" alt="Logo ConformExpert">
+    Conform<span>Expert</span>
+  </a>
   <ul class="nav-links">
     {% if user.is_authenticated %}
       <!-- NAV ADMIN -->
@@ -166,7 +170,7 @@ footer a{color:var(--gold);text-decoration:none}
 </main>
 
 <footer>
-  <p>© 2024 <a href="{% url 'home' %}">ConformExpert</a> — Analyse indépendante RT2012 / RE2020</p>
+  <p>© 2026 <a href="{% url 'landing' %}">ConformExpert</a> — Analyse indépendante RT2012 / RE2020</p>
 </footer>
 
 {% block extra_scripts %}{% endblock %}
