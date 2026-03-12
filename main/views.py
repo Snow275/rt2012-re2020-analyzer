@@ -308,7 +308,7 @@ Texte du document :
 
             payload = json.dumps({
                 "model": "claude-sonnet-4-5",
-                "max_tokens": 2500,
+                "max_tokens": 8192,
                 "messages": [{"role": "user", "content": prompt}]
             }).encode('utf-8')
 
