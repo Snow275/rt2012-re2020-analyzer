@@ -220,26 +220,7 @@
           </a>
         </div>
 
-        <!-- Rapport IA généré -->
-        {% if document.rapport_ia_html %}
-        <div style="margin-top:1rem;padding:1rem;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);border-radius:8px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
-            <span style="font-size:.8rem;color:var(--gold);font-weight:600">🤖 Rapport IA disponible</span>
-            <a href="{% url 'generate_rapport_ia' document.id %}?force=1"
-               onclick="return confirm('Régénérer le rapport IA ?')"
-               style="font-size:.72rem;color:var(--gray-1);text-decoration:none">🔄 Régénérer</a>
-          </div>
-          <a href="{% url 'download_rapport_ia_pdf' document.id %}" class="btn btn-gold" style="font-size:.83rem;width:100%;text-align:center;display:block">
-            ⬇ Télécharger rapport IA (PDF)
-          </a>
-        </div>
-        {% else %}
-        <div style="margin-top:1rem;text-align:center">
-          <a href="{% url 'generate_rapport_ia' document.id %}" style="font-size:.8rem;color:var(--gray-1);text-decoration:none;padding:.5rem 1rem;border:1px dashed rgba(255,255,255,.15);border-radius:6px;display:inline-block">
-            ✨ Générer le rapport IA
-          </a>
-        </div>
-        {% endif %}
+        <!-- Rapport IA → voir onglet dédié -->
 
         {% if document.status == 'termine' %}
         <div style="margin-top:1rem;padding:.8rem 1rem;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.15);border-radius:8px;font-size:.82rem;color:var(--success);text-align:center">
