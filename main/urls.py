@@ -9,6 +9,7 @@ urlpatterns = [
     path('suivi/<str:token>/rapport-ia/', views.rapport_ia_client, name='rapport_ia_client'),
     path('contact/', views.contact, name='contact'),
     path('faq/', views.faq, name='faq'),
+    path('mentions-legales/', views.mentions_legales, name='mentions_legales'),
     # Téléchargement rapport public (via lien de suivi)
     path('rapport/<int:document_id>/', views.download_report, name='download_report'),
 
