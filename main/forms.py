@@ -14,20 +14,21 @@ class DocumentForm(forms.ModelForm):
             'climate_zone': 'Zone climatique',
             'pays': 'Pays',
             'norme': 'Norme applicable',
-            'upload': 'Document (PDF)',
+            'upload': 'Document principal',
         }
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Ex: Résidence Les Acacias — Lot B'}),
             'client_name': forms.TextInput(attrs={'placeholder': 'Jean Dupont'}),
             'client_email': forms.EmailInput(attrs={'placeholder': 'jean@cabinet.fr'}),
+            'upload': forms.ClearableFileInput(attrs={'accept': '.pdf,.doc,.docx'}),
         }
 
     def clean_upload(self):
         upload = self.cleaned_data.get('upload')
         if upload:
             ext = upload.name.split('.')[-1].lower()
-            if ext not in ['pdf']:
-                raise forms.ValidationError("Seuls les fichiers PDF sont acceptés.")
+            if ext not in ['pdf', 'doc', 'docx']:
+                raise forms.ValidationError("Formats acceptés : PDF, Word (.doc, .docx).")
             if upload.size > 20 * 1024 * 1024:
                 raise forms.ValidationError("Le fichier ne doit pas dépasser 20 Mo.")
         return upload
@@ -53,7 +54,7 @@ class ContactForm(forms.Form):
         label="Profil",
         choices=[
             ('', 'Sélectionner…'),
-            ('architecte', 'Architecte / Bureau d\'études'),
+            ('architecte', "Architecte / Bureau d'études"),
             ('promoteur', 'Promoteur / Maître d\'ouvrage'),
             ('agent', 'Agent immobilier'),
             ('particulier', 'Particulier'),
