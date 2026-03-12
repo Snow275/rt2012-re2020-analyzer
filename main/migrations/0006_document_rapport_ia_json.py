@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -8,9 +8,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='document',
-            name='rapport_ia_json',
-            field=models.TextField(blank=True, default=''),
+        migrations.RunSQL(
+            sql="ALTER TABLE main_document ADD COLUMN IF NOT EXISTS rapport_ia_json TEXT NOT NULL DEFAULT '';",
+            reverse_sql="ALTER TABLE main_document DROP COLUMN IF EXISTS rapport_ia_json;",
         ),
     ]
