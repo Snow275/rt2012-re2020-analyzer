@@ -4,12 +4,6 @@ class Standard(models.Model):
     TYPE_CHOICES = (
         ("RE2020", "RE2020"),
         ("RT2012", "RT2012"),
-        ('PEB','PEB'),
-        ('Minergie','Minergie'),
-        ('SIA 380','SIA 380'),
-        ('CNEB 2015','CNEB 2015'),
-        ('CNEB 2020','CNEB 2020'),
-        ('Lenoz','Lenoz'),
     )
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
@@ -73,6 +67,7 @@ class Document(models.Model):
     pays = models.CharField(max_length=5, choices=PAYS_CHOICES, default="FR")
     norme = models.CharField(max_length=10, choices=NORME_CHOICES, default="RE2020")
     date_debut_analyse = models.DateField(null=True, blank=True)
+    rapport_ia_json = models.TextField(blank=True, default="")
 
     # Champs RE2020
     re2020_energy_efficiency = models.FloatField(null=True, blank=True)
@@ -121,23 +116,7 @@ class Document(models.Model):
         if not self.tracking_token:
             import secrets
             self.tracking_token = secrets.token_urlsafe(32)
-        if self.status == 'en_cours' and not self.date_debut_analyse:
-            from django.utils import timezone
-            self.date_debut_analyse = timezone.now().date()
         super().save(*args, **kwargs)
-
-    def date_livraison(self, nb_jours=15):
-        """Calcule la date de livraison en jours ouvrés depuis date_debut_analyse."""
-        if not self.date_debut_analyse:
-            return None
-        from datetime import timedelta
-        date = self.date_debut_analyse
-        jours = 0
-        while jours < nb_jours:
-            date += timedelta(days=1)
-            if date.weekday() < 5:
-                jours += 1
-        return date
 
     @property
     def is_conform(self):
@@ -210,7 +189,7 @@ class Devis(models.Model):
     # Projet
     projet_nom   = models.CharField(max_length=255, blank=True, default='')
     type_batiment = models.CharField(max_length=20, choices=TYPE_CHOICES, default='maison')
-    norme = models.CharField(max_length=50, choices=[('RE2020','RE2020'), ('RT2012','RT2012'), ('Les deux','Les deux'), ('PEB','PEB'), ('Minergie','Minergie'), ('SIA 380','SIA 380'), ('CNEB 2015','CNEB 2015'), ('CNEB 2020','CNEB 2020'), ('Lenoz','Lenoz')])
+    norme        = models.CharField(max_length=20, choices=[('RT2012','RT2012'),('RE2020','RE2020'),('Les deux','Les deux')], default='RE2020')
 
     # Devis
     montant      = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
