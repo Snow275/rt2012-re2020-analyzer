@@ -3,20 +3,47 @@
 
 {% block content %}
 <style>
-@media (max-width: 768px) {
-  .stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important; }
-  .main-grid { grid-template-columns: 1fr !important; }
-  .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .data-table td:nth-child(2),
-  .data-table th:nth-child(2) { display: none; } /* cache colonne Client */
-  .data-table td:nth-child(5),
-  .data-table th:nth-child(5) { display: none; } /* cache colonne Norme */
-  .alert-old-pending { flex-wrap: wrap; }
-  .alert-old-pending a { margin-left: 0 !important; margin-top: .5rem; width: 100%; text-align: center; }
+/* ── Onglets type analyse ── */
+.tab-bar { display:flex;gap:.5rem;margin-bottom:1.8rem;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:0 }
+.tab-btn { background:none;border:none;padding:.7rem 1.2rem;font-size:.82rem;font-weight:500;color:var(--gray-1);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;letter-spacing:.04em;text-transform:uppercase }
+.tab-btn:hover { color:var(--white) }
+.tab-btn.active { color:var(--gold);border-bottom-color:var(--gold) }
+.tab-pane { display:none }
+.tab-pane.active { display:block }
+
+/* ── Badge type analyse ── */
+.badge-energie  { background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2) }
+.badge-pca      { background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.2) }
+.badge-complet  { background:rgba(200,168,75,.12);color:#C8A84B;border:1px solid rgba(200,168,75,.2) }
+
+/* ── Stat cards ── */
+.stats-grid-4 { display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.8rem }
+
+/* ── Kanban columns ── */
+.kanban { display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem }
+.kanban-col { background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;overflow:hidden }
+.kanban-col-hd { padding:.8rem 1rem;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center }
+.kanban-col-hd .col-title { font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600 }
+.kanban-col-hd .col-count { font-size:.7rem;background:rgba(255,255,255,.07);padding:.1rem .45rem;border-radius:99px;color:var(--gray-1) }
+.col-recu .col-title    { color:var(--gray-2) }
+.col-en-cours .col-title { color:#E5A93A }
+.col-termine .col-title  { color:#4ade80 }
+.kanban-body { padding:.7rem;display:flex;flex-direction:column;gap:.5rem;min-height:120px }
+.kanban-card { background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.8rem 1rem;text-decoration:none;display:block;transition:border-color .2s }
+.kanban-card:hover { border-color:rgba(200,168,75,.3) }
+.kanban-card .kc-name { font-size:.85rem;color:var(--white);font-weight:500;margin-bottom:.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+.kanban-card .kc-meta { font-size:.73rem;color:var(--gray-1);display:flex;justify-content:space-between;align-items:center;gap:.5rem }
+.kanban-empty { padding:2rem 1rem;text-align:center;color:var(--muted);font-size:.8rem }
+
+@media(max-width:900px) { .kanban { grid-template-columns:1fr } }
+@media(max-width:768px) {
+  .stats-grid-4 { grid-template-columns:1fr 1fr }
+  .main-grid { grid-template-columns:1fr !important }
+  .tab-btn { padding:.6rem .8rem;font-size:.75rem }
 }
-@media (max-width: 480px) {
-  .stats-grid-4 { grid-template-columns: 1fr 1fr !important; }
-  .stat-card .stat-value { font-size: 1.8rem !important; }
+@media(max-width:480px) {
+  .stats-grid-4 { grid-template-columns:1fr 1fr }
+  .stat-card .stat-value { font-size:1.8rem !important }
 }
 </style>
 
@@ -31,7 +58,7 @@
 <div class="container">
 
   <!-- STATS -->
-  <div class="stats-grid stats-grid-4 fade-up" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stats-grid-4 fade-up">
     <div class="stat-card">
       <div class="stat-label">Dossiers actifs</div>
       <div class="stat-value">{{ total_projects }}</div>
@@ -40,12 +67,12 @@
     <div class="stat-card">
       <div class="stat-label">En attente</div>
       <div class="stat-value" style="{% if pending_count > 0 %}color:#E5A93A{% endif %}">{{ pending_count }}</div>
-      <div class="stat-sub">dossiers reçus non traités</div>
+      <div class="stat-sub">non traités</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Taux de conformité</div>
       <div class="stat-value">{{ compliance_rate }}<span style="font-size:1.2rem">%</span></div>
-      <div class="stat-sub">tous référentiels confondus</div>
+      <div class="stat-sub">tous référentiels</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Devis en attente</div>
@@ -56,81 +83,226 @@
 
   <!-- ALERTE dossiers anciens -->
   {% if old_pending %}
-  <div class="alert-old-pending fade-up" style="background:rgba(229,169,58,.08);border:1px solid rgba(229,169,58,.25);border-radius:8px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+  <div class="fade-up" style="background:rgba(229,169,58,.08);border:1px solid rgba(229,169,58,.25);border-radius:8px;padding:1rem 1.4rem;margin-bottom:1.8rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
     <span style="font-size:1.3rem">⚠️</span>
     <div style="flex:1;min-width:200px">
-      <div style="font-size:.88rem;color:#E5A93A;font-weight:500">{{ old_pending }} dossier{{ old_pending|pluralize }} reçu{{ old_pending|pluralize }} depuis plus de 5 jours sans traitement</div>
+      <div style="font-size:.88rem;color:#E5A93A;font-weight:500">{{ old_pending }} dossier{{ old_pending|pluralize }} en attente depuis plus de 5 jours</div>
       <div style="font-size:.78rem;color:var(--gray-1);margin-top:.2rem">Pensez à mettre à jour leur statut.</div>
     </div>
     <a href="{% url 'history' %}" class="btn btn-outline btn-sm" style="margin-left:auto">Voir →</a>
   </div>
   {% endif %}
 
-  <div class="main-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:2rem;align-items:start">
+  <div class="main-grid fade-up-2" style="display:grid;grid-template-columns:1fr 280px;gap:2rem;align-items:start">
 
-    <!-- DOSSIERS RÉCENTS -->
-    <div class="fade-up-2">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
-        <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem">Dossiers récents</h2>
+    <!-- DOSSIERS PAR TYPE -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem">Dossiers</h2>
         <a href="{% url 'history' %}" class="btn btn-outline btn-sm">Voir tout →</a>
       </div>
 
-      {% if documents %}
-      <div class="card">
-        <div class="data-table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Projet</th>
-                <th>Client</th>
-                <th>Date</th>
-                <th>Statut</th>
-                <th>Norme</th>
-                <th>Conformité</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for doc in documents|slice:":6" %}
-              <tr>
-                <td><strong style="color:var(--white);font-size:.88rem">{{ doc.name }}</strong></td>
-                <td style="font-size:.83rem;color:var(--gray-1)">{{ doc.client_name|default:"—" }}</td>
-                <td style="font-size:.8rem;color:var(--gray-1)">{{ doc.upload_date|date:"d/m/Y" }}</td>
-                <td>
-                  {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
-                  {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
-                  {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if doc.norme %}
-                    <span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;letter-spacing:.04em;padding:.18rem .55rem;border-radius:3px;background:rgba(200,168,75,.1);color:#C8A84B;border:1px solid rgba(200,168,75,.25)">{{ doc.norme }}</span>
-                  {% else %}
-                    <span class="text-muted">—</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if doc.is_conform is None %}<span class="text-muted">—</span>
-                  {% elif doc.is_conform %}<span class="badge badge-success">Conforme</span>
-                  {% else %}<span class="badge badge-danger">Non conforme</span>
-                  {% endif %}
-                </td>
-                <td>
-                  <a href="{% url 'edit_document' doc.id %}" class="btn btn-outline btn-sm">Éditer</a>
-                </td>
-              </tr>
+      <!-- Onglets -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('energie', this)">
+          ⚡ Pré-analyse énergétique
+          {% if count_energie %}<span style="margin-left:.4rem;font-size:.68rem;background:rgba(59,130,246,.15);color:#60a5fa;padding:.1rem .4rem;border-radius:99px">{{ count_energie }}</span>{% endif %}
+        </button>
+        <button class="tab-btn" onclick="switchTab('pca', this)">
+          🏗️ Pré-analyse technique
+          {% if count_pca %}<span style="margin-left:.4rem;font-size:.68rem;background:rgba(168,85,247,.15);color:#c084fc;padding:.1rem .4rem;border-radius:99px">{{ count_pca }}</span>{% endif %}
+        </button>
+        <button class="tab-btn" onclick="switchTab('complet', this)">
+          📊 Analyse complète
+          {% if count_complet %}<span style="margin-left:.4rem;font-size:.68rem;background:rgba(200,168,75,.15);color:#C8A84B;padding:.1rem .4rem;border-radius:99px">{{ count_complet }}</span>{% endif %}
+        </button>
+      </div>
+
+      <!-- TAB : Énergie -->
+      <div id="tab-energie" class="tab-pane active">
+        <div class="kanban">
+          <div class="kanban-col col-recu">
+            <div class="kanban-col-hd">
+              <span class="col-title">Reçus</span>
+              <span class="col-count">{{ docs_energie_recu|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_energie_recu %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                  <span style="font-size:.68rem;background:rgba(200,168,75,.1);color:#C8A84B;padding:.1rem .45rem;border-radius:3px">{{ doc.norme }}</span>
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
               {% endfor %}
-            </tbody>
-          </table>
+            </div>
+          </div>
+          <div class="kanban-col col-en-cours">
+            <div class="kanban-col-hd">
+              <span class="col-title">En cours</span>
+              <span class="col-count">{{ docs_energie_en_cours|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_energie_en_cours %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                  <span style="font-size:.68rem;background:rgba(200,168,75,.1);color:#C8A84B;padding:.1rem .45rem;border-radius:3px">{{ doc.norme }}</span>
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="kanban-col col-termine">
+            <div class="kanban-col-hd">
+              <span class="col-title">Terminés</span>
+              <span class="col-count">{{ docs_energie_termine|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_energie_termine %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                  {% if doc.is_conform is not None %}
+                    {% if doc.is_conform %}<span style="color:#4ade80;font-size:.72rem">✓ Conforme</span>
+                    {% else %}<span style="color:#f87171;font-size:.72rem">✗ Non conforme</span>{% endif %}
+                  {% endif %}
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
+              {% endfor %}
+            </div>
+          </div>
         </div>
       </div>
-      {% else %}
-      <div class="card" style="padding:2.5rem;text-align:center">
-        <div style="font-size:2rem;margin-bottom:.8rem">📭</div>
-        <p style="color:var(--gray-1);font-size:.9rem">En attente de dossiers clients.</p>
-        <p style="color:var(--muted);font-size:.8rem;margin-top:.4rem">Les dossiers déposés via le formulaire apparaîtront ici.</p>
+
+      <!-- TAB : PCA -->
+      <div id="tab-pca" class="tab-pane">
+        <div class="kanban">
+          <div class="kanban-col col-recu">
+            <div class="kanban-col-hd">
+              <span class="col-title">Reçus</span>
+              <span class="col-count">{{ docs_pca_recu|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_pca_recu %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                  <span style="font-size:.68rem;color:var(--gray-1)">{{ doc.building_type|default:"—" }}</span>
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="kanban-col col-en-cours">
+            <div class="kanban-col-hd">
+              <span class="col-title">En cours</span>
+              <span class="col-count">{{ docs_pca_en_cours|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_pca_en_cours %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                  <span style="font-size:.68rem;color:var(--gray-1)">{{ doc.building_type|default:"—" }}</span>
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="kanban-col col-termine">
+            <div class="kanban-col-hd">
+              <span class="col-title">Terminés</span>
+              <span class="col-count">{{ docs_pca_termine|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_pca_termine %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
       </div>
-      {% endif %}
+
+      <!-- TAB : Complet -->
+      <div id="tab-complet" class="tab-pane">
+        <div class="kanban">
+          <div class="kanban-col col-recu">
+            <div class="kanban-col-hd">
+              <span class="col-title">Reçus</span>
+              <span class="col-count">{{ docs_complet_recu|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_complet_recu %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                  <span style="font-size:.68rem;background:rgba(200,168,75,.1);color:#C8A84B;padding:.1rem .45rem;border-radius:3px">{{ doc.norme }}</span>
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="kanban-col col-en-cours">
+            <div class="kanban-col-hd">
+              <span class="col-title">En cours</span>
+              <span class="col-count">{{ docs_complet_en_cours|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_complet_en_cours %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                  <span style="font-size:.68rem;background:rgba(200,168,75,.1);color:#C8A84B;padding:.1rem .45rem;border-radius:3px">{{ doc.norme }}</span>
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="kanban-col col-termine">
+            <div class="kanban-col-hd">
+              <span class="col-title">Terminés</span>
+              <span class="col-count">{{ docs_complet_termine|length }}</span>
+            </div>
+            <div class="kanban-body">
+              {% for doc in docs_complet_termine %}
+              <a href="{% url 'edit_document' doc.id %}" class="kanban-card">
+                <div class="kc-name">{{ doc.name }}</div>
+                <div class="kc-meta">
+                  <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+                  {% if doc.is_conform is not None %}
+                    {% if doc.is_conform %}<span style="color:#4ade80;font-size:.72rem">✓ Conforme</span>
+                    {% else %}<span style="color:#f87171;font-size:.72rem">✗ Non conforme</span>{% endif %}
+                  {% endif %}
+                </div>
+              </a>
+              {% empty %}<div class="kanban-empty">Aucun dossier</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- COLONNE DROITE -->
@@ -138,63 +310,63 @@
 
       <!-- Actions rapides -->
       <div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:1rem">Actions rapides</h2>
-        <div style="display:flex;flex-direction:column;gap:.7rem">
-          <a href="{% url 'results' %}" class="card" style="padding:1.1rem 1.3rem;text-decoration:none;display:flex;align-items:center;gap:1rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
-            <span style="font-size:1.3rem">📊</span>
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:.9rem">Actions rapides</h2>
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+          <a href="{% url 'results' %}" class="card" style="padding:.9rem 1.1rem;text-decoration:none;display:flex;align-items:center;gap:.9rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <span style="font-size:1.2rem">📊</span>
             <div>
-              <div style="font-size:.88rem;color:var(--white);font-weight:500">Résultats des analyses</div>
-              <div style="font-size:.75rem;color:var(--gray-1)">Résultats par référentiel</div>
+              <div style="font-size:.85rem;color:var(--white);font-weight:500">Résultats</div>
+              <div style="font-size:.73rem;color:var(--gray-1)">Par référentiel</div>
             </div>
           </a>
-          <a href="{% url 'history' %}" class="card" style="padding:1.1rem 1.3rem;text-decoration:none;display:flex;align-items:center;gap:1rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
-            <span style="font-size:1.3rem">📁</span>
+          <a href="{% url 'history' %}" class="card" style="padding:.9rem 1.1rem;text-decoration:none;display:flex;align-items:center;gap:.9rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <span style="font-size:1.2rem">📁</span>
             <div>
-              <div style="font-size:.88rem;color:var(--white);font-weight:500">Historique des dossiers</div>
-              <div style="font-size:.75rem;color:var(--gray-1)">Tous les projets reçus</div>
+              <div style="font-size:.85rem;color:var(--white);font-weight:500">Historique</div>
+              <div style="font-size:.73rem;color:var(--gray-1)">Tous les dossiers</div>
             </div>
           </a>
-          <a href="{% url 'devis_list' %}" class="card" style="padding:1.1rem 1.3rem;text-decoration:none;display:flex;align-items:center;gap:1rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
-            <span style="font-size:1.3rem">💰</span>
+          <a href="{% url 'devis_list' %}" class="card" style="padding:.9rem 1.1rem;text-decoration:none;display:flex;align-items:center;gap:.9rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <span style="font-size:1.2rem">💰</span>
             <div>
-              <div style="font-size:.88rem;color:var(--white);font-weight:500">Gérer les devis</div>
-              <div style="font-size:.75rem;color:var(--gray-1)">{{ devis_en_attente }} en attente</div>
+              <div style="font-size:.85rem;color:var(--white);font-weight:500">Devis</div>
+              <div style="font-size:.73rem;color:var(--gray-1)">{{ devis_en_attente }} en attente</div>
             </div>
           </a>
-          <a href="{% url 'settings' %}" class="card" style="padding:1.1rem 1.3rem;text-decoration:none;display:flex;align-items:center;gap:1rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
-            <span style="font-size:1.3rem">⚙️</span>
+          <a href="{% url 'settings' %}" class="card" style="padding:.9rem 1.1rem;text-decoration:none;display:flex;align-items:center;gap:.9rem;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(200,168,75,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+            <span style="font-size:1.2rem">⚙️</span>
             <div>
-              <div style="font-size:.88rem;color:var(--white);font-weight:500">Paramètres</div>
-              <div style="font-size:.75rem;color:var(--gray-1)">Seuils par référentiel</div>
+              <div style="font-size:.85rem;color:var(--white);font-weight:500">Paramètres</div>
+              <div style="font-size:.73rem;color:var(--gray-1)">Seuils par référentiel</div>
             </div>
           </a>
         </div>
       </div>
 
-      <!-- Derniers devis -->
+      <!-- Devis récents -->
       <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-          <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem">Devis récents</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">
+          <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem">Devis récents</h2>
           <a href="{% url 'devis_create' %}" class="btn btn-gold btn-sm">+ Nouveau</a>
         </div>
         {% if recent_devis %}
         <div class="card" style="overflow:hidden">
           {% for d in recent_devis %}
-          <a href="{% url 'devis_edit' d.id %}" style="display:flex;justify-content:space-between;align-items:center;padding:.8rem 1rem;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;gap:.5rem" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+          <a href="{% url 'devis_edit' d.id %}" style="display:flex;justify-content:space-between;align-items:center;padding:.75rem .9rem;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;gap:.5rem" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
             <div style="min-width:0">
-              <div style="font-size:.85rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.client_nom }}</div>
-              <div style="font-size:.73rem;color:var(--gray-1)">{{ d.created_at|date:"d/m/Y" }} · {% if d.montant %}{{ d.montant }}€{% else %}Non chiffré{% endif %}</div>
+              <div style="font-size:.83rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.client_nom }}</div>
+              <div style="font-size:.72rem;color:var(--gray-1)">{{ d.created_at|date:"d/m/Y" }} · {% if d.montant %}{{ d.montant }}€{% else %}Non chiffré{% endif %}</div>
             </div>
-            <span class="badge {% if d.statut == 'accepte' %}badge-success{% elif d.statut == 'refuse' %}badge-danger{% elif d.statut == 'facture' %}badge-gold{% else %}badge-gray{% endif %}" style="font-size:.7rem;flex-shrink:0">
+            <span class="badge {% if d.statut == 'accepte' %}badge-success{% elif d.statut == 'refuse' %}badge-danger{% elif d.statut == 'facture' %}badge-gold{% else %}badge-gray{% endif %}" style="font-size:.68rem;flex-shrink:0">
               {{ d.get_statut_display }}
             </span>
           </a>
           {% endfor %}
         </div>
         {% else %}
-        <div class="card" style="padding:1.5rem;text-align:center">
-          <p style="color:var(--gray-1);font-size:.85rem">Aucun devis pour l'instant.</p>
-          <a href="{% url 'devis_create' %}" class="btn btn-gold btn-sm" style="margin-top:.8rem">Créer un devis</a>
+        <div class="card" style="padding:1.3rem;text-align:center">
+          <p style="color:var(--gray-1);font-size:.83rem">Aucun devis pour l'instant.</p>
+          <a href="{% url 'devis_create' %}" class="btn btn-gold btn-sm" style="margin-top:.7rem">Créer un devis</a>
         </div>
         {% endif %}
       </div>
@@ -202,4 +374,15 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
 {% endblock %}
