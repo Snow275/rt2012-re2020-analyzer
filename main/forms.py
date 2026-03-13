@@ -6,7 +6,8 @@ class DocumentForm(forms.ModelForm):
 
     # ── Zone climatique avec groupes par pays ─────────────────────────────────
     climate_zone = forms.ChoiceField(
-        label='Zone climatique',
+    label='Zone climatique',
+    required=False,
         choices=[
             ('', 'Sélectionner…'),
             ('🇫🇷 France', (
@@ -44,7 +45,8 @@ class DocumentForm(forms.ModelForm):
 
     # ── Norme applicable avec groupes par pays ────────────────────────────────
     norme = forms.ChoiceField(
-        label='Norme applicable',
+    label='Norme applicable',
+    required=False,
         choices=[
             ('', 'Sélectionner…'),
             ('🇫🇷 France', (
