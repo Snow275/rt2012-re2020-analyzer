@@ -460,6 +460,10 @@ def import_document(request):
         if form.is_valid():
             document = form.save(commit=False)
             document.type_analyse = request.POST.get('type_analyse', 'energie')
+            # Garantit que rapport_ia_json n'est jamais NULL en BDD
+            # (contourne le NOT NULL constraint si la migration n'est pas encore passée)
+            if document.rapport_ia_json is None:
+                document.rapport_ia_json = ''
             document.save()
 
             # ── Multi-upload : sauvegarder chaque fichier ──────────────────
