@@ -3,6 +3,11 @@
 {% block title %}Paramètres{% endblock %}
 
 {% block content %}
+<style>
+@media (max-width: 768px) {
+  .seuils-grid { grid-template-columns: 1fr !important; }
+}
+</style>
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Paramètres</span>
@@ -19,7 +24,7 @@
       <span>{{ pays_label }}</span>
       <span style="display:inline-block;width:32px;height:1px;background:rgba(255,255,255,.1)"></span>
     </h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem">
+    <div class="seuils-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem">
       {% for norme_code, norme_label, fields_seuils in normes %}
       <div class="card fade-up" style="overflow:hidden">
         <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.05)">
