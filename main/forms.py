@@ -75,7 +75,20 @@ class DocumentForm(forms.ModelForm):
 
     class Meta:
         model = Document
-        fields = ['name', 'client_name', 'client_email', 'building_type', 'pays', 'climate_zone', 'norme', 'upload']
+        fields = [
+            'name',
+            'client_name',
+            'client_email',
+            'building_type',
+            'pays',
+            'climate_zone',
+            'norme',
+            'surface_totale',
+            'annee_construction',
+            'nombre_logements',
+            'upload'
+        ]
+        
         labels = {
             'name': 'Nom du projet',
             'client_name': 'Votre nom',
