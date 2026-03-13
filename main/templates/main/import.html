@@ -214,11 +214,18 @@ function toggleEnergyFields(){
   const selected = document.querySelector('input[name="type_analyse"]:checked').value;
 
   if(selected === "pca"){
-    if(climateGroup) climateGroup.style.display = "none";
-    if(normeGroup) normeGroup.style.display = "none";
+    climateGroup.style.display = "none";
+    normeGroup.style.display = "none";
+
+    document.getElementById("id_climate_zone").disabled = true;
+    document.getElementById("id_norme").disabled = true;
+
   }else{
-    if(climateGroup) climateGroup.style.display = "flex";
-    if(normeGroup) normeGroup.style.display = "flex";
+    climateGroup.style.display = "flex";
+    normeGroup.style.display = "flex";
+
+    document.getElementById("id_climate_zone").disabled = false;
+    document.getElementById("id_norme").disabled = false;
   }
 }
 
