@@ -421,10 +421,13 @@ def home(request):
     documents = Document.objects.filter(is_active=True).order_by('-upload_date')
     total_projects = documents.count()
 
-    compliant_count = sum(
-        1 for doc in documents
-        if doc.is_conform is True
-    )
+    compliant_count = 0
+    for doc in documents:
+        try:
+            if doc.is_conform is True:
+                compliant_count += 1
+        except Exception:
+            pass
     compliance_rate = round((compliant_count / total_projects * 100), 1) if total_projects else 0
 
     # Dossiers en attente
