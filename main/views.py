@@ -513,8 +513,11 @@ def home(request):
         'count_energie': count_energie,
         'count_pca': count_pca,
         'count_complet': count_complet,
+        "document": document,
+        "rapport": rapport,
     }
     return render(request, 'main/home.html', context)
+    return render(request, "main/rapport_ia_client.html", context)
 
 
 def import_document(request):
