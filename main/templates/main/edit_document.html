@@ -3,6 +3,40 @@
 {% block title %}Éditer — {{ document.name }}{% endblock %}
 
 {% block content %}
+<style>
+/* ══ EDIT DOCUMENT — MOBILE RESPONSIVE ══ */
+@media (max-width: 768px) {
+  /* Onglets : scroll horizontal */
+  .tab-bar {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-bar button { white-space: nowrap; padding: .6rem 1rem !important; font-size: .82rem !important; }
+
+  /* Grille 2 colonnes → 1 colonne */
+  .main-2col { grid-template-columns: 1fr !important; }
+
+  /* Seuils RT2012 — champs en colonne */
+  .rt-field-row { flex-direction: column !important; align-items: flex-start !important; }
+  .rt-field-row label { width: auto !important; margin-bottom: .3rem; }
+  .rt-field-row input { width: 100% !important; box-sizing: border-box !important; }
+
+  /* Rapport IA bouton centré */
+  .rapport-ia-btn-wrap { flex-direction: column !important; align-items: stretch !important; }
+  .rapport-ia-btn-wrap button { width: 100% !important; }
+
+  /* Tableaux résultats */
+  .results-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 480px) {
+  .page-header .ph-inner h1 { font-size: 1.3rem !important; }
+  .container { padding: 0 .8rem !important; }
+}
+</style>
+
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Administration</span>
@@ -26,7 +60,7 @@
   {% endif %}
 
   <!-- ONGLETS -->
-  <div style="display:flex;gap:0;margin-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.08)">
+  <div class="tab-bar" style="display:flex;gap:0;margin-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.08)">
     <button onclick="showTab('infos')" id="tab-infos"
       style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--gold);color:var(--gold);font-weight:500;margin-bottom:-1px">
       📋 Informations
@@ -49,7 +83,7 @@
   <div id="panel-infos">
     <form method="post">
       {% csrf_token %}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+      <div class="main-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
 
         <!-- COLONNE GAUCHE -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
