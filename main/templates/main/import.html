@@ -203,6 +203,28 @@ const zone = document.getElementById('upload-zone');
 const fileList = document.getElementById('file-list');
 let selectedFiles = [];
 
+const analyseRadios = document.querySelectorAll('input[name="type_analyse"]');
+const climateGroup = document.getElementById("id_climate_zone").closest(".f-group");
+const normeGroup = document.getElementById("id_norme").closest(".f-group");
+
+function toggleEnergyFields(){
+  const selected = document.querySelector('input[name="type_analyse"]:checked').value;
+
+  if(selected === "pca"){
+    climateGroup.style.display = "none";
+    normeGroup.style.display = "none";
+  }else{
+    climateGroup.style.display = "flex";
+    normeGroup.style.display = "flex";
+  }
+}
+
+analyseRadios.forEach(r => {
+  r.addEventListener("change", toggleEnergyFields);
+});
+
+toggleEnergyFields();
+  
 function formatSize(bytes) {
   return (bytes / 1024 / 1024).toFixed(2) + ' Mo';
 }
@@ -308,36 +330,5 @@ function updateFields(){
 }
 
 paysSelect.addEventListener("change", updateFields);
-</script>
-
-{% block extra_scripts %}
-<script>
-
-... ton script actuel ...
-
-paysSelect.addEventListener("change", updateFields);
-
-const analyseRadios = document.querySelectorAll('input[name="type_analyse"]');
-const climateGroup = document.getElementById("id_climate_zone").closest(".f-group");
-const normeGroup = document.getElementById("id_norme").closest(".f-group");
-
-function toggleEnergyFields(){
-  const selected = document.querySelector('input[name="type_analyse"]:checked').value;
-
-  if(selected === "pca"){
-    climateGroup.style.display = "none";
-    normeGroup.style.display = "none";
-  }else{
-    climateGroup.style.display = "flex";
-    normeGroup.style.display = "flex";
-  }
-}
-
-analyseRadios.forEach(r => {
-  r.addEventListener("change", toggleEnergyFields);
-});
-
-toggleEnergyFields();
-
 </script>
 {% endblock %}
