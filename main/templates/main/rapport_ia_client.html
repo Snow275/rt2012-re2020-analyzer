@@ -9,149 +9,175 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --navy:   #0C1929;
-      --navy2:  #0F2035;
-      --navy3:  #162338;
-      --gold:   #C8A84B;
-      --gold-lt:#e0c070;
-      --white:  #F0F4FA;
-      --gray1:  #8892A4;
-      --gray2:  #C2CDD6;
-      --muted:  #536070;
-      --green:  #27C93F;
-      --red:    #ef5350;
+      --navy:#0C1929; --navy2:#0F2035; --navy3:#162338;
+      --gold:#C8A84B; --gold-lt:#e0c070;
+      --white:#F0F4FA; --gray1:#8892A4; --gray2:#C2CDD6; --muted:#536070;
+      --green:#27C93F; --red:#ef5350;
     }
     html { scroll-behavior: smooth; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--navy); color: var(--white); min-height: 100vh; line-height: 1.5; }
+    body { font-family:'DM Sans',sans-serif; background:var(--navy); color:var(--white); min-height:100vh; line-height:1.5; }
 
-    /* Header */
-    .pub-header { background: var(--navy2); border-bottom: 1px solid rgba(200,168,75,.18); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
-    .pub-logo { font-family: 'Playfair Display', serif; font-size: 1.1rem; text-decoration: none; }
-    .pub-logo span:first-child { color: var(--white); }
-    .pub-logo span:last-child  { color: var(--gold); }
-    .pub-back { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--gray1); text-decoration: none; padding: .35rem .85rem; border: 1px solid rgba(255,255,255,.08); border-radius: 7px; transition: color .2s, border-color .2s; }
-    .pub-back:hover { color: var(--gold); border-color: rgba(200,168,75,.3); }
+    .pub-header { background:var(--navy2); border-bottom:1px solid rgba(200,168,75,.18); padding:1rem 2rem; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; }
+    .pub-logo { font-family:'Playfair Display',serif; font-size:1.1rem; text-decoration:none; }
+    .pub-logo .w { color:var(--white); }
+    .pub-logo .g { color:var(--gold); }
+    .pub-back { display:inline-flex; align-items:center; gap:.4rem; font-size:.8rem; color:var(--gray1); text-decoration:none; padding:.35rem .85rem; border:1px solid rgba(255,255,255,.08); border-radius:7px; transition:color .2s,border-color .2s; }
+    .pub-back:hover { color:var(--gold); border-color:rgba(200,168,75,.3); }
 
-    /* Container */
-    .pub-container { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+    .pub-wrap { max-width:860px; margin:0 auto; padding:2.5rem 1.5rem 4rem; }
+    .dossier-hd { margin-bottom:2rem; padding-bottom:1.2rem; border-bottom:1px solid rgba(255,255,255,.06); }
+    .dossier-hd h1 { font-family:'Playfair Display',serif; font-size:1.5rem; margin-bottom:.4rem; }
+    .dossier-hd p { font-size:.82rem; color:var(--gray1); }
+    .dossier-hd p span { color:var(--gold); font-family:monospace; }
 
-    /* Dossier header */
-    .pub-dossier { margin-bottom: 2rem; padding-bottom: 1.2rem; border-bottom: 1px solid rgba(255,255,255,.06); }
-    .pub-dossier h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; margin-bottom: .4rem; }
-    .pub-dossier p { font-size: .82rem; color: var(--gray1); }
-    .pub-dossier p span { color: var(--gold); font-family: monospace; }
+    .card { background:var(--navy3); border:1px solid rgba(255,255,255,.06); border-radius:12px; }
+    .section-title { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.9rem; }
 
-    /* Card */
-    .card { background: var(--navy3); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; }
+    /* verdict */
+    .verdict-box { margin-bottom:1.8rem; padding:1.5rem 2rem; border-radius:14px; display:flex; align-items:center; justify-content:space-between; border:1px solid; }
+    .verdict-box.conform  { background:rgba(39,201,63,.07);   border-color:rgba(39,201,63,.3); }
+    .verdict-box.nonconf  { background:rgba(229,57,53,.07);   border-color:rgba(229,57,53,.3); }
+    .verdict-box.insuff   { background:rgba(136,136,153,.07); border-color:rgba(136,136,153,.25); }
+    .verdict-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.12em; opacity:.6; margin-bottom:.5rem; }
+    .verdict-text { font-family:'Playfair Display',serif; font-size:1.9rem; font-weight:700; }
+    .verdict-text.conform { color:var(--green); }
+    .verdict-text.nonconf { color:var(--red); }
+    .verdict-text.insuff  { color:#888899; }
+    .verdict-icon { font-size:3.2rem; }
 
-    /* Table */
-    table { border-collapse: collapse; width: 100%; }
-    th, td { text-align: left; }
+    /* kpis */
+    .kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.4rem; }
+    .kpi-box { text-align:center; padding:1.3rem; border-radius:12px; border:1px solid; }
+    .kpi-box.ok  { background:rgba(39,201,63,.06);  border-color:rgba(39,201,63,.2); }
+    .kpi-box.ko  { background:rgba(229,57,53,.06);  border-color:rgba(229,57,53,.2); }
+    .kpi-n { font-size:2.6rem; font-weight:700; line-height:1; }
+    .kpi-n.ok { color:var(--green); }
+    .kpi-n.ko { color:var(--red); }
+    .kpi-lbl { font-size:.76rem; color:var(--gray1); margin-top:.4rem; }
 
-    /* Animations */
-    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-    .fade-up { animation: fadeUp .5s ease both; }
-    .fade-up-2 { animation: fadeUp .5s ease .1s both; }
-    .fade-up-3 { animation: fadeUp .5s ease .2s both; }
+    /* table */
+    table { border-collapse:collapse; width:100%; }
+    th { padding:.7rem 1rem; color:var(--gray1); font-weight:500; font-size:.69rem; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid rgba(255,255,255,.07); background:var(--navy); }
+    td { padding:.8rem 1rem; border-bottom:1px solid rgba(255,255,255,.04); }
+    tr:nth-child(even) td { background:rgba(255,255,255,.015); }
+    .badge { padding:.22rem .6rem; border-radius:12px; font-size:.71rem; font-weight:600; }
+    .badge.ok  { background:rgba(39,201,63,.12);  color:#27C93F; }
+    .badge.ko  { background:rgba(229,57,53,.12);  color:#ef5350; }
 
-    /* Mobile */
-    @media (max-width: 640px) {
-      .pub-header { padding: .85rem 1rem; }
-      .pub-container { padding: 1.5rem .9rem 3rem; }
-      .grid-2col { grid-template-columns: 1fr !important; }
-      .hide-mobile { display: none !important; }
-      table thead th:last-child { display: none; }
-      table tbody td:last-child { display: none; }
+    /* non-conformités */
+    .nc-item { padding:1.3rem 1.5rem; border-radius:12px; border:1px solid; margin-bottom:1rem; }
+    .nc-item.bloquant { border-color:rgba(229,57,53,.25);   background:rgba(229,57,53,.07);   border-left:4px solid #ef5350; }
+    .nc-item.majeur   { border-color:rgba(255,152,0,.2);    background:rgba(255,152,0,.05);   border-left:4px solid #ff9800; }
+    .nc-item.mineur   { border-color:rgba(200,168,75,.2);   background:rgba(200,168,75,.05);  border-left:4px solid #C8A84B; }
+    .nc-gravite { padding:.15rem .6rem; border-radius:7px; font-size:.69rem; font-weight:700; text-transform:uppercase; }
+    .nc-gravite.bloquant { background:rgba(229,57,53,.15);  color:#ef5350; }
+    .nc-gravite.majeur   { background:rgba(255,152,0,.12);  color:#ff9800; }
+    .nc-gravite.mineur   { background:rgba(200,168,75,.12); color:#C8A84B; }
+
+    /* recommandations */
+    .rec-item { display:flex; gap:1.2rem; padding:1.2rem 1.4rem; border-radius:12px; border:1px solid rgba(255,255,255,.06); margin-bottom:1rem; }
+    .rec-item.urgent    { background:rgba(229,57,53,.06); }
+    .rec-item.recommande{ background:rgba(200,168,75,.06); }
+    .rec-item.optionnel { background:rgba(96,165,250,.06); }
+    .rec-badge { padding:.2rem .65rem; border-radius:7px; font-size:.69rem; font-weight:700; letter-spacing:.05em; white-space:nowrap; }
+    .rec-badge.urgent     { background:rgba(229,57,53,.15);  color:#ef5350; }
+    .rec-badge.recommande { background:rgba(200,168,75,.15); color:#C8A84B; }
+    .rec-badge.optionnel  { background:rgba(96,165,250,.12); color:#60a5fa; }
+
+    .eval-badge { font-size:.71rem; padding:.13rem .5rem; border-radius:6px; }
+    .eval-badge.perf    { background:rgba(39,201,63,.1);   color:#27C93F; }
+    .eval-badge.noperf  { background:rgba(255,193,7,.08);  color:#ffc107; }
+
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1.4rem; }
+
+    .empty-box { padding:3rem; text-align:center; background:rgba(200,168,75,.04); border:1px solid rgba(200,168,75,.12); border-radius:14px; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    .fu  { animation:fadeUp .5s ease both; }
+    .fu2 { animation:fadeUp .5s ease .1s both; }
+    .fu3 { animation:fadeUp .5s ease .2s both; }
+
+    @media(max-width:640px){
+      .pub-wrap { padding:1.5rem .9rem 3rem; }
+      .grid-2 { grid-template-columns:1fr; }
+      .kpi-grid { grid-template-columns:1fr 1fr; }
+      .hide-mob { display:none; }
     }
   </style>
 </head>
 <body>
 
 <header class="pub-header">
-  <a href="/" class="pub-logo"><span>Conform</span><span>Expert</span></a>
+  <a href="/" class="pub-logo"><span class="w">Conform</span><span class="g">Expert</span></a>
   <a href="{% url 'tracking' document.tracking_token %}" class="pub-back">← Retour au suivi</a>
 </header>
 
-<div class="pub-container">
+<div class="pub-wrap">
 
-  <!-- Titre -->
-  <div class="pub-dossier fade-up">
+  <div class="dossier-hd fu">
     <h1>{{ document.name }}</h1>
     <p>Référence <span>DOC-{{ document.id|stringformat:"04d" }}</span> &nbsp;·&nbsp; {{ document.norme }} &nbsp;·&nbsp; {{ document.get_building_type_display }}</p>
   </div>
 
   {% if rapport %}
 
+    {% with v=rapport.verdict %}
+
     <!-- Verdict -->
-    {% with verdict=rapport.verdict %}
-    <div class="fade-up" style="margin-bottom:1.8rem;padding:1.5rem 2rem;border-radius:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid;
-      {% if verdict == 'Conforme' %}background:rgba(39,201,63,.07);border-color:rgba(39,201,63,.3)
-      {% elif verdict == 'Données insuffisantes' %}background:rgba(136,136,153,.07);border-color:rgba(136,136,153,.25)
-      {% else %}background:rgba(229,57,53,.07);border-color:rgba(229,57,53,.3){% endif %}">
+    <div class="verdict-box fu {% if v == 'Conforme' %}conform{% elif v == 'Données insuffisantes' %}insuff{% else %}nonconf{% endif %}">
       <div>
-        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;opacity:.6;margin-bottom:.5rem">Verdict — {{ document.norme }}</div>
-        <div style="font-size:1.9rem;font-weight:700;font-family:'Playfair Display',serif;
-          {% if verdict == 'Conforme' %}color:#27C93F
-          {% elif verdict == 'Données insuffisantes' %}color:#888899
-          {% else %}color:#ef5350{% endif %}">{{ verdict }}</div>
+        <div class="verdict-label">Verdict — {{ document.norme }}</div>
+        <div class="verdict-text {% if v == 'Conforme' %}conform{% elif v == 'Données insuffisantes' %}insuff{% else %}nonconf{% endif %}">{{ v|default:"—" }}</div>
       </div>
-      <div style="font-size:3.2rem">
-        {% if verdict == 'Conforme' %}✅{% elif verdict == 'Données insuffisantes' %}⏳{% else %}❌{% endif %}
-      </div>
+      <div class="verdict-icon">{% if v == 'Conforme' %}✅{% elif v == 'Données insuffisantes' %}⏳{% else %}❌{% endif %}</div>
     </div>
+
     {% endwith %}
 
-    <!-- Résumé exécutif -->
-    <div class="card fade-up-2" style="padding:1.6rem;margin-bottom:1.4rem">
-      <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:.9rem">📋 Résumé exécutif</h4>
+    <!-- Résumé -->
+    <div class="card fu2" style="padding:1.6rem;margin-bottom:1.4rem">
+      <div class="section-title" style="color:var(--gold)">📋 Résumé exécutif</div>
       <p style="font-size:.92rem;color:var(--gray2);line-height:1.75">{{ rapport.resume_executif|default:"—" }}</p>
     </div>
 
     <!-- KPIs -->
-    {% with criteres=rapport.criteres|default_if_none:"" %}
-    <div class="fade-up-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.4rem">
-      <div style="text-align:center;padding:1.3rem;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2);border-radius:12px">
-        <div id="kpi-ok" style="font-size:2.6rem;font-weight:700;color:var(--green);line-height:1">—</div>
-        <div style="font-size:.76rem;color:var(--gray1);margin-top:.4rem">Critères conformes</div>
+    <div class="kpi-grid fu2">
+      <div class="kpi-box ok">
+        <div class="kpi-n ok" id="kpi-ok">—</div>
+        <div class="kpi-lbl">Critères conformes</div>
       </div>
-      <div style="text-align:center;padding:1.3rem;background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.2);border-radius:12px">
-        <div id="kpi-ko" style="font-size:2.6rem;font-weight:700;color:var(--red);line-height:1">—</div>
-        <div style="font-size:.76rem;color:var(--gray1);margin-top:.4rem">Non conformes</div>
+      <div class="kpi-box ko">
+        <div class="kpi-n ko" id="kpi-ko">—</div>
+        <div class="kpi-lbl">Non conformes</div>
       </div>
     </div>
-    {% endwith %}
 
     <!-- Tableau critères -->
     {% if rapport.criteres %}
-    <div class="card fade-up-3" style="padding:1.6rem;margin-bottom:1.4rem;overflow-x:auto">
-      <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:1.1rem">🔍 Analyse détaillée des critères</h4>
+    <div class="card fu3" style="padding:1.6rem;margin-bottom:1.4rem;overflow-x:auto">
+      <div class="section-title" style="color:var(--gold)">🔍 Analyse détaillée des critères</div>
       <table>
         <thead>
-          <tr style="background:var(--navy)">
-            <th style="padding:.7rem 1rem;color:var(--gray1);font-weight:500;font-size:.69rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.07)">Critère</th>
-            <th style="padding:.7rem 1rem;text-align:center;color:var(--gray1);font-weight:500;font-size:.69rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.07)">Valeur</th>
-            <th style="padding:.7rem 1rem;text-align:center;color:var(--gray1);font-weight:500;font-size:.69rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.07)">Seuil</th>
-            <th style="padding:.7rem 1rem;text-align:center;color:var(--gray1);font-weight:500;font-size:.69rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.07)">Résultat</th>
-            <th class="hide-mobile" style="padding:.7rem 1rem;color:var(--gray1);font-weight:500;font-size:.69rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.07)">Commentaire</th>
+          <tr>
+            <th style="text-align:left">Critère</th>
+            <th style="text-align:center">Valeur</th>
+            <th style="text-align:center">Seuil</th>
+            <th style="text-align:center">Résultat</th>
+            <th class="hide-mob" style="text-align:left">Commentaire</th>
           </tr>
         </thead>
         <tbody id="criteres-tbody">
           {% for c in rapport.criteres %}
-          <tr style="border-bottom:1px solid rgba(255,255,255,.04){% if forloop.counter|divisibleby:2 %}{% else %};background:rgba(255,255,255,.015){% endif %}">
-            <td style="padding:.8rem 1rem;color:var(--white);font-weight:500">{{ c.nom }}</td>
-            <td style="padding:.8rem 1rem;text-align:center;font-weight:700;color:{% if c.conforme %}#27C93F{% else %}#ef5350{% endif %}">
-              {{ c.valeur|default:"—" }}
-              {% if c.unite %}<span style="font-size:.69rem;color:var(--muted)"> {{ c.unite }}</span>{% endif %}
+          <tr>
+            <td style="color:var(--white);font-weight:500">{{ c.nom }}</td>
+            <td style="text-align:center;font-weight:700;color:{% if c.conforme %}#27C93F{% else %}#ef5350{% endif %}">
+              {{ c.valeur|default:"—" }}{% if c.unite %} <span style="font-size:.69rem;color:var(--muted)">{{ c.unite }}</span>{% endif %}
             </td>
-            <td style="padding:.8rem 1rem;text-align:center;color:var(--gray1)">≤ {{ c.seuil|default:"—" }}</td>
-            <td style="padding:.8rem 1rem;text-align:center">
-              {% if c.conforme %}
-                <span style="background:rgba(39,201,63,.12);color:#27C93F;padding:.22rem .6rem;border-radius:12px;font-size:.71rem;font-weight:600">✓ Conforme</span>
-              {% else %}
-                <span style="background:rgba(229,57,53,.12);color:#ef5350;padding:.22rem .6rem;border-radius:12px;font-size:.71rem;font-weight:600">✗ Non conforme</span>
-              {% endif %}
+            <td style="text-align:center;color:var(--gray1)">≤ {{ c.seuil|default:"—" }}</td>
+            <td style="text-align:center">
+              {% if c.conforme %}<span class="badge ok">✓ Conforme</span>{% else %}<span class="badge ko">✗ Non conforme</span>{% endif %}
             </td>
-            <td class="hide-mobile" style="padding:.8rem 1rem;color:var(--gray2);font-size:.82rem">{{ c.commentaire|default:"" }}</td>
+            <td class="hide-mob" style="color:var(--gray2);font-size:.82rem">{{ c.commentaire|default:"" }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -161,12 +187,10 @@
 
     <!-- Points forts -->
     {% if rapport.points_forts %}
-    <div class="card fade-up-3" style="padding:1.6rem;margin-bottom:1.4rem">
-      <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--green);margin-bottom:.9rem">✅ Points forts identifiés</h4>
+    <div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+      <div class="section-title" style="color:var(--green)">✅ Points forts identifiés</div>
       <ul style="padding-left:1.3rem;display:flex;flex-direction:column;gap:.5rem">
-        {% for p in rapport.points_forts %}
-        <li style="font-size:.88rem;color:var(--gray2)">{{ p }}</li>
-        {% endfor %}
+        {% for p in rapport.points_forts %}<li style="font-size:.88rem;color:var(--gray2)">{{ p }}</li>{% endfor %}
       </ul>
     </div>
     {% endif %}
@@ -174,68 +198,54 @@
     <!-- Non-conformités -->
     {% if rapport.non_conformites %}
     <div style="margin-bottom:1.4rem">
-      <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--red);margin-bottom:.9rem">⚠️ Non-conformités détaillées</h4>
-      <div style="display:flex;flex-direction:column;gap:1rem">
-        {% for nc in rapport.non_conformites %}
-        <div style="padding:1.3rem 1.5rem;border-radius:12px;border-left:4px solid
-          {% if nc.gravite == 'bloquant' %}#ef5350;border:1px solid rgba(229,57,53,.25);background:rgba(229,57,53,.07)
-          {% elif nc.gravite == 'majeur' %}#ff9800;border:1px solid rgba(255,152,0,.2);background:rgba(255,152,0,.05)
-          {% else %}#C8A84B;border:1px solid rgba(200,168,75,.2);background:rgba(200,168,75,.05){% endif %}">
-          <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.7rem">
-            <span style="padding:.15rem .6rem;border-radius:7px;font-size:.69rem;font-weight:700;text-transform:uppercase;
-              {% if nc.gravite == 'bloquant' %}background:rgba(229,57,53,.15);color:#ef5350
-              {% elif nc.gravite == 'majeur' %}background:rgba(255,152,0,.12);color:#ff9800
-              {% else %}background:rgba(200,168,75,.12);color:#C8A84B{% endif %}">{{ nc.gravite }}</span>
-            <strong style="color:var(--white);font-size:.92rem">{{ nc.critere }}</strong>
-          </div>
-          <p style="font-size:.87rem;color:var(--gray2);margin-bottom:.7rem;line-height:1.55">{{ nc.description }}</p>
-          <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
-            {% if nc.action %}<span style="font-size:.82rem"><span style="color:var(--muted)">Action : </span>{{ nc.action }}</span>{% endif %}
-            {% if nc.delai %}<span style="font-size:.82rem"><span style="color:var(--muted)">Délai : </span>{{ nc.delai }}</span>{% endif %}
-            {% if nc.cout_estime %}<span style="font-size:.82rem"><span style="color:var(--muted)">Coût : </span><span style="color:var(--gold);font-weight:600">{{ nc.cout_estime }}</span></span>{% endif %}
-          </div>
+      <div class="section-title" style="color:var(--red)">⚠️ Non-conformités détaillées</div>
+      {% for nc in rapport.non_conformites %}
+      <div class="nc-item {{ nc.gravite|default:'mineur' }}">
+        <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.7rem">
+          <span class="nc-gravite {{ nc.gravite|default:'mineur' }}">{{ nc.gravite }}</span>
+          <strong style="color:var(--white);font-size:.92rem">{{ nc.critere }}</strong>
         </div>
-        {% endfor %}
+        <p style="font-size:.87rem;color:var(--gray2);margin-bottom:.7rem;line-height:1.55">{{ nc.description }}</p>
+        <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+          {% if nc.action %}<span style="font-size:.82rem"><span style="color:var(--muted)">Action : </span>{{ nc.action }}</span>{% endif %}
+          {% if nc.delai %}<span style="font-size:.82rem"><span style="color:var(--muted)">Délai : </span>{{ nc.delai }}</span>{% endif %}
+          {% if nc.cout_estime %}<span style="font-size:.82rem"><span style="color:var(--muted)">Coût : </span><span style="color:var(--gold);font-weight:600">{{ nc.cout_estime }}</span></span>{% endif %}
+        </div>
       </div>
+      {% endfor %}
     </div>
     {% endif %}
 
     <!-- Recommandations -->
     {% if rapport.recommandations %}
     <div style="margin-bottom:1.4rem">
-      <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:.9rem">📌 Recommandations & plan d'action</h4>
-      <div style="display:flex;flex-direction:column;gap:1rem">
-        {% for rec in rapport.recommandations %}
-        <div style="display:flex;gap:1.2rem;padding:1.2rem 1.4rem;border-radius:12px;border:1px solid rgba(255,255,255,.06);
-          {% if rec.priorite == 'URGENT' %}background:rgba(229,57,53,.06)
-          {% elif rec.priorite == 'RECOMMANDÉ' %}background:rgba(200,168,75,.06)
-          {% else %}background:rgba(96,165,250,.06){% endif %}">
-          <div style="flex-shrink:0">
-            <span style="padding:.2rem .65rem;border-radius:7px;font-size:.69rem;font-weight:700;letter-spacing:.05em;white-space:nowrap;
-              {% if rec.priorite == 'URGENT' %}background:rgba(229,57,53,.15);color:#ef5350
-              {% elif rec.priorite == 'RECOMMANDÉ' %}background:rgba(200,168,75,.15);color:#C8A84B
-              {% else %}background:rgba(96,165,250,.12);color:#60a5fa{% endif %}">{{ rec.priorite }}</span>
-          </div>
-          <div style="flex:1">
-            <div style="font-weight:600;color:var(--white);font-size:.92rem;margin-bottom:.4rem">{{ rec.titre }}</div>
-            <p style="font-size:.86rem;color:var(--gray2);line-height:1.55;margin-bottom:.5rem">{{ rec.description }}</p>
-            <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
-              {% if rec.impact_reglementaire %}<span style="font-size:.8rem"><span style="color:var(--muted)">Impact : </span>{{ rec.impact_reglementaire }}</span>{% endif %}
-              {% if rec.delai %}<span style="font-size:.8rem"><span style="color:var(--muted)">Délai : </span>{{ rec.delai }}</span>{% endif %}
-            </div>
+      <div class="section-title" style="color:var(--gold)">📌 Recommandations & plan d'action</div>
+      {% for rec in rapport.recommandations %}
+      {% with p=rec.priorite %}
+      <div class="rec-item {% if p == 'URGENT' %}urgent{% elif p == 'RECOMMANDÉ' %}recommande{% else %}optionnel{% endif %}">
+        <div style="flex-shrink:0">
+          <span class="rec-badge {% if p == 'URGENT' %}urgent{% elif p == 'RECOMMANDÉ' %}recommande{% else %}optionnel{% endif %}">{{ p }}</span>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:600;color:var(--white);font-size:.92rem;margin-bottom:.4rem">{{ rec.titre }}</div>
+          <p style="font-size:.86rem;color:var(--gray2);line-height:1.55;margin-bottom:.5rem">{{ rec.description }}</p>
+          <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+            {% if rec.impact_reglementaire %}<span style="font-size:.8rem"><span style="color:var(--muted)">Impact : </span>{{ rec.impact_reglementaire }}</span>{% endif %}
+            {% if rec.delai %}<span style="font-size:.8rem"><span style="color:var(--muted)">Délai : </span>{{ rec.delai }}</span>{% endif %}
           </div>
         </div>
-        {% endfor %}
       </div>
+      {% endwith %}
+      {% endfor %}
     </div>
     {% endif %}
 
     <!-- Enveloppe + Systèmes -->
     {% if rapport.analyse_enveloppe or rapport.systemes_energetiques %}
-    <div class="grid-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
+    <div class="grid-2">
       {% if rapport.analyse_enveloppe %}
       <div class="card" style="padding:1.6rem">
-        <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:.9rem">🏗️ Enveloppe thermique</h4>
+        <div class="section-title" style="color:var(--gold)">🏗️ Enveloppe thermique</div>
         <p style="font-size:.87rem;color:var(--gray2);line-height:1.65;margin-bottom:.7rem">{{ rapport.analyse_enveloppe.synthese }}</p>
         {% if rapport.analyse_enveloppe.points_attention %}
         <ul style="padding-left:1.2rem;font-size:.82rem;color:var(--gray1);display:flex;flex-direction:column;gap:.35rem">
@@ -246,7 +256,7 @@
       {% endif %}
       {% if rapport.systemes_energetiques %}
       <div class="card" style="padding:1.6rem">
-        <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:.9rem">⚡ Systèmes énergétiques</h4>
+        <div class="section-title" style="color:var(--gold)">⚡ Systèmes énergétiques</div>
         <p style="font-size:.87rem;color:var(--gray2);line-height:1.65;margin-bottom:.7rem">{{ rapport.systemes_energetiques.synthese }}</p>
         {% for e in rapport.systemes_energetiques.equipements %}
         <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
@@ -255,8 +265,7 @@
             {% if e.equipement %}<span style="color:var(--gray1);font-size:.79rem;margin-left:.5rem">{{ e.equipement }}</span>{% endif %}
           </div>
           {% if e.evaluation %}
-          <span style="font-size:.71rem;padding:.13rem .5rem;border-radius:6px;
-            {% if e.evaluation == 'Performant' %}background:rgba(39,201,63,.1);color:#27C93F{% else %}background:rgba(255,193,7,.08);color:#ffc107{% endif %}">{{ e.evaluation }}</span>
+          <span class="eval-badge {% if e.evaluation == 'Performant' %}perf{% else %}noperf{% endif %}">{{ e.evaluation }}</span>
           {% endif %}
         </div>
         {% endfor %}
@@ -265,10 +274,10 @@
     </div>
     {% endif %}
 
-    <!-- Contexte réglementaire -->
+    <!-- Contexte -->
     {% if rapport.contexte_reglementaire %}
     <div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
-      <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:.9rem">📜 Contexte réglementaire</h4>
+      <div class="section-title" style="color:var(--gold)">📜 Contexte réglementaire</div>
       <p style="font-size:.87rem;color:var(--gray2);line-height:1.65">{{ rapport.contexte_reglementaire }}</p>
     </div>
     {% endif %}
@@ -281,15 +290,13 @@
     {% endif %}
 
   {% else %}
-    <!-- Pas de rapport -->
-    <div style="padding:3rem;text-align:center;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.12);border-radius:14px">
+    <div class="empty-box">
       <div style="font-size:2.5rem;margin-bottom:1rem">⏳</div>
       <div style="font-size:1rem;color:var(--gold);font-weight:500;margin-bottom:.5rem">Rapport en cours de préparation</div>
       <p style="font-size:.85rem;color:var(--gray2);line-height:1.7">Le rapport IA n'a pas encore été généré pour ce dossier.<br>Il sera disponible ici dès la finalisation de l'analyse.</p>
     </div>
   {% endif %}
 
-  <!-- Retour -->
   <div style="text-align:center;margin-top:2.5rem">
     <a href="{% url 'tracking' document.tracking_token %}"
       style="display:inline-flex;align-items:center;gap:.6rem;padding:.75rem 1.8rem;border-radius:9px;border:1px solid rgba(200,168,75,.3);color:var(--gold);font-size:.88rem;text-decoration:none;background:rgba(200,168,75,.05);font-weight:500">
@@ -300,20 +307,19 @@
 </div>
 
 <script>
-// Calcul KPIs côté client depuis les données déjà rendues
 (function(){
   var rows = document.querySelectorAll('#criteres-tbody tr');
-  if (!rows.length) return;
-  var ok = 0, ko = 0;
+  if(!rows.length) return;
+  var ok=0, ko=0;
   rows.forEach(function(tr){
-    var badge = tr.querySelector('td:nth-child(4) span');
-    if (!badge) return;
-    if (badge.textContent.indexOf('✓') >= 0) ok++; else ko++;
+    var b = tr.querySelector('td:nth-child(4) span');
+    if(!b) return;
+    b.textContent.indexOf('✓') >= 0 ? ok++ : ko++;
   });
   var elOk = document.getElementById('kpi-ok');
   var elKo = document.getElementById('kpi-ko');
-  if (elOk) elOk.textContent = ok;
-  if (elKo) elKo.textContent = ko;
+  if(elOk) elOk.textContent = ok;
+  if(elKo) elKo.textContent = ko;
 })();
 </script>
 
