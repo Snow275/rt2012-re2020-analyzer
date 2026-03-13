@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Document, Analysis, Devis
+from .models import Document, DocumentFile, Analysis, Devis
 from .forms import DocumentForm, ContactForm
 from .serializers import DocumentSerializer, AnalysisSerializer
 
@@ -458,18 +458,46 @@ def import_document(request):
     if request.method == "POST":
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
-            document = form.save()
-            upload_path = document.upload.path
-            text = extract_text_from_pdf(upload_path)
-            data = parse_pdf_text(text)
+            document = form.save(commit=False)
+            document.type_analyse = request.POST.get('type_analyse', 'energie')
+            document.save()
+
+            # ── Multi-upload : sauvegarder chaque fichier ──────────────────
+            fichiers = request.FILES.getlist('uploads')
+            for f in fichiers:
+                DocumentFile.objects.create(
+                    document=document,
+                    fichier=f,
+                    nom=f.name,
+                    taille=f.size,
+                )
+
+            # ── Extraction de texte (tous les fichiers uploadés) ───────────
+            texte_complet = ""
+            for doc_file in document.fichiers.all():
+                try:
+                    texte_complet += extract_text_from_pdf(doc_file.fichier.path) + "\n\n"
+                except Exception:
+                    pass
+
+            # Fallback sur l'ancien champ upload si aucun fichier multi
+            if not texte_complet and document.upload:
+                try:
+                    texte_complet = extract_text_from_pdf(document.upload.path)
+                except Exception:
+                    texte_complet = ""
+
+            data = parse_pdf_text(texte_complet)
             analyze_document(document, data)
             send_mail_reception(document)
+
             messages.success(request, "Dossier reçu. Votre lien de suivi a été créé.")
             return redirect('tracking', token=document.tracking_token)
         else:
             messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     else:
         form = DocumentForm()
+
     return render(request, "main/import.html", {
         "form": form,
         "doc_items": [
@@ -482,7 +510,7 @@ def import_document(request):
             "Accusé de réception sous 24h",
             "Confirmation de complétude du dossier",
             "Analyse documentaire complète",
-            "Livraison du rapport PDF + lien de suivi",
+            "Livraison du rapport IA + lien de suivi",
         ],
     })
 
