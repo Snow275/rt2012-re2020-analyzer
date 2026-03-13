@@ -68,9 +68,34 @@ class DocumentForm(forms.ModelForm):
         ]
     )
 
+    surface_totale = forms.FloatField(
+        label='Surface totale (m²)',
+        required=False,
+        widget=forms.NumberInput(attrs={'placeholder': 'Ex: 250', 'min': '1', 'step': '0.1'})
+    )
+    annee_construction = forms.IntegerField(
+        label='Année de construction',
+        required=False,
+        widget=forms.NumberInput(attrs={'placeholder': 'Ex: 1998', 'min': '1800', 'max': '2030'})
+    )
+    nombre_logements = forms.IntegerField(
+        label='Nombre de logements / unités',
+        required=False,
+        widget=forms.NumberInput(attrs={'placeholder': 'Ex: 12', 'min': '1'})
+    )
+    type_analyse = forms.ChoiceField(
+        label="Type d'analyse souhaitée",
+        choices=[
+            ('energie', 'Pré-analyse énergétique'),
+            ('pca',     'Pré-analyse technique (PCA)'),
+            ('complet', 'Analyse complète'),
+        ],
+        initial='energie',
+    )
+
     class Meta:
         model = Document
-        fields = ['name', 'client_name', 'client_email', 'building_type', 'climate_zone', 'pays', 'norme', 'upload']
+        fields = ['name', 'client_name', 'client_email', 'building_type', 'climate_zone', 'pays', 'norme', 'surface_totale', 'annee_construction', 'nombre_logements', 'type_analyse', 'upload']
         labels = {
             'name': 'Nom du projet',
             'client_name': 'Votre nom',
@@ -78,12 +103,19 @@ class DocumentForm(forms.ModelForm):
             'building_type': 'Type de bâtiment',
             'pays': 'Pays',
             'upload': 'Document principal',
+            'surface_totale': 'Surface totale (m²)',
+            'annee_construction': 'Année de construction',
+            'nombre_logements': 'Nombre de logements / unités',
+            'type_analyse': "Type d'analyse souhaitée",
         }
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Ex: Résidence Les Acacias — Lot B'}),
             'client_name': forms.TextInput(attrs={'placeholder': 'Jean Dupont'}),
             'client_email': forms.EmailInput(attrs={'placeholder': 'jean@cabinet.fr'}),
             'upload': forms.ClearableFileInput(attrs={'accept': '.pdf,.doc,.docx'}),
+            'surface_totale': forms.NumberInput(attrs={'placeholder': 'Ex: 250', 'min': '1'}),
+            'annee_construction': forms.NumberInput(attrs={'placeholder': 'Ex: 1998', 'min': '1800', 'max': '2030'}),
+            'nombre_logements': forms.NumberInput(attrs={'placeholder': 'Ex: 12', 'min': '1'}),
         }
 
     def clean_upload(self):
