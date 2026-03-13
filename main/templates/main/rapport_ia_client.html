@@ -17,10 +17,6 @@
     html { scroll-behavior: smooth; }
     body { font-family:'DM Sans',sans-serif; background:var(--navy); color:var(--white); min-height:100vh; line-height:1.5; }
 
-    {% if document.type_analyse == "pca" %}
-    {% include "rapport_pca.html" %}
-    {% else %}
-
     .pub-header { background:var(--navy2); border-bottom:1px solid rgba(200,168,75,.18); padding:1rem 2rem; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; }
     .pub-logo { font-family:'Playfair Display',serif; font-size:1.1rem; text-decoration:none; }
     .pub-logo .w { color:var(--white); }
