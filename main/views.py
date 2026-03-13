@@ -703,8 +703,19 @@ def settings_view(request):
             normes_data.append((norme_code, NORME_LABELS.get(norme_code, norme_code), fields_seuils))
         seuils_par_pays.append((pays_code, PAYS_LABELS.get(pays_code, pays_code), normes_data))
 
+    pca_seuils = [
+        ("Âge max toiture", 30, "ans"),
+        ("Âge max chauffage", 25, "ans"),
+        ("Humidité mur max", 5, "%"),
+        ("Année interdiction amiante", 1997, ""),
+        ("Surface bâtiment min", 20, "m²"),
+        ("Surface bâtiment max", 100000, "m²"),
+        ("Nombre logements max", 1000, "")
+    ]
+
     return render(request, 'main/settings.html', {
         'seuils_par_pays': seuils_par_pays,
+        'pca_seuils': pca_seuils
     })
 
 
