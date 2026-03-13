@@ -1747,8 +1747,18 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
 
 def rapport_ia_client(request, token):
     """Page publique rapport IA — accessible via lien de suivi, sans login."""
+    import json as _json
     document = get_object_or_404(Document, tracking_token=token, status='termine')
-    return render(request, 'main/rapport_ia_client.html', {'document': document})
+    rapport = None
+    if document.rapport_ia_json:
+        try:
+            rapport = _json.loads(document.rapport_ia_json)
+        except Exception:
+            rapport = None
+    return render(request, 'main/rapport_ia_client.html', {
+        'document': document,
+        'rapport': rapport,
+    })
 
 
 
