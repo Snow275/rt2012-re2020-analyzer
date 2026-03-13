@@ -208,9 +208,213 @@
       [style*="color:var(--muted)"] { color: #666 !important; }
       [style*="color:var(--gold)"]  { color: #9a7a20 !important; }
     }
+
+    /* ===== PAGE DE GARDE & SOMMAIRE (print only) ===== */
+    .print-cover, .print-toc { display: none; }
+
+    @media print {
+      .print-cover {
+        display: flex !important;
+        flex-direction: column;
+        width: 100%; height: 100vh;
+        page-break-after: always;
+        background: #0C1929 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        padding: 0;
+        position: relative;
+      }
+      .cover-header {
+        background: #0C1929 !important;
+        border-bottom: 3px solid #C8A84B !important;
+        padding: 1.2rem 2.5rem;
+        font-family: 'Playfair Display', serif;
+        font-size: 1.2rem;
+      }
+      .cover-logo-w { color: #fff !important; }
+      .cover-logo-g { color: #C8A84B !important; }
+      .cover-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 3rem 2.5rem;
+        background: #0C1929 !important;
+      }
+      .cover-label {
+        font-size: .72rem;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: #C8A84B !important;
+        margin-bottom: 1.2rem;
+        font-weight: 500;
+      }
+      .cover-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        color: #fff !important;
+        line-height: 1.15;
+        margin-bottom: 2.5rem;
+        border-bottom: 1px solid rgba(200,168,75,.3) !important;
+        padding-bottom: 2rem;
+        width: 100%;
+      }
+      .cover-meta { display: flex; flex-direction: column; gap: .9rem; margin-bottom: 2.5rem; }
+      .cover-meta-row { display: flex; gap: 1.5rem; align-items: baseline; }
+      .cover-meta-label { font-size: .78rem; color: #8892A4 !important; min-width: 140px; text-transform: uppercase; letter-spacing: .06em; }
+      .cover-meta-val { font-size: 1rem; color: #F0F4FA !important; font-weight: 500; }
+      .cover-verdict-wrap { margin-top: .5rem; }
+      .cover-verdict-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: #8892A4 !important; margin-bottom: .6rem; }
+      .cover-verdict { font-size: 1.6rem; font-weight: 700; font-family: 'Playfair Display', serif; }
+      .cover-verdict.cv-ok    { color: #27C93F !important; }
+      .cover-verdict.cv-ko    { color: #ef5350 !important; }
+      .cover-verdict.cv-insuff{ color: #888 !important; }
+      .cover-footer {
+        background: rgba(200,168,75,.08) !important;
+        border-top: 1px solid rgba(200,168,75,.2) !important;
+        padding: 1rem 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        font-size: .72rem;
+        color: #8892A4 !important;
+      }
+
+      /* TOC */
+      .print-toc {
+        display: flex !important;
+        flex-direction: column;
+        width: 100%; min-height: 100vh;
+        page-break-after: always;
+        background: #fff !important;
+        padding: 0;
+      }
+      .toc-header {
+        background: #0C1929 !important;
+        border-bottom: 3px solid #C8A84B !important;
+        padding: 1rem 2.5rem;
+        font-family: 'Playfair Display', serif;
+        font-size: 1.1rem;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .toc-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+        color: #111 !important;
+        margin: 2rem 2.5rem .4rem;
+        padding-bottom: .7rem;
+        border-bottom: 2px solid #C8A84B !important;
+      }
+      .toc-ref { font-size: .8rem; color: #666 !important; margin: 0 2.5rem 2rem; }
+      .toc-list {
+        list-style: none;
+        padding: 0 2.5rem;
+        margin: 0 0 2rem;
+        display: flex;
+        flex-direction: column;
+        counter-reset: toc-counter;
+      }
+      .toc-list li {
+        counter-increment: toc-counter;
+        display: flex;
+        align-items: baseline;
+        padding: .75rem 0;
+        border-bottom: 1px solid #eee !important;
+        gap: .5rem;
+      }
+      .toc-list li::before {
+        content: counter(toc-counter) ".";
+        color: #C8A84B !important;
+        font-weight: 700;
+        font-size: .9rem;
+        min-width: 1.5rem;
+      }
+      .toc-item { font-size: .95rem; color: #222 !important; font-weight: 500; }
+      .toc-dots { flex: 1; border-bottom: 2px dotted #ccc !important; margin: 0 .5rem .2rem; }
+      .toc-page { font-size: .85rem; color: #888 !important; font-weight: 600; min-width: 1.5rem; text-align: right; }
+      .toc-notice {
+        margin: 0 2.5rem;
+        padding: 1rem 1.3rem;
+        background: #f9f6ee !important;
+        border-left: 4px solid #C8A84B !important;
+        border-radius: 4px;
+        font-size: .8rem;
+        color: #555 !important;
+        line-height: 1.6;
+      }
+      .toc-footer {
+        margin-top: auto;
+        padding: 1rem 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        font-size: .72rem;
+        color: #888 !important;
+        border-top: 1px solid #eee !important;
+      }
+    }
+
   </style>
 </head>
 <body>
+
+<!-- ===== PAGE DE GARDE (print only) ===== -->
+<div class="print-cover">
+  <div class="cover-header">
+    <span class="cover-logo-w">Conform</span><span class="cover-logo-g">Expert</span>
+  </div>
+  <div class="cover-body">
+    <div class="cover-label">RAPPORT D'ANALYSE THERMIQUE</div>
+    <div class="cover-title" id="cover-doc-name">{{ document.name }}</div>
+    <div class="cover-meta">
+      <div class="cover-meta-row"><span class="cover-meta-label">Référence</span><span class="cover-meta-val" style="color:#C8A84B;font-family:monospace">DOC-{{ document.id|stringformat:"04d" }}</span></div>
+      <div class="cover-meta-row"><span class="cover-meta-label">Norme</span><span class="cover-meta-val">{{ document.norme }}</span></div>
+      <div class="cover-meta-row"><span class="cover-meta-label">Type de bâtiment</span><span class="cover-meta-val">{{ document.get_building_type_display }}</span></div>
+      <div class="cover-meta-row"><span class="cover-meta-label">Date d'analyse</span><span class="cover-meta-val">{{ document.upload_date|date:"d/m/Y" }}</span></div>
+    </div>
+    {% if rapport %}
+    <div class="cover-verdict-wrap">
+      <div class="cover-verdict-label">Verdict</div>
+      <div class="cover-verdict {% if rapport.verdict == 'Conforme' %}cv-ok{% elif rapport.verdict == 'Données insuffisantes' %}cv-insuff{% else %}cv-ko{% endif %}">
+        {% if rapport.verdict == 'Conforme' %}✅{% elif rapport.verdict == 'Données insuffisantes' %}⏳{% else %}❌{% endif %}
+        {{ rapport.verdict|default:"—" }}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="cover-footer">
+    <span>ConformExpert — conformexpert.cc</span>
+    <span>Document confidentiel</span>
+  </div>
+</div>
+
+<!-- ===== SOMMAIRE (print only) ===== -->
+<div class="print-toc">
+  <div class="toc-header">
+    <span class="cover-logo-w">Conform</span><span class="cover-logo-g">Expert</span>
+  </div>
+  <h2 class="toc-title">Sommaire</h2>
+  <div class="toc-ref">Dossier {{ document.name }} — DOC-{{ document.id|stringformat:"04d" }}</div>
+  <ol class="toc-list">
+    <li><span class="toc-item">Verdict & résumé exécutif</span><span class="toc-dots"></span><span class="toc-page">3</span></li>
+    <li><span class="toc-item">Analyse détaillée des critères</span><span class="toc-dots"></span><span class="toc-page">4</span></li>
+    {% if rapport and rapport.points_forts %}<li><span class="toc-item">Points forts identifiés</span><span class="toc-dots"></span><span class="toc-page">4</span></li>{% endif %}
+    {% if rapport and rapport.non_conformites %}<li><span class="toc-item">Non-conformités détaillées</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
+    {% if rapport and rapport.recommandations %}<li><span class="toc-item">Recommandations & plan d'action</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
+    {% if rapport and rapport.analyse_enveloppe or rapport and rapport.systemes_energetiques %}<li><span class="toc-item">Enveloppe thermique & systèmes énergétiques</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
+    {% if rapport and rapport.contexte_reglementaire %}<li><span class="toc-item">Contexte réglementaire</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
+    <li><span class="toc-item">Mentions légales</span><span class="toc-dots"></span><span class="toc-page">6</span></li>
+  </ol>
+  <div class="toc-notice">
+    <strong>Note :</strong> Ce rapport est établi sur la base des documents fournis et constitue une analyse documentaire indépendante. Il ne se substitue pas à une attestation officielle de conformité délivrée par un bureau d'études thermiques certifié.
+  </div>
+  <div class="toc-footer">
+    <span>ConformExpert — conformexpert.cc</span>
+    <span>Document confidentiel</span>
+  </div>
+</div>
+
 
 <header class="pub-header">
   <a href="/" class="pub-logo"><span class="w">Conform</span><span class="g">Expert</span></a>
