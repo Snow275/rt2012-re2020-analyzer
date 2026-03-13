@@ -2099,6 +2099,11 @@ def rapport_ia_client(request, token):
             rapport = _json.loads(document.rapport_ia_json)
         except Exception:
             rapport = None
+            
+    rapport = None
+    if document.type_analyse == "pca":
+        rapport = analyse_pca(document)
+        
     return render(request, 'main/rapport_ia_client.html', {
         'document': document,
         'rapport': rapport,
