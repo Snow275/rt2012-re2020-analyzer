@@ -89,6 +89,9 @@ class Document(models.Model):
     pays = models.CharField(max_length=5, choices=PAYS_CHOICES, default="FR")
     norme = models.CharField(max_length=10, choices=NORME_CHOICES, default="RE2020")
 
+    # ── Rapport IA (JSON sauvegardé en BDD pour éviter de régénérer) ──
+    rapport_ia_json = models.TextField(null=True, blank=True)
+
     # Champs RE2020
     re2020_energy_efficiency = models.FloatField(null=True, blank=True)
     re2020_thermal_comfort = models.FloatField(null=True, blank=True)
