@@ -442,6 +442,11 @@ def home(request):
         recent_devis = []
         devis_en_attente = 0
 
+    docs = Document.objects.filter(is_active=True)
+
+    def by_type_status(type_analyse, status):
+        return list(docs.filter(type_analyse=type_analyse, status=status).order_by('-upload_date')[:10])
+
     context = {
         'documents': documents,
         'total_projects': total_projects,
@@ -450,6 +455,22 @@ def home(request):
         'old_pending': old_pending,
         'recent_devis': recent_devis,
         'devis_en_attente': devis_en_attente,
+        # Compteurs par type
+        'count_energie':  docs.filter(type_analyse='energie').count(),
+        'count_pca':      docs.filter(type_analyse='pca').count(),
+        'count_complet':  docs.filter(type_analyse='complet').count(),
+        # Kanban énergie
+        'docs_energie_recu':     by_type_status('energie', 'recu'),
+        'docs_energie_en_cours': by_type_status('energie', 'en_cours'),
+        'docs_energie_termine':  by_type_status('energie', 'termine'),
+        # Kanban PCA
+        'docs_pca_recu':         by_type_status('pca', 'recu'),
+        'docs_pca_en_cours':     by_type_status('pca', 'en_cours'),
+        'docs_pca_termine':      by_type_status('pca', 'termine'),
+        # Kanban complet
+        'docs_complet_recu':     by_type_status('complet', 'recu'),
+        'docs_complet_en_cours': by_type_status('complet', 'en_cours'),
+        'docs_complet_termine':  by_type_status('complet', 'termine'),
     }
     return render(request, 'main/home.html', context)
 
