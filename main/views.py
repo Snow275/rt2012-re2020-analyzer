@@ -1707,7 +1707,7 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
     try:
         payload = json.dumps({
             "model": "claude-sonnet-4-5",
-            "max_tokens": 4000,
+            "max_tokens": 8000,
             "system": system_prompt,
             "messages": [{"role": "user", "content": user_content}]
         }).encode('utf-8')
