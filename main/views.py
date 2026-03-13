@@ -419,6 +419,20 @@ def home(request):
     from datetime import timedelta
 
     documents = Document.objects.filter(is_active=True).order_by('-upload_date')
+    # ── Pré-analyse énergétique ──
+    docs_energie_recu = documents.filter(type_analyse="energie", status="recu")
+    docs_energie_en_cours = documents.filter(type_analyse="energie", status="en_cours")
+    docs_energie_termine = documents.filter(type_analyse="energie", status="termine")
+
+    # ── PCA ──
+    docs_pca_recu = documents.filter(type_analyse="pca", status="recu")
+    docs_pca_en_cours = documents.filter(type_analyse="pca", status="en_cours")
+    docs_pca_termine = documents.filter(type_analyse="pca", status="termine")
+
+    # ── Analyse complète ──
+    docs_complet_recu = documents.filter(type_analyse="complet", status="recu")
+    docs_complet_en_cours = documents.filter(type_analyse="complet", status="en_cours")
+    docs_complet_termine = documents.filter(type_analyse="complet", status="termine")
     energie_docs = documents.filter(type_analyse="energie")
     pca_docs = documents.filter(type_analyse="pca")
     complet_docs = documents.filter(type_analyse="complet")
@@ -445,6 +459,10 @@ def home(request):
         recent_devis = []
         devis_en_attente = 0
 
+    count_energie = energie_docs.count()
+    count_pca = pca_docs.count()
+    count_complet = complet_docs.count()
+
     context = {
         'documents': documents,
         'energie_docs': energie_docs,
@@ -456,6 +474,21 @@ def home(request):
         'old_pending': old_pending,
         'recent_devis': recent_devis,
         'devis_en_attente': devis_en_attente,
+        'docs_energie_recu': docs_energie_recu,
+        'docs_energie_en_cours': docs_energie_en_cours,
+        'docs_energie_termine': docs_energie_termine,
+
+        'docs_pca_recu': docs_pca_recu,
+        'docs_pca_en_cours': docs_pca_en_cours,
+        'docs_pca_termine': docs_pca_termine,
+
+        'docs_complet_recu': docs_complet_recu,
+        'docs_complet_en_cours': docs_complet_en_cours,
+        'docs_complet_termine': docs_complet_termine,
+
+        'count_energie': count_energie,
+        'count_pca': count_pca,
+        'count_complet': count_complet,
     }
     return render(request, 'main/home.html', context)
 
