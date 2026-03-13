@@ -1063,6 +1063,21 @@ footer {
   padding: 2rem;
 }
 .nav-mobile-menu.open { display: flex; }
+.nav-mobile-close {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-size: 1.6rem;
+  cursor: pointer;
+  padding: .5rem;
+  line-height: 1;
+  opacity: .85;
+  transition: opacity .2s;
+}
+.nav-mobile-close:hover { opacity: 1; }
 .nav-mobile-menu a {
   font-size: 1.5rem;
   font-weight: 400;
@@ -1163,6 +1178,7 @@ footer {
 
 <!-- Mobile menu overlay -->
 <div class="nav-mobile-menu" id="mobileMenu" role="dialog" aria-modal="true">
+  <button class="nav-mobile-close" id="mobileClose" aria-label="Fermer le menu">✕</button>
   <a href="#offre" class="mobile-link">Offre</a>
   <a href="#process" class="mobile-link">Processus</a>
   <a href="#tarifs" class="mobile-link">Tarifs</a>
@@ -1177,21 +1193,37 @@ footer {
 (function() {
   var btn = document.getElementById('hamburgerBtn');
   var menu = document.getElementById('mobileMenu');
+  var closeBtn = document.getElementById('mobileClose');
   if (!btn || !menu) return;
-  function toggleMenu() {
-    var open = menu.classList.toggle('open');
-    btn.classList.toggle('open', open);
-    btn.setAttribute('aria-expanded', open);
-    document.body.style.overflow = open ? 'hidden' : '';
+
+  function closeMenu() {
+    menu.classList.remove('open');
+    btn.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
   }
-  btn.addEventListener('click', toggleMenu);
+
+  function openMenu() {
+    menu.classList.add('open');
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  btn.addEventListener('click', function() {
+    menu.classList.contains('open') ? closeMenu() : openMenu();
+  });
+
+  if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+
   menu.querySelectorAll('.mobile-link').forEach(function(a) {
-    a.addEventListener('click', function() {
-      menu.classList.remove('open');
-      btn.classList.remove('open');
-      btn.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
-    });
+    a.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('click', function(e) {
+    if (menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) {
+      closeMenu();
+    }
   });
 })();
 </script>
