@@ -520,14 +520,24 @@ def home(request):
 
 def import_document(request):
     if request.method == "POST":
-        form = DocumentForm(request.POST, request.FILES)
+        data = request.POST.copy()
+
+        type_analyse = data.get("type_analyse")
+
+        # Si PCA → on supprime les champs énergie pour éviter la validation
+        if type_analyse == "pca":
+            data["climate_zone"] = ""
+            data["norme"] = ""
+
+        form = DocumentForm(data, request.FILES)
+
         if form.is_valid():
             document = form.save(commit=False)
-            document.type_analyse = request.POST.get('type_analyse', 'energie')
+            document.type_analyse = type_analyse
             document.save()
 
-            # ── Multi-upload : sauvegarder chaque fichier ──────────────────
-            fichiers = request.FILES.getlist('uploads')
+            # Multi upload
+            fichiers = request.FILES.getlist("uploads")
             for f in fichiers:
                 DocumentFile.objects.create(
                     document=document,
@@ -535,7 +545,6 @@ def import_document(request):
                     nom=f.name,
                     taille=f.size,
                 )
-
             # ── Extraction de texte (tous les fichiers uploadés) ───────────
             texte_complet = ""
             for doc_file in document.fichiers.all():
