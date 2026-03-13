@@ -419,6 +419,9 @@ def home(request):
     from datetime import timedelta
 
     documents = Document.objects.filter(is_active=True).order_by('-upload_date')
+    energie_docs = documents.filter(type_analyse="energie")
+    pca_docs = documents.filter(type_analyse="pca")
+    complet_docs = documents.filter(type_analyse="complet")
     total_projects = documents.count()
 
     compliant_count = sum(
