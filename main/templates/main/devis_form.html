@@ -2,6 +2,18 @@
 {% block title %}{% if devis %}Éditer devis{% else %}Nouveau devis{% endif %} — ConformExpert{% endblock %}
 
 {% block content %}
+<style>
+@media (max-width: 768px) {
+  .devis-form-grid { grid-template-columns: 1fr !important; }
+  .devis-bottom-grid { grid-template-columns: 1fr 1fr !important; }
+  .devis-actions { flex-direction: column-reverse; gap: .8rem !important; }
+  .devis-actions > div { width: 100%; }
+  .devis-actions .btn { width: 100%; justify-content: center; }
+}
+@media (max-width: 480px) {
+  .devis-bottom-grid { grid-template-columns: 1fr !important; }
+}
+</style>
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Devis</span>
@@ -20,7 +32,7 @@
     {% endfor %}
     {% endif %}
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem">
+    <div class="devis-form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem">
 
       <!-- Infos client -->
       <div class="card" style="padding:1.5rem">
@@ -74,7 +86,7 @@
     <!-- Devis + statut -->
     <div class="card" style="padding:1.5rem;margin-top:1.5rem">
       <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Devis & Statut</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:1.2rem">
+      <div class="devis-bottom-grid" style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:1.2rem">
         <div class="form-group">
           <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">Montant (€ HT)</label>
           <input type="number" step="0.01" name="montant" value="{{ devis.montant|default:'' }}" placeholder="450.00" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.65rem .9rem;color:var(--white);font-size:.88rem;outline:none">
@@ -96,7 +108,7 @@
     </div>
 
     <!-- Actions -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem">
+    <div class="devis-actions" style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem">
       {% if devis %}
       <div></div>
       {% else %}
