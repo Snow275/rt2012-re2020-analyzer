@@ -262,5 +262,52 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
     setTimeout(() => zone.style.borderColor = 'rgba(200,168,75,.25)', 3000);
   }
 });
+
+<script>
+const zonesByCountry = {
+  FR: ["H1","H2","H3"],
+  BE: ["BE-I","BE-II","BE-III"],
+  CH: ["CH-I","CH-II","CH-III","CH-IV","CH-V","CH-VI"],
+  CA: ["CA-4","CA-5","CA-6","CA-7","CA-7b","CA-8"],
+  LU: ["LU-A","LU-B"]
+};
+
+const normesByCountry = {
+  FR: ["RE2020","RT2012"],
+  BE: ["PEB"],
+  CH: ["MINERGIE","SIA380"],
+  CA: ["CNEB2020","CNEB2015"],
+  LU: ["LENOZ"]
+};
+
+const paysSelect = document.getElementById("id_pays");
+const zoneSelect = document.getElementById("id_climate_zone");
+const normeSelect = document.getElementById("id_norme");
+
+function filterOptions(select, allowedValues){
+  Array.from(select.options).forEach(opt=>{
+    if(opt.value === ""){
+      opt.hidden = false;
+      return;
+    }
+    opt.hidden = !allowedValues.includes(opt.value);
+  });
+
+  select.value = "";
+}
+
+function updateFields(){
+  const country = paysSelect.value;
+
+  if(zonesByCountry[country]){
+    filterOptions(zoneSelect, zonesByCountry[country]);
+  }
+
+  if(normesByCountry[country]){
+    filterOptions(normeSelect, normesByCountry[country]);
+  }
+}
+
+paysSelect.addEventListener("change", updateFields);
 </script>
 {% endblock %}
