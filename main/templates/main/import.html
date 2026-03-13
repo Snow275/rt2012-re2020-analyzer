@@ -2,6 +2,23 @@
 {% block title %}Déposer un dossier{% endblock %}
 
 {% block content %}
+<style>
+@media (max-width: 768px) {
+  .import-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
+  /* Sur mobile : sidebar info passe en-dessous du formulaire */
+  .import-sidebar { order: 2; }
+  .import-form   { order: 1; }
+  .import-form-inner { padding: 1.5rem !important; }
+  .import-form-header { padding: 1.5rem !important; }
+  .form-row { grid-template-columns: 1fr !important; }
+  #upload-zone { padding: 1.2rem !important; }
+}
+@media (max-width: 480px) {
+  .import-form-inner { padding: 1rem !important; }
+  .import-form-header { padding: 1.2rem !important; }
+}
+</style>
+
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Dépôt de dossier</span>
@@ -11,10 +28,10 @@
 </div>
 
 <div class="container">
-  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:3rem;align-items:start">
+  <div class="import-grid" style="display:grid;grid-template-columns:1fr 1.4fr;gap:3rem;align-items:start">
 
     <!-- Info sidebar -->
-    <div class="fade-up">
+    <div class="import-sidebar fade-up">
       <div class="card" style="padding:2rem;margin-bottom:1.5rem">
         <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem">
           <span class="text-gold">📎</span> Documents acceptés
@@ -50,12 +67,12 @@
     </div>
 
     <!-- Form -->
-    <div class="card card-gold fade-up-2" style="overflow:hidden">
-      <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:2rem 2.5rem;border-bottom:1px solid rgba(200,168,75,.1)">
+    <div class="import-form card card-gold fade-up-2" style="overflow:hidden">
+      <div class="import-form-header" style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:2rem 2.5rem;border-bottom:1px solid rgba(200,168,75,.1)">
         <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">Formulaire de dépôt</h2>
         <p style="font-size:.82rem;color:var(--gray-1);font-weight:300">Vos données sont traitées de manière confidentielle.</p>
       </div>
-      <div style="padding:2.5rem">
+      <div class="import-form-inner" style="padding:2.5rem">
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
 
