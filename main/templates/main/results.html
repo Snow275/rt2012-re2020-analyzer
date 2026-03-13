@@ -3,6 +3,17 @@
 {% block title %}Résultats d'analyse{% endblock %}
 
 {% block content %}
+<style>
+@media (max-width: 768px) {
+  .doc-header { flex-direction: column !important; align-items: flex-start !important; }
+  .doc-header > div:last-child { flex-wrap: wrap; gap: .5rem !important; }
+  .criteria-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 480px) {
+  .doc-header { padding: 1.2rem !important; }
+  .doc-body { padding: 1.2rem !important; }
+}
+</style>
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Résultats</span>
@@ -25,7 +36,7 @@
   {% for doc in documents %}
   <div class="card" style="margin-bottom:2rem;overflow:hidden" class="fade-up">
     <!-- Doc header -->
-    <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.8rem 2rem;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+    <div class="doc-header" style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.8rem 2rem;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
       <div>
         <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:.3rem">{{ doc.name }}</h2>
         <span style="font-size:.78rem;color:var(--gray-1)">Déposé le {{ doc.upload_date|date:"d/m/Y" }}{% if doc.client_name %} · {{ doc.client_name }}{% endif %}</span>
@@ -43,12 +54,12 @@
       </div>
     </div>
 
-    <div style="padding:2rem">
+    <div class="doc-body" style="padding:2rem">
       <h3 style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem">
         {{ doc.get_norme_display }} — Critères
         <span style="font-size:.7rem;color:var(--gray-1);font-weight:400;margin-left:.5rem">{{ doc.get_pays_display }}</span>
       </h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+      <div class="criteria-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
         {% get_norme_fields doc.norme as norme_fields %}
         {% for field, label, unit in norme_fields %}
           {% with val=doc|attr:field %}
