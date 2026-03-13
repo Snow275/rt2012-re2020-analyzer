@@ -127,6 +127,23 @@ footer a{color:var(--gold);text-decoration:none}
   .form-row{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:1fr}
 }
+
+/* NAV ADMIN HAMBURGER */
+.nav-admin-hamburger{display:none;flex-direction:column;justify-content:space-between;width:18px;height:13px;cursor:pointer;padding:0;background:none;border:none;flex-shrink:0;opacity:.75;transition:opacity .2s}
+.nav-admin-hamburger:hover{opacity:1}.nav-admin-hamburger span{display:block;height:1.5px;background:var(--gray-2);border-radius:2px;transition:all .25s}
+.nav-admin-hamburger.open span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.nav-admin-hamburger.open span:nth-child(2){opacity:0}
+.nav-admin-hamburger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.nav-admin-mobile{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(8,16,28,.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:2rem}
+.nav-admin-mobile.open{display:flex}
+.nav-admin-mobile a{font-size:1.4rem;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s}
+.nav-admin-mobile a:hover,.nav-admin-mobile a.active{color:var(--gold)}
+.nav-admin-mobile .nav-mobile-close{position:absolute;top:1.2rem;right:1.5rem;background:none;border:none;color:var(--gold);font-size:1.6rem;cursor:pointer;padding:.5rem;line-height:1;opacity:.85}
+.nav-admin-mobile .nav-mobile-close:hover{opacity:1}
+.nav-admin-mobile .nav-logout{font-size:.85rem!important;color:var(--muted)!important;letter-spacing:.1em}
+@media(max-width:768px){
+  .nav-admin-hamburger{display:flex}
+}
 </style>
 {% block extra_head %}{% endblock %}
 </head>
@@ -152,7 +169,21 @@ footer a{color:var(--gold);text-decoration:none}
       <li><a href="{% url 'import' %}" class="nav-cta">Déposer un dossier</a></li>
     {% endif %}
   </ul>
+  {% if user.is_authenticated %}<button class="nav-admin-hamburger" id="adminHamburger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>{% endif %}
 </nav>
+
+<!-- Admin mobile menu -->
+{% if user.is_authenticated %}
+<div class="nav-admin-mobile" id="adminMobileMenu">
+  <button class="nav-mobile-close" id="adminMobileClose" aria-label="Fermer">✕</button>
+  <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Dashboard</a>
+  <a href="{% url 'results' %}" {% if request.resolver_match.url_name == 'results' %}class="active"{% endif %}>Résultats</a>
+  <a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a>
+  <a href="{% url 'devis_list' %}" {% if request.resolver_match.url_name == 'devis_list' or request.resolver_match.url_name == 'devis_create' or request.resolver_match.url_name == 'devis_edit' %}class="active"{% endif %}>Devis</a>
+  <a href="{% url 'settings' %}" {% if request.resolver_match.url_name == 'settings' %}class="active"{% endif %}>Paramètres</a>
+  <a href="{% url 'logout' %}" class="nav-logout">Déconnexion</a>
+</div>
+{% endif %}
 
 {% if messages %}
 <ul class="messages" style="margin-top:70px">
@@ -171,5 +202,19 @@ footer a{color:var(--gold);text-decoration:none}
 </footer>
 
 {% block extra_scripts %}{% endblock %}
+<script>
+(function(){
+  var btn = document.getElementById('adminHamburger');
+  var menu = document.getElementById('adminMobileMenu');
+  var close = document.getElementById('adminMobileClose');
+  if(!btn||!menu) return;
+  function openMenu(){menu.classList.add('open');btn.classList.add('open');btn.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';}
+  function closeMenu(){menu.classList.remove('open');btn.classList.remove('open');btn.setAttribute('aria-expanded','false');document.body.style.overflow='';}
+  btn.addEventListener('click',function(){menu.classList.contains('open')?closeMenu():openMenu();});
+  if(close) close.addEventListener('click',closeMenu);
+  menu.querySelectorAll('a').forEach(function(a){a.addEventListener('click',closeMenu);});
+  document.addEventListener('click',function(e){if(menu.classList.contains('open')&&!menu.contains(e.target)&&!btn.contains(e.target))closeMenu();});
+})();
+</script>
 </body>
 </html>
