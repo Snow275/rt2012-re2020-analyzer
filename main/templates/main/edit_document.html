@@ -4,47 +4,46 @@
 
 {% block content %}
 <style>
-/* ══ EDIT DOCUMENT — MOBILE RESPONSIVE ══ */
 @media (max-width: 768px) {
-  /* Onglets : scroll horizontal */
-  .tab-bar {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-    flex-wrap: nowrap !important;
-    scrollbar-width: none;
-  }
-  .tab-bar::-webkit-scrollbar { display: none; }
-  .tab-bar button { white-space: nowrap; padding: .6rem 1rem !important; font-size: .82rem !important; }
-
-  /* Grille 2 colonnes → 1 colonne */
-  .main-2col { grid-template-columns: 1fr !important; }
-
-  /* Seuils RT2012 — champs en colonne */
-  .rt-field-row { flex-direction: column !important; align-items: flex-start !important; }
-  .rt-field-row label { width: auto !important; margin-bottom: .3rem; }
-  .rt-field-row input { width: 100% !important; box-sizing: border-box !important; }
-
-  /* Rapport IA bouton centré */
-  .rapport-ia-btn-wrap { flex-direction: column !important; align-items: stretch !important; }
-  .rapport-ia-btn-wrap button { width: 100% !important; }
-
-  /* Tableaux résultats */
-  .results-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab-bar { overflow-x:auto !important;-webkit-overflow-scrolling:touch;flex-wrap:nowrap !important;scrollbar-width:none }
+  .tab-bar::-webkit-scrollbar { display:none }
+  .tab-bar button { white-space:nowrap;padding:.6rem 1rem !important;font-size:.8rem !important }
+  .main-2col { grid-template-columns:1fr !important }
+  .rt-field-row { flex-direction:column !important;align-items:flex-start !important }
+  .rt-field-row label { width:auto !important;margin-bottom:.3rem }
+  .rt-field-row input { width:100% !important;box-sizing:border-box !important }
 }
 @media (max-width: 480px) {
-  .page-header .ph-inner h1 { font-size: 1.3rem !important; }
-  .container { padding: 0 .8rem !important; }
+  .page-header .ph-inner h1 { font-size:1.3rem !important }
+  .container { padding:0 .8rem !important }
 }
+
+/* Badge type analyse dans le header */
+.type-badge { display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-radius:99px;letter-spacing:.04em }
+.type-badge.energie { background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2) }
+.type-badge.pca     { background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.2) }
+.type-badge.complet { background:rgba(200,168,75,.12);color:#C8A84B;border:1px solid rgba(200,168,75,.2) }
+
+/* Champ style commun */
+.f-input { width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box }
+.f-input:focus { border-color:var(--gold) }
+.f-label { display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem }
 </style>
 
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Administration</span>
     <h1>{{ document.name }}</h1>
-    <p>DOC-{{ document.id|stringformat:"04d" }} ·
-      {% if document.status == 'recu' %}<span style="color:#60a5fa">Dossier reçu</span>
-      {% elif document.status == 'en_cours' %}<span style="color:var(--gold)">Analyse en cours</span>
-      {% else %}<span style="color:var(--success)">Analyse terminée</span>{% endif %}
+    <p style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+      <span>DOC-{{ document.id|stringformat:"04d" }} ·
+        {% if document.status == 'recu' %}<span style="color:#60a5fa">Dossier reçu</span>
+        {% elif document.status == 'en_cours' %}<span style="color:var(--gold)">Analyse en cours</span>
+        {% else %}<span style="color:var(--success)">Analyse terminée</span>{% endif %}
+      </span>
+      {% if document.type_analyse == 'energie' %}<span class="type-badge energie">⚡ Pré-analyse énergétique</span>
+      {% elif document.type_analyse == 'pca' %}<span class="type-badge pca">🏗️ Pré-analyse technique</span>
+      {% elif document.type_analyse == 'complet' %}<span class="type-badge complet">📊 Analyse complète</span>
+      {% endif %}
     </p>
   </div>
 </div>
@@ -53,9 +52,7 @@
 
   {% if messages %}
   {% for msg in messages %}
-  <div style="background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.5rem;font-size:.88rem;color:var(--success)">
-    ✓ {{ msg }}
-  </div>
+  <div style="background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.5rem;font-size:.88rem;color:var(--success)">✓ {{ msg }}</div>
   {% endfor %}
   {% endif %}
 
@@ -77,9 +74,11 @@
       style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
       🤖 Rapport IA
     </button>
-  </div><!-- /onglets -->
+  </div>
 
-  <!-- ONGLET INFORMATIONS -->
+  <!-- ══════════════════════════════════════════════════════
+       ONGLET INFORMATIONS
+  ══════════════════════════════════════════════════════ -->
   <div id="panel-infos">
     <form method="post">
       {% csrf_token %}
@@ -106,17 +105,13 @@
             <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Informations client</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
               <div>
-                <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Nom du client</label>
-                <input type="text" name="client_name" value="{{ document.client_name|default:'' }}"
-                  placeholder="Jean Dupont"
-                  style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box"
+                <label class="f-label">Nom du client</label>
+                <input type="text" name="client_name" value="{{ document.client_name|default:'' }}" placeholder="Jean Dupont" class="f-input"
                   onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
               </div>
               <div>
-                <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Email</label>
-                <input type="email" name="client_email" value="{{ document.client_email|default:'' }}"
-                  placeholder="client@email.fr"
-                  style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box"
+                <label class="f-label">Email</label>
+                <input type="email" name="client_email" value="{{ document.client_email|default:'' }}" placeholder="client@email.fr" class="f-input"
                   onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;font-size:.82rem">
@@ -126,25 +121,88 @@
             </div>
           </div>
 
+          <!-- Infos bâtiment -->
+          <div class="card" style="padding:1.5rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Informations du bâtiment</h3>
+            <div style="display:flex;flex-direction:column;gap:.8rem">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem">
+                <div>
+                  <label class="f-label">Type</label>
+                  <div style="font-size:.85rem;color:var(--gray-2)">{{ document.get_building_type_display|default:"—" }}</div>
+                </div>
+                <div>
+                  <label class="f-label">Pays</label>
+                  <div style="font-size:.85rem;color:var(--gray-2)">{{ document.get_pays_display|default:"—" }}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem">
+                <div>
+                  <label class="f-label">Zone climatique</label>
+                  <div style="font-size:.85rem;color:var(--gray-2)">{{ document.climate_zone|default:"—" }}</div>
+                </div>
+                <div>
+                  <label class="f-label">Norme</label>
+                  <div style="font-size:.85rem;color:var(--gold);font-weight:600">{{ document.norme|default:"—" }}</div>
+                </div>
+              </div>
+              {% if document.surface_totale or document.annee_construction or document.nombre_logements %}
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem;padding-top:.4rem;border-top:1px solid rgba(255,255,255,.05)">
+                {% if document.surface_totale %}
+                <div>
+                  <label class="f-label">Surface</label>
+                  <div style="font-size:.85rem;color:var(--gray-2)">{{ document.surface_totale }} m²</div>
+                </div>
+                {% endif %}
+                {% if document.annee_construction %}
+                <div>
+                  <label class="f-label">Année</label>
+                  <div style="font-size:.85rem;color:var(--gray-2)">{{ document.annee_construction }}</div>
+                </div>
+                {% endif %}
+                {% if document.nombre_logements %}
+                <div>
+                  <label class="f-label">Logements</label>
+                  <div style="font-size:.85rem;color:var(--gray-2)">{{ document.nombre_logements }}</div>
+                </div>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
           <!-- Notes internes -->
           <div class="card" style="padding:1.5rem">
             <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:.8rem;color:var(--gold)">Notes internes</h3>
-            <textarea name="admin_notes" rows="4" placeholder="Observations, remarques sur le dossier..."
-              style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.83rem;outline:none;resize:vertical;box-sizing:border-box"
+            <textarea name="admin_notes" rows="4" placeholder="Observations, remarques sur le dossier..." class="f-input" style="resize:vertical"
               onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">{{ document.admin_notes|default:'' }}</textarea>
           </div>
 
         </div>
 
-        <!-- COLONNE DROITE -->
+        <!-- COLONNE DROITE — conditionnelle selon type_analyse -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
 
-          <!-- RT2012 -->
+          {% if document.type_analyse == 'pca' %}
+          <!-- PCA uniquement : pas de valeurs RT/RE2020 -->
+          <div class="card" style="padding:1.5rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:.8rem;color:#c084fc">🏗️ Pré-analyse technique (PCA)</h3>
+            <div style="padding:.9rem 1rem;background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.15);border-radius:8px">
+              <p style="font-size:.83rem;color:var(--gray-2);line-height:1.6;margin:0">
+                Ce dossier est soumis pour une <strong style="color:#c084fc">pré-analyse technique</strong> uniquement.<br>
+                L'analyse IA évaluera l'état de l'enveloppe, des systèmes, les risques identifiés et les travaux à prévoir — sans analyse de conformité thermique réglementaire.
+              </p>
+            </div>
+          </div>
+
+          {% else %}
+          <!-- Énergie ou Complet : afficher les champs RT2012 / RE2020 -->
+
+          {% if document.norme == 'RT2012' or document.type_analyse == 'complet' %}
           <div class="card" style="padding:1.5rem">
             <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">RT2012 — Valeurs mesurées</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
               {% for field, label, unit in rt2012_fields %}
-              <div style="display:flex;align-items:center;gap:.8rem">
+              <div class="rt-field-row" style="display:flex;align-items:center;gap:.8rem">
                 <label style="width:140px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
                   {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
                 </label>
@@ -160,13 +218,14 @@
               {% endfor %}
             </div>
           </div>
+          {% endif %}
 
-          <!-- RE2020 -->
+          {% if document.norme == 'RE2020' or document.type_analyse == 'complet' %}
           <div class="card" style="padding:1.5rem">
             <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">RE2020 — Valeurs mesurées</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
               {% for field, label, unit in re2020_fields %}
-              <div style="display:flex;align-items:center;gap:.8rem">
+              <div class="rt-field-row" style="display:flex;align-items:center;gap:.8rem">
                 <label style="width:180px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
                   {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
                 </label>
@@ -182,6 +241,9 @@
               {% endfor %}
             </div>
           </div>
+          {% endif %}
+
+          {% endif %}{# fin if pca #}
 
         </div>
       </div>
@@ -203,33 +265,57 @@
     </form>
   </div>
 
-  <!-- ONGLET DOCUMENTS -->
+  <!-- ══════════════════════════════════════════════════════
+       ONGLET DOCUMENTS
+  ══════════════════════════════════════════════════════ -->
   <div id="panel-documents" style="display:none">
     <div class="card" style="padding:1.8rem">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.4rem;color:var(--gold)">📁 Document déposé par le client</h3>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.4rem;color:var(--gold)">📁 Documents déposés par le client</h3>
 
-      {% if document.upload %}
-      <div style="display:flex;align-items:center;gap:1.2rem;padding:1.1rem 1.3rem;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.15);border-radius:10px">
-        <div style="font-size:2.2rem;flex-shrink:0">📄</div>
+      {% if document.fichiers.all %}
+      <div style="display:flex;flex-direction:column;gap:.7rem">
+        {% for f in document.fichiers.all %}
+        <div style="display:flex;align-items:center;gap:1.2rem;padding:1rem 1.3rem;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.15);border-radius:10px">
+          <div style="font-size:2rem;flex-shrink:0">📄</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.88rem;color:var(--white);font-weight:500;margin-bottom:.2rem;word-break:break-all">{{ f.nom }}</div>
+            <div style="font-size:.75rem;color:var(--gray-1)">
+              Déposé le {{ f.uploaded_at|date:"d/m/Y à H:i" }}
+              {% if f.taille %} · {{ f.taille|filesizeformat }}{% endif %}
+            </div>
+          </div>
+          <a href="{{ f.fichier.url }}" target="_blank" download
+             style="flex-shrink:0;display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;background:var(--gold);color:#0C1929;font-weight:700;font-size:.78rem;border-radius:7px;text-decoration:none">
+            ⬇ Télécharger
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% elif document.upload %}
+      <!-- Fallback ancien champ upload -->
+      <div style="display:flex;align-items:center;gap:1.2rem;padding:1rem 1.3rem;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.15);border-radius:10px">
+        <div style="font-size:2rem;flex-shrink:0">📄</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:.9rem;color:var(--white);font-weight:500;margin-bottom:.25rem;word-break:break-all">{{ document.upload.name|cut:"documents/" }}</div>
-          <div style="font-size:.76rem;color:var(--gray-1)">Déposé le {{ document.upload_date|date:"d/m/Y à H:i" }}</div>
+          <div style="font-size:.88rem;color:var(--white);font-weight:500;margin-bottom:.2rem;word-break:break-all">{{ document.upload.name|cut:"documents/" }}</div>
+          <div style="font-size:.75rem;color:var(--gray-1)">Déposé le {{ document.upload_date|date:"d/m/Y à H:i" }}</div>
         </div>
         <a href="{{ document.upload.url }}" target="_blank" download
-           style="flex-shrink:0;display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;background:var(--gold);color:#0C1929;font-weight:700;font-size:.8rem;border-radius:7px;text-decoration:none">
+           style="flex-shrink:0;display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;background:var(--gold);color:#0C1929;font-weight:700;font-size:.78rem;border-radius:7px;text-decoration:none">
           ⬇ Télécharger
         </a>
       </div>
       {% else %}
       <div style="text-align:center;padding:2.5rem 1rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px">
         <div style="font-size:2.5rem;margin-bottom:.8rem;opacity:.4">📂</div>
-        <p style="font-size:.85rem;color:var(--gray-1)">Aucun document déposé par le client.</p>
+        <p style="font-size:.85rem;color:var(--gray-1)">Aucun document déposé.</p>
       </div>
       {% endif %}
     </div>
   </div>
 
-  <!-- ONGLET EMAILS -->
+  <!-- ══════════════════════════════════════════════════════
+       ONGLET EMAILS
+  ══════════════════════════════════════════════════════ -->
   <div id="panel-emails" style="display:none">
     <div class="card" style="padding:1.5rem">
       <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">✉️ Workflow emails client</h3>
@@ -272,212 +358,231 @@
     </div>
   </div>
 
-</div>
-
-<!-- MODALE DEVIS -->
-<div id="modal-devis" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center">
-  <div style="background:var(--navy-2);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:2rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
-    <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.5rem;color:var(--gold)">✉ Envoyer le devis</h3>
-    <form method="post" action="{% url 'send_email_manual' document.id 'devis' %}">
-      {% csrf_token %}
-      <input type="hidden" name="create_devis" value="1">
-      <div style="display:flex;flex-direction:column;gap:1rem">
-        <div>
-          <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Nom du projet</label>
-          <input type="text" name="projet_nom" value="{{ document.name }}" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+  <!-- Modale devis -->
+  <div id="modal-devis" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:var(--navy-2);border:1px solid rgba(200,168,75,.2);border-radius:14px;padding:2rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.4rem;color:var(--gold)">💰 Envoyer un devis</h3>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="create_devis" value="1">
+        <div style="display:flex;flex-direction:column;gap:1rem">
           <div>
-            <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Norme</label>
-            <select name="norme" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none">
-              <option value="RE2020">RE2020</option>
-              <option value="RT2012">RT2012</option>
-              <option value="Les deux">Les deux</option>
-            </select>
+            <label class="f-label">Nom du projet</label>
+            <input type="text" name="projet_nom" value="{{ document.name }}" class="f-input"
+              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
+            <div>
+              <label class="f-label">Type d'analyse</label>
+              <select name="type_analyse" class="f-input">
+                <option value="energie" {% if document.type_analyse == 'energie' %}selected{% endif %}>Énergétique</option>
+                <option value="pca" {% if document.type_analyse == 'pca' %}selected{% endif %}>Technique (PCA)</option>
+                <option value="complet" {% if document.type_analyse == 'complet' %}selected{% endif %}>Analyse complète</option>
+              </select>
+            </div>
+            <div>
+              <label class="f-label">Montant HT (€)</label>
+              <input type="number" name="montant" step="0.01" placeholder="650.00" class="f-input"
+                onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+            </div>
           </div>
           <div>
-            <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Montant HT (€)</label>
-            <input type="number" name="montant" step="0.01" placeholder="650.00" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+            <label class="f-label">Notes (optionnel)</label>
+            <textarea name="notes" rows="2" class="f-input" style="resize:vertical"
+              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'"></textarea>
           </div>
         </div>
-        <div>
-          <label style="display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">Notes (optionnel)</label>
-          <textarea name="notes" rows="2" style="width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.83rem;outline:none;resize:vertical;box-sizing:border-box" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'"></textarea>
+        <div style="display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end">
+          <button type="button" onclick="fermerModalDevis()" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--gray-2);padding:.6rem 1.2rem;border-radius:7px;font-size:.83rem;cursor:pointer">Annuler</button>
+          <button type="submit" class="btn btn-gold">✉ Envoyer le devis</button>
         </div>
-      </div>
-      <div style="display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end">
-        <button type="button" onclick="fermerModalDevis()" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--gray-2);padding:.6rem 1.2rem;border-radius:7px;font-size:.83rem;cursor:pointer">Annuler</button>
-        <button type="submit" class="btn btn-gold">✉ Envoyer le devis</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- ═══ ONGLET RAPPORT IA ═══ -->
-<div id="panel-rapport-ia" style="display:none">
-
-  <!-- Bandeau statut + boutons -->
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;padding:1.1rem 1.4rem;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px">
-    <div>
-      <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 .25rem 0">🤖 Rapport d'analyse IA</p>
-      <p style="font-size:.83rem;color:var(--gray-1);margin:0">
-        Norme <strong style="color:var(--white)">{{ document.norme }}</strong> —
-        {{ document.get_building_type_display }} — {{ document.get_pays_display }}
-      </p>
+      </form>
     </div>
-    <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
+  </div>
 
-      {% if document.rapport_ia_json %}
-      <!-- Rapport déjà en base — afficher état + régénérer -->
-      <span style="font-size:.75rem;color:var(--success);display:flex;align-items:center;gap:.3rem">
-        ✓ <span>Rapport sauvegardé</span>
-      </span>
-      <button id="btn-regen"
-        onclick="if(confirm('Régénérer le rapport ? Le rapport actuel sera remplacé.')) genererRapportIA(true)"
-        style="display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:7px;color:var(--gold);font-size:.82rem;cursor:pointer;font-weight:500">
-        🔄 Régénérer
-      </button>
-      {% else %}
-      <!-- Pas encore de rapport -->
-      <button id="btn-generer"
-        onclick="genererRapportIA(false)"
-        style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.3rem;background:linear-gradient(135deg,#C8A84B,#e0c070);border:none;border-radius:8px;color:#0C1929;font-size:.88rem;cursor:pointer;font-weight:700">
-        <span id="btn-icon">✨</span>
-        <span id="btn-text">Générer le rapport</span>
-      </button>
+  <!-- ══════════════════════════════════════════════════════
+       ONGLET RAPPORT IA
+  ══════════════════════════════════════════════════════ -->
+  <div id="panel-rapport-ia" style="display:none">
+
+    <!-- Bandeau statut + boutons -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;padding:1.1rem 1.4rem;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px">
+      <div>
+        <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 .25rem 0">🤖 Rapport d'analyse IA</p>
+        <p style="font-size:.83rem;color:var(--gray-1);margin:0">
+          {% if document.type_analyse == 'energie' %}Pré-analyse énergétique —
+            <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
+          {% elif document.type_analyse == 'pca' %}Pré-analyse technique (PCA) —
+            {{ document.get_building_type_display }} · {{ document.get_pays_display }}
+          {% else %}Analyse complète —
+            <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
+          {% endif %}
+        </p>
+      </div>
+      <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
+        {% if document.rapport_ia_json %}
+        <span style="font-size:.75rem;color:var(--success);display:flex;align-items:center;gap:.3rem">✓ <span>Rapport sauvegardé</span></span>
+        <button id="btn-regen"
+          onclick="if(confirm('Régénérer le rapport ? Le rapport actuel sera remplacé.')) genererRapportIA(true)"
+          style="display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:7px;color:var(--gold);font-size:.82rem;cursor:pointer;font-weight:500">
+          🔄 Régénérer
+        </button>
+        {% else %}
+        <button id="btn-generer" onclick="genererRapportIA(false)"
+          style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.3rem;background:linear-gradient(135deg,#C8A84B,#e0c070);border:none;border-radius:8px;color:#0C1929;font-size:.88rem;cursor:pointer;font-weight:700">
+          <span id="btn-icon">✨</span>
+          <span id="btn-text">Générer le rapport</span>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Barre de progression -->
+    <div id="progress-bar-wrap" style="display:none;margin-bottom:1.5rem">
+      <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.4rem">
+        <span id="progress-label">Envoi du document à Claude…</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:20px;height:6px;overflow:hidden">
+        <div id="progress-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#C8A84B,#e0c070);border-radius:20px;transition:width .4s ease"></div>
+      </div>
+    </div>
+
+    <!-- Message d'erreur -->
+    <div id="rapport-error" style="display:none;margin-bottom:1.2rem;padding:.8rem 1rem;background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.25);border-radius:8px;font-size:.83rem;color:#ef5350"></div>
+
+    <!-- Zone du rapport rendu -->
+    <div id="rapport-content" style="{% if not document.rapport_ia_json %}display:none{% endif %}">
+
+      <!-- Verdict -->
+      <div id="verdict-banner" style="margin-bottom:1.4rem;padding:1.2rem 1.5rem;border-radius:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,.08)">
+        <div>
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;opacity:.65;margin-bottom:.4rem">
+            {% if document.type_analyse == 'pca' %}État technique global{% else %}Verdict — {{ document.norme }}{% endif %}
+          </div>
+          <div id="verdict-text" style="font-size:1.4rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--gold)"></div>
+        </div>
+        <div id="verdict-icon" style="font-size:2.5rem"></div>
+      </div>
+
+      <!-- Résumé + KPIs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
+        <div class="card" style="padding:1.4rem">
+          <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📋 Résumé exécutif</h4>
+          <p id="resume-executif" style="font-size:.86rem;color:var(--gray-2);line-height:1.65;margin:0"></p>
+        </div>
+        <div class="card" style="padding:1.4rem">
+          <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📊 Critères</h4>
+          <div style="display:flex;gap:.8rem;margin-bottom:.9rem">
+            <div id="kpi-conforme" style="flex:1;text-align:center;padding:.7rem;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2);border-radius:8px">
+              <div style="font-size:1.8rem;font-weight:700;color:#27c93f">—</div>
+              <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">{% if document.type_analyse == 'pca' %}Conformes{% else %}Conformes{% endif %}</div>
+            </div>
+            <div id="kpi-nonconforme" style="flex:1;text-align:center;padding:.7rem;background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.2);border-radius:8px">
+              <div style="font-size:1.8rem;font-weight:700;color:#ef5350">—</div>
+              <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">{% if document.type_analyse == 'pca' %}Risques{% else %}Non conformes{% endif %}</div>
+            </div>
+          </div>
+          <div id="mini-bars" style="display:flex;flex-direction:column;gap:.45rem"></div>
+        </div>
+      </div>
+
+      <!-- Tableau critères — affiché pour énergie et complet -->
+      {% if document.type_analyse != 'pca' %}
+      <div class="card" style="padding:1.4rem;margin-bottom:1.4rem;overflow-x:auto">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.9rem">🔍 Analyse des critères</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:.83rem">
+          <thead>
+            <tr style="background:#0C1929">
+              <th style="padding:.65rem 1rem;text-align:left;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Critère</th>
+              <th style="padding:.65rem 1rem;text-align:center;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Valeur</th>
+              <th style="padding:.65rem 1rem;text-align:center;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Seuil</th>
+              <th style="padding:.65rem 1rem;text-align:center;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Résultat</th>
+              <th style="padding:.65rem 1rem;text-align:left;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Commentaire</th>
+            </tr>
+          </thead>
+          <tbody id="criteres-tbody"></tbody>
+        </table>
+      </div>
       {% endif %}
 
-    </div>
-  </div>
+      <!-- PCA : tableau état technique (remplace tableau critères) -->
+      {% if document.type_analyse == 'pca' or document.type_analyse == 'complet' %}
+      <div id="pca-etat-wrap" class="card" style="padding:1.4rem;margin-bottom:1.4rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin-bottom:.9rem">🏗️ État technique — Composants</h4>
+        <div id="pca-etat-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
+      </div>
 
-  <!-- Barre de progression (visible uniquement pendant génération) -->
-  <div id="progress-bar-wrap" style="display:none;margin-bottom:1.5rem">
-    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.4rem">
-      <span id="progress-label">Envoi du PDF à Claude…</span>
-      <span id="progress-pct">0%</span>
-    </div>
-    <div style="background:rgba(255,255,255,.06);border-radius:20px;height:6px;overflow:hidden">
-      <div id="progress-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#C8A84B,#e0c070);border-radius:20px;transition:width .4s ease"></div>
-    </div>
-  </div>
+      <div id="pca-travaux-wrap" class="card" style="padding:1.4rem;margin-bottom:1.4rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin-bottom:.9rem">🔧 Travaux identifiés</h4>
+        <div id="pca-travaux-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
+      </div>
+      {% endif %}
 
-  <!-- Message d'erreur -->
-  <div id="rapport-error" style="display:none;margin-bottom:1.2rem;padding:.8rem 1rem;background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.25);border-radius:8px;font-size:.83rem;color:#ef5350"></div>
+      <!-- Points forts -->
+      <div id="points-forts-wrap" class="card" style="padding:1.4rem;margin-bottom:1.4rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#27c93f;margin-bottom:.8rem">✅ Points forts</h4>
+        <ul id="points-forts-list" style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.4rem"></ul>
+      </div>
 
-  <!-- Zone du rapport rendu -->
-  <div id="rapport-content" style="{% if not document.rapport_ia_json %}display:none{% endif %}">
+      <!-- Non-conformités / Risques -->
+      <div id="nonconf-wrap" style="margin-bottom:1.4rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#ef5350;margin-bottom:.8rem">
+          {% if document.type_analyse == 'pca' %}⚠️ Risques identifiés{% else %}⚠️ Non-conformités{% endif %}
+        </h4>
+        <div id="nonconf-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
+      </div>
 
-    <!-- Verdict -->
-    <div id="verdict-banner" style="margin-bottom:1.4rem;padding:1.2rem 1.5rem;border-radius:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid
-      {% if document.rapport_ia_json %}
-        {% with r=document.rapport_ia_json %}rgba(200,168,75,.2){% endwith %}
-      {% else %}rgba(255,255,255,.08){% endif %}">
-      <div>
-        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;opacity:.65;margin-bottom:.4rem">Verdict — {{ document.norme }}</div>
-        <div id="verdict-text" style="font-size:1.4rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--gold)">
-          {% if document.rapport_ia_json %}—{% endif %}
+      <!-- Recommandations -->
+      <div id="recos-wrap" style="margin-bottom:1.4rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📌 Recommandations</h4>
+        <div id="recos-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
+      </div>
+
+      <!-- Enveloppe + Systèmes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
+        <div class="card" style="padding:1.4rem">
+          <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">🏗️ Enveloppe thermique</h4>
+          <p id="enveloppe-synthese" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin-bottom:.7rem"></p>
+          <ul id="enveloppe-points" style="margin:0;padding-left:1.1rem;font-size:.8rem;color:var(--gray-1);display:flex;flex-direction:column;gap:.3rem"></ul>
+        </div>
+        <div class="card" style="padding:1.4rem">
+          <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">⚡ Systèmes énergétiques</h4>
+          <p id="systemes-synthese" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin-bottom:.7rem"></p>
+          <div id="equipements-table" style="font-size:.8rem"></div>
         </div>
       </div>
-      <div id="verdict-icon" style="font-size:2.5rem"></div>
-    </div>
 
-    <!-- Résumé + KPIs -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
-      <div class="card" style="padding:1.4rem">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📋 Résumé exécutif</h4>
-        <p id="resume-executif" style="font-size:.86rem;color:var(--gray-2);line-height:1.65;margin:0"></p>
+      <!-- Contexte réglementaire — seulement si énergie ou complet -->
+      {% if document.type_analyse != 'pca' %}
+      <div class="card" style="padding:1.4rem;margin-bottom:1.4rem">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📜 Contexte réglementaire</h4>
+        <p id="contexte-reglementaire" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin:0"></p>
       </div>
-      <div class="card" style="padding:1.4rem">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📊 Critères</h4>
-        <div style="display:flex;gap:.8rem;margin-bottom:.9rem">
-          <div id="kpi-conforme" style="flex:1;text-align:center;padding:.7rem;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2);border-radius:8px">
-            <div style="font-size:1.8rem;font-weight:700;color:#27c93f">—</div>
-            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">Conformes</div>
-          </div>
-          <div id="kpi-nonconforme" style="flex:1;text-align:center;padding:.7rem;background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.2);border-radius:8px">
-            <div style="font-size:1.8rem;font-weight:700;color:#ef5350">—</div>
-            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">Non conformes</div>
-          </div>
-        </div>
-        <div id="mini-bars" style="display:flex;flex-direction:column;gap:.45rem"></div>
+      {% endif %}
+
+      <!-- Mentions légales -->
+      <div style="padding:.9rem 1.1rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:8px;font-size:.73rem;color:var(--muted);line-height:1.5">
+        <strong style="color:var(--gray-1)">Mentions légales — </strong><span id="mentions-legales"></span>
       </div>
+
+    </div><!-- /rapport-content -->
+
+    {% if not document.rapport_ia_json %}
+    <div id="rapport-vide" style="text-align:center;padding:3rem 2rem;color:var(--gray-1)">
+      <p style="font-size:2rem;margin-bottom:.8rem">🤖</p>
+      <p style="font-size:.95rem;margin-bottom:.3rem;color:var(--white)">Aucun rapport IA généré pour ce dossier.</p>
+      <p style="font-size:.83rem">Cliquez sur <strong style="color:var(--gold)">Générer le rapport</strong> ci-dessus.</p>
     </div>
+    {% endif %}
 
-    <!-- Tableau critères -->
-    <div class="card" style="padding:1.4rem;margin-bottom:1.4rem;overflow-x:auto">
-      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.9rem">🔍 Analyse des critères</h4>
-      <table style="width:100%;border-collapse:collapse;font-size:.83rem">
-        <thead>
-          <tr style="background:#0C1929">
-            <th style="padding:.65rem 1rem;text-align:left;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Critère</th>
-            <th style="padding:.65rem 1rem;text-align:center;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Valeur</th>
-            <th style="padding:.65rem 1rem;text-align:center;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Seuil</th>
-            <th style="padding:.65rem 1rem;text-align:center;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Résultat</th>
-            <th style="padding:.65rem 1rem;text-align:left;color:var(--gray-1);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Commentaire</th>
-          </tr>
-        </thead>
-        <tbody id="criteres-tbody"></tbody>
-      </table>
-    </div>
+  </div><!-- /panel-rapport-ia -->
 
-    <!-- Points forts -->
-    <div id="points-forts-wrap" class="card" style="padding:1.4rem;margin-bottom:1.4rem;display:none">
-      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#27c93f;margin-bottom:.8rem">✅ Points forts</h4>
-      <ul id="points-forts-list" style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.4rem"></ul>
-    </div>
-
-    <!-- Non-conformités -->
-    <div id="nonconf-wrap" style="margin-bottom:1.4rem;display:none">
-      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#ef5350;margin-bottom:.8rem">⚠️ Non-conformités</h4>
-      <div id="nonconf-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
-    </div>
-
-    <!-- Recommandations -->
-    <div id="recos-wrap" style="margin-bottom:1.4rem;display:none">
-      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📌 Recommandations</h4>
-      <div id="recos-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
-    </div>
-
-    <!-- Enveloppe + Systèmes -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
-      <div class="card" style="padding:1.4rem">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">🏗️ Enveloppe thermique</h4>
-        <p id="enveloppe-synthese" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin-bottom:.7rem"></p>
-        <ul id="enveloppe-points" style="margin:0;padding-left:1.1rem;font-size:.8rem;color:var(--gray-1);display:flex;flex-direction:column;gap:.3rem"></ul>
-      </div>
-      <div class="card" style="padding:1.4rem">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">⚡ Systèmes énergétiques</h4>
-        <p id="systemes-synthese" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin-bottom:.7rem"></p>
-        <div id="equipements-table" style="font-size:.8rem"></div>
-      </div>
-    </div>
-
-    <!-- Contexte réglementaire -->
-    <div class="card" style="padding:1.4rem;margin-bottom:1.4rem">
-      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📜 Contexte réglementaire</h4>
-      <p id="contexte-reglementaire" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin:0"></p>
-    </div>
-
-    <!-- Mentions légales -->
-    <div style="padding:.9rem 1.1rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:8px;font-size:.73rem;color:var(--muted);line-height:1.5">
-      <strong style="color:var(--gray-1)">Mentions légales — </strong><span id="mentions-legales"></span>
-    </div>
-
-  </div><!-- /rapport-content -->
-
-  <!-- État vide (pas encore de rapport généré) -->
-  {% if not document.rapport_ia_json %}
-  <div id="rapport-vide" style="text-align:center;padding:3rem 2rem;color:var(--gray-1)">
-    <p style="font-size:2rem;margin-bottom:.8rem">🤖</p>
-    <p style="font-size:.95rem;margin-bottom:.3rem;color:var(--white)">Aucun rapport IA généré pour ce dossier.</p>
-    <p style="font-size:.83rem">Cliquez sur <strong style="color:var(--gold)">Générer le rapport</strong> ci-dessus.</p>
-  </div>
-  {% endif %}
-
-</div><!-- /panel-rapport-ia -->
+</div>
 
 <script>
 const DOC_ID = {{ document.id }};
+const TYPE_ANALYSE = "{{ document.type_analyse }}";
 const RAPPORT_SAUVEGARDE = {{ document.rapport_ia_json|default:"null"|safe }};
 let rapportDejaRendu = false;
 
@@ -496,14 +601,12 @@ function showTab(name) {
       btn.style.fontWeight   = 'normal';
     }
   });
-  // Si on ouvre l'onglet IA et qu'un rapport est en base et pas encore rendu
   if (name === 'rapport-ia' && RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
     afficherRapport(RAPPORT_SAUVEGARDE);
     rapportDejaRendu = true;
   }
 }
 
-// ── Au chargement : si rapport en base, le rendre immédiatement ──────────────
 document.addEventListener('DOMContentLoaded', function() {
   if (RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
     afficherRapport(RAPPORT_SAUVEGARDE);
@@ -532,29 +635,28 @@ function getCsrf() {
 
 // ── Génération ────────────────────────────────────────────
 async function genererRapportIA(force) {
-  const errorDiv     = document.getElementById('rapport-error');
-  const progressWrap = document.getElementById('progress-bar-wrap');
-  const rapportContent = document.getElementById('rapport-content');
-  const rapportVide  = document.getElementById('rapport-vide');
+  const errorDiv       = document.getElementById('rapport-error');
+  const progressWrap   = document.getElementById('progress-bar-wrap');
+  const rapportVide    = document.getElementById('rapport-vide');
 
-  // Désactiver les boutons
   ['btn-generer','btn-regen'].forEach(id => {
     const b = document.getElementById(id);
     if (b) { b.disabled = true; b.style.opacity = '.5'; b.style.cursor = 'not-allowed'; }
   });
 
-  errorDiv.style.display    = 'none';
+  errorDiv.style.display     = 'none';
   progressWrap.style.display = 'block';
   setProgress(5, 'Envoi du document à Claude…');
+
+  const labels = TYPE_ANALYSE === 'pca'
+    ? ['Lecture des documents techniques…', 'Analyse de l\'enveloppe et des systèmes…', 'Identification des risques…']
+    : ['Lecture du document thermique…', `Analyse des critères {{ document.norme }}…`, 'Génération des recommandations…'];
 
   const prog = setInterval(() => {
     const current = parseInt(document.getElementById('progress-fill').style.width) || 5;
     if (current < 85) {
       const next = Math.min(current + Math.random() * 7, 85);
-      setProgress(Math.round(next),
-        current < 30 ? 'Lecture du document thermique…'
-        : current < 60 ? `Analyse des critères {{ document.norme }}…`
-        : 'Génération des recommandations…');
+      setProgress(Math.round(next), current < 30 ? labels[0] : current < 60 ? labels[1] : labels[2]);
     }
   }, 1200);
 
@@ -572,10 +674,8 @@ async function genererRapportIA(force) {
     setProgress(100, 'Rapport généré ✓');
     setTimeout(() => { progressWrap.style.display = 'none'; }, 800);
     if (rapportVide) rapportVide.style.display = 'none';
-
     afficherRapport(data.rapport);
 
-    // Mettre à jour l'indicateur "Rapport sauvegardé" sans reload
     const wrap = document.querySelector('#panel-rapport-ia > div:first-child > div:last-child');
     if (wrap && !document.querySelector('#btn-regen')) {
       wrap.innerHTML = `
@@ -585,7 +685,6 @@ async function genererRapportIA(force) {
           🔄 Régénérer
         </button>`;
     }
-
   } catch (err) {
     clearInterval(prog);
     progressWrap.style.display = 'none';
@@ -603,7 +702,7 @@ async function genererRapportIA(force) {
 function afficherRapport(r) {
   const el = id => document.getElementById(id);
 
-  const conf = r.verdict === 'Conforme';
+  const conf = r.verdict === 'Conforme' || r.verdict === 'Bon état';
   const ins  = r.verdict === 'Données insuffisantes';
   const vc   = conf
     ? { bg:'rgba(39,201,63,.06)',   border:'rgba(39,201,63,.25)',   color:'#27c93f', icon:'✅' }
@@ -617,14 +716,13 @@ function afficherRapport(r) {
   el('verdict-text').style.color = vc.color;
   el('verdict-text').textContent = r.verdict || '—';
   el('verdict-icon').textContent = vc.icon;
-
   el('resume-executif').textContent = r.resume_executif || '—';
 
   const criteres = r.criteres || [];
   const nbOk  = criteres.filter(c => c.conforme).length;
   const nbKo  = criteres.filter(c => !c.conforme).length;
-  el('kpi-conforme').querySelector('div').textContent    = nbOk;
-  el('kpi-nonconforme').querySelector('div').textContent = nbKo;
+  el('kpi-conforme').querySelector('div').textContent    = nbOk || (r.etat_technique ? r.etat_technique.filter(e => e.etat === 'Bon').length : 0);
+  el('kpi-nonconforme').querySelector('div').textContent = nbKo || (r.risques ? r.risques.length : 0);
 
   el('mini-bars').innerHTML = criteres.map(c => {
     const pct   = c.valeur && c.seuil ? Math.min((c.valeur / c.seuil) * 100, 150) : 50;
@@ -638,19 +736,52 @@ function afficherRapport(r) {
     </div>`;
   }).join('');
 
-  el('criteres-tbody').innerHTML = criteres.map((c, i) => {
-    const color = c.conforme ? '#27c93f' : '#ef5350';
-    const badge = c.conforme
-      ? `<span style="background:rgba(39,201,63,.12);color:#27c93f;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✓ Conforme</span>`
-      : `<span style="background:rgba(229,57,53,.12);color:#ef5350;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✗ Non conforme</span>`;
-    return `<tr style="background:${i%2===0?'rgba(255,255,255,.01)':'transparent'};border-bottom:1px solid rgba(255,255,255,.04)">
-      <td style="padding:.65rem 1rem;color:var(--white);font-weight:500">${c.nom}</td>
-      <td style="padding:.65rem 1rem;text-align:center;color:${color};font-weight:700">${c.valeur??'—'} <span style="font-size:.68rem;color:var(--muted)">${c.unite||''}</span></td>
-      <td style="padding:.65rem 1rem;text-align:center;color:var(--gray-1)">≤ ${c.seuil??'—'}</td>
-      <td style="padding:.65rem 1rem;text-align:center">${badge}</td>
-      <td style="padding:.65rem 1rem;color:var(--gray-2);font-size:.79rem">${c.commentaire||''}</td>
-    </tr>`;
-  }).join('');
+  // Tableau critères (énergie/complet)
+  if (el('criteres-tbody')) {
+    el('criteres-tbody').innerHTML = criteres.map((c, i) => {
+      const color = c.conforme ? '#27c93f' : '#ef5350';
+      const badge = c.conforme
+        ? `<span style="background:rgba(39,201,63,.12);color:#27c93f;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✓ Conforme</span>`
+        : `<span style="background:rgba(229,57,53,.12);color:#ef5350;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✗ Non conforme</span>`;
+      return `<tr style="background:${i%2===0?'rgba(255,255,255,.01)':'transparent'};border-bottom:1px solid rgba(255,255,255,.04)">
+        <td style="padding:.65rem 1rem;color:var(--white);font-weight:500">${c.nom}</td>
+        <td style="padding:.65rem 1rem;text-align:center;color:${color};font-weight:700">${c.valeur??'—'} <span style="font-size:.68rem;color:var(--muted)">${c.unite||''}</span></td>
+        <td style="padding:.65rem 1rem;text-align:center;color:var(--gray-1)">≤ ${c.seuil??'—'}</td>
+        <td style="padding:.65rem 1rem;text-align:center">${badge}</td>
+        <td style="padding:.65rem 1rem;color:var(--gray-2);font-size:.79rem">${c.commentaire||''}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Tableau état technique PCA
+  if (el('pca-etat-wrap') && (r.etat_technique||[]).length) {
+    el('pca-etat-wrap').style.display = 'block';
+    el('pca-etat-list').innerHTML = r.etat_technique.map(e => {
+      const ec = e.etat === 'Bon' ? '#27c93f' : e.etat === 'Moyen' ? '#E5A93A' : '#ef5350';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)">
+        <div>
+          <span style="color:var(--white);font-weight:500;font-size:.86rem">${e.composant}</span>
+          ${e.observation ? `<p style="font-size:.78rem;color:var(--gray-1);margin:.2rem 0 0">${e.observation}</p>` : ''}
+        </div>
+        <span style="font-size:.75rem;padding:.2rem .65rem;border-radius:99px;background:${ec}22;color:${ec};border:1px solid ${ec}44;flex-shrink:0">${e.etat}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Travaux PCA
+  if (el('pca-travaux-wrap') && (r.travaux||[]).length) {
+    el('pca-travaux-wrap').style.display = 'block';
+    el('pca-travaux-list').innerHTML = r.travaux.map(t => {
+      const hc = t.horizon === 'Immédiat' ? '#ef5350' : t.horizon === '1-2 ans' ? '#E5A93A' : '#60a5fa';
+      return `<div style="display:flex;align-items:center;gap:1rem;padding:.7rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,.05)">
+        <span style="font-size:.7rem;padding:.2rem .55rem;border-radius:99px;background:${hc}22;color:${hc};border:1px solid ${hc}44;white-space:nowrap;flex-shrink:0">${t.horizon}</span>
+        <div style="flex:1">
+          <span style="color:var(--white);font-size:.84rem;font-weight:500">${t.titre}</span>
+          ${t.cout_estime ? `<span style="color:var(--gold);font-size:.78rem;margin-left:.6rem">${t.cout_estime}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
 
   if ((r.points_forts||[]).length) {
     el('points-forts-wrap').style.display = 'block';
@@ -716,9 +847,8 @@ function afficherRapport(r) {
       </div>`).join('');
   }
 
-  el('contexte-reglementaire').textContent = r.contexte_reglementaire || '';
-  el('mentions-legales').textContent        = r.mentions_legales || '';
-
+  if (el('contexte-reglementaire')) el('contexte-reglementaire').textContent = r.contexte_reglementaire || '';
+  el('mentions-legales').textContent = r.mentions_legales || '';
   el('rapport-content').style.display = 'block';
 }
 </script>
