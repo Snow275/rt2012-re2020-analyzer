@@ -17,3 +17,25 @@
 
 </div>
 {% endif %}
+{% if rapport.travaux %}
+<div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+
+<div class="section-title">Travaux recommandés</div>
+
+{% for t in rapport.travaux %}
+<div style="margin-bottom:1rem">
+
+<strong>{{ t.titre }}</strong>
+
+<div>{{ t.description }}</div>
+
+<div>
+Priorité : {{ t.priorite }}  
+Coût estimé : {{ t.cout_estime }}
+</div>
+
+</div>
+{% endfor %}
+
+</div>
+{% endif %}
