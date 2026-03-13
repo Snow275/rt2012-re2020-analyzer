@@ -421,13 +421,10 @@ def home(request):
     documents = Document.objects.filter(is_active=True).order_by('-upload_date')
     total_projects = documents.count()
 
-    compliant_count = 0
-    for doc in documents:
-        try:
-            if doc.is_conform is True:
-                compliant_count += 1
-        except Exception:
-            pass
+    compliant_count = sum(
+        1 for doc in documents
+        if doc.is_conform is True
+    )
     compliance_rate = round((compliant_count / total_projects * 100), 1) if total_projects else 0
 
     # Dossiers en attente
@@ -445,11 +442,6 @@ def home(request):
         recent_devis = []
         devis_en_attente = 0
 
-    docs = Document.objects.filter(is_active=True)
-
-    def by_type_status(type_analyse, status):
-        return list(docs.filter(type_analyse=type_analyse, status=status).order_by('-upload_date')[:10])
-
     context = {
         'documents': documents,
         'total_projects': total_projects,
@@ -458,22 +450,6 @@ def home(request):
         'old_pending': old_pending,
         'recent_devis': recent_devis,
         'devis_en_attente': devis_en_attente,
-        # Compteurs par type
-        'count_energie':  docs.filter(type_analyse='energie').count(),
-        'count_pca':      docs.filter(type_analyse='pca').count(),
-        'count_complet':  docs.filter(type_analyse='complet').count(),
-        # Kanban énergie
-        'docs_energie_recu':     by_type_status('energie', 'recu'),
-        'docs_energie_en_cours': by_type_status('energie', 'en_cours'),
-        'docs_energie_termine':  by_type_status('energie', 'termine'),
-        # Kanban PCA
-        'docs_pca_recu':         by_type_status('pca', 'recu'),
-        'docs_pca_en_cours':     by_type_status('pca', 'en_cours'),
-        'docs_pca_termine':      by_type_status('pca', 'termine'),
-        # Kanban complet
-        'docs_complet_recu':     by_type_status('complet', 'recu'),
-        'docs_complet_en_cours': by_type_status('complet', 'en_cours'),
-        'docs_complet_termine':  by_type_status('complet', 'termine'),
     }
     return render(request, 'main/home.html', context)
 
@@ -1592,22 +1568,61 @@ def generer_rapport_ia(request, doc_id):
     if not ANTHROPIC_API_KEY:
         return JsonResponse({'error': 'Clé API Anthropic manquante (ANTHROPIC_API_KEY)'}, status=500)
 
-    # ── 1. Tenter de lire le PDF ──────────────────────────────────────────────
+    # ── 1. Lire les fichiers multi-upload ─────────────────────────────────────
     pdf_b64 = None
-    try:
-        if document.upload and document.upload.name:
-            with open(document.upload.path, 'rb') as f:
-                pdf_b64 = base64.standard_b64encode(f.read()).decode('utf-8')
-    except Exception as e:
-        print(f"PDF indisponible (fallback BDD) : {e}")
+    pdf_b64_list = []
 
-    # ── 2. Contexte du dossier ────────────────────────────────────────────────
+    # Essayer d'abord les fichiers multi-upload (DocumentFile)
+    try:
+        for doc_file in document.fichiers.all()[:3]:  # max 3 PDFs
+            try:
+                with open(doc_file.fichier.path, 'rb') as f:
+                    b64 = base64.standard_b64encode(f.read()).decode('utf-8')
+                    pdf_b64_list.append(b64)
+            except Exception as e:
+                print(f"Fichier multi indisponible : {e}")
+    except Exception:
+        pass
+
+    # Fallback sur l'ancien champ upload
+    if not pdf_b64_list:
+        try:
+            if document.upload and document.upload.name:
+                with open(document.upload.path, 'rb') as f:
+                    pdf_b64_list.append(base64.standard_b64encode(f.read()).decode('utf-8'))
+        except Exception as e:
+            print(f"PDF upload indisponible : {e}")
+
+    pdf_b64 = pdf_b64_list[0] if pdf_b64_list else None
+
+    # ── 2. Contexte commun ────────────────────────────────────────────────────
+    type_analyse = getattr(document, 'type_analyse', 'energie') or 'energie'
     norme = document.norme
     pays_map = {'FR': 'France', 'BE': 'Belgique', 'CH': 'Suisse', 'CA': 'Canada', 'LU': 'Luxembourg'}
     pays_label = pays_map.get(document.pays, document.pays)
     batiment_label = document.get_building_type_display()
     zone = document.climate_zone or 'H2'
     ref = f"DOC-{document.id:04d}"
+    surface = getattr(document, 'surface_totale', None)
+    annee = getattr(document, 'annee_construction', None)
+    logements = getattr(document, 'nombre_logements', None)
+
+    infos_batiment = f"""- Type : {batiment_label}
+- Pays / Zone : {pays_label} — Zone climatique {zone}
+{"- Surface totale : " + str(surface) + " m²" if surface else ""}
+{"- Année de construction : " + str(annee) if annee else ""}
+{"- Nombre de logements : " + str(logements) if logements else ""}"""
+
+    SEUILS_LABELS = {
+        'RT2012': "Bbio ≤ 60 | Cep ≤ 50 kWh ep/m².an | Tic ≤ 27°C | Étanchéité ≤ 0,6 m³/h.m²",
+        'RE2020': "Cep,nr ≤ 100 kWh/m².an | Ic énergie ≤ 160 kgCO2/m².an | DH ≤ 1250 (zone H2)",
+        'PEB': "Espec ≤ 100 kWh/m².an | U mur ≤ 0,24 | U toit ≤ 0,20 | U plancher ≤ 0,30 W/m².K",
+        'MINERGIE': "Qh ≤ 60 kWh/m².an | Qtot ≤ 38 kWh/m².an | n50 ≤ 0,6 h⁻¹",
+        'SIA380': "Qh ≤ 90 kWh/m².an selon SIA 380/1",
+        'CNEB2015': "EI ≤ 170 kWh/m².an | U mur ≤ 0,24 | U toit ≤ 0,18 | U fenêtre ≤ 1,8 W/m².K",
+        'CNEB2020': "EI ≤ 150 kWh/m².an | U mur ≤ 0,21 | U toit ≤ 0,16 | U fenêtre ≤ 1,6 W/m².K",
+        'LENOZ': "EP ≤ 90 kWh/m².an | Ew ≤ 100 | U mur ≤ 0,22 | U toit ≤ 0,17 W/m².K",
+    }
 
     champs_norme = {
         'RT2012': [
@@ -1651,32 +1666,202 @@ def generer_rapport_ia(request, doc_id):
         val = getattr(document, field, None)
         if val is not None:
             valeurs_connues[label] = f"{val} {unit}".strip()
-
     valeurs_str = '\n'.join([f"  - {k} : {v}" for k, v in valeurs_connues.items()]) or "  (aucune valeur encore saisie)"
 
-    SEUILS_LABELS = {
-        'RT2012': "Bbio ≤ 60 | Cep ≤ 50 kWh ep/m².an | Tic ≤ 27°C | Étanchéité ≤ 0,6 m³/h.m² (maison) ou 1,0 (ERP)",
-        'RE2020': "Cep,nr ≤ 100 kWh/m².an | Ic énergie ≤ 160 kgCO2/m².an | DH ≤ 1250 (zone H2)",
-        'PEB': "Espec ≤ 100 kWh/m².an | U mur ≤ 0,24 | U toit ≤ 0,20 | U plancher ≤ 0,30 W/m².K",
-        'MINERGIE': "Qh ≤ 60 kWh/m².an | Qtot ≤ 38 kWh/m².an | n50 ≤ 0,6 h⁻¹",
-        'SIA380': "Qh ≤ 90 kWh/m².an selon SIA 380/1",
-        'CNEB2015': "EI ≤ 170 kWh/m².an | U mur ≤ 0,24 | U toit ≤ 0,18 | U fenêtre ≤ 1,8 W/m².K | Infiltration ≤ 0,30 L/s.m²",
-        'CNEB2020': "EI ≤ 150 kWh/m².an | U mur ≤ 0,21 | U toit ≤ 0,16 | U fenêtre ≤ 1,6 W/m².K | Infiltration ≤ 0,25 L/s.m²",
-        'LENOZ': "EP ≤ 90 kWh/m².an | Ew ≤ 100 | U mur ≤ 0,22 | U toit ≤ 0,17 W/m².K",
-    }
-    seuils_str = SEUILS_LABELS.get(norme, "Voir réglementation applicable")
-    source_donnees = "le PDF joint ET les valeurs extraites ci-dessous" if pdf_b64 else "les valeurs extraites ci-dessous (PDF non disponible sur le serveur)"
+    source_donnees = f"{len(pdf_b64_list)} fichier(s) PDF joint(s) + les valeurs extraites ci-dessous" if pdf_b64_list else "les valeurs extraites ci-dessous (PDF non disponible sur le serveur)"
 
-    system_prompt = f"""Tu es ConformExpert, un expert en réglementation thermique et énergétique des bâtiments.
+    # ── 3. Prompt selon type_analyse ─────────────────────────────────────────
+
+    if type_analyse == 'pca':
+        # ── PCA : Pré-analyse technique (état du bâtiment, travaux) ──────────
+        system_prompt = f"""Tu es ConformExpert, un expert en pathologie du bâtiment et diagnostic technique immobilier.
+Tu réalises des pré-analyses techniques (PCA - Property Condition Assessment) à partir de documents fournis par le client (plans, photos, rapports de diagnostic, DDT, carnet d'entretien, etc.).
+
+Contexte du dossier :
+- Référence : {ref}
+- Projet : {document.name}
+- Client : {document.client_name or 'Non renseigné'}
+- Type d'analyse : Pré-analyse technique (PCA)
+- Informations du bâtiment :
+{infos_batiment}
+- Source des données : {source_donnees}
+
+Tu dois générer un rapport PCA structuré et professionnel.
+Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication, sans balises.
+
+Structure JSON attendue :
+{{
+  "verdict": "Bon état général" | "État moyen — travaux à prévoir" | "État dégradé — intervention urgente" | "Données insuffisantes",
+  "score_global": 72,
+  "resume_executif": "Paragraphe de 3-5 phrases résumant l'état général du bâtiment et les principaux enjeux.",
+  "etat_technique": [
+    {{
+      "composant": "Toiture",
+      "etat": "Bon" | "Moyen" | "Mauvais",
+      "observation": "Description précise de l'état observé ou estimé.",
+      "risque": "faible" | "modéré" | "élevé"
+    }}
+  ],
+  "travaux": [
+    {{
+      "horizon": "Immédiat" | "1-3 ans" | "3-5 ans" | "5-10 ans",
+      "titre": "Intitulé des travaux",
+      "description": "Description des travaux à réaliser.",
+      "cout_estime": "15 000 — 25 000 €",
+      "priorite": "URGENT" | "IMPORTANT" | "PLANIFIABLE"
+    }}
+  ],
+  "enveloppe": {{
+    "synthese": "Analyse de l'enveloppe : façades, toiture, menuiseries, étanchéité.",
+    "points_attention": ["Point 1", "Point 2"]
+  }},
+  "systemes": {{
+    "synthese": "Analyse des systèmes : chauffage, plomberie, électricité, ventilation.",
+    "points_attention": ["Point 1", "Point 2"]
+  }},
+  "risques": [
+    {{
+      "titre": "Titre du risque identifié",
+      "description": "Description du risque.",
+      "gravite": "faible" | "modéré" | "élevé",
+      "action": "Action recommandée."
+    }}
+  ],
+  "points_forts": ["Point fort 1", "Point fort 2"],
+  "enveloppe_budgetaire": {{
+    "court_terme": "0 — 5 000 €",
+    "moyen_terme": "20 000 — 40 000 €",
+    "long_terme": "50 000 — 80 000 €",
+    "total_estime": "70 000 — 125 000 €"
+  }},
+  "mentions_legales": "Ce rapport est établi sur la base des documents fournis et constitue une pré-analyse documentaire indépendante. Il ne se substitue pas à un diagnostic technique complet réalisé par un expert certifié sur site."
+}}
+
+Base ton analyse sur les documents fournis. Si des éléments ne sont pas documentés, indique-le dans les observations mais génère quand même une estimation professionnelle basée sur le type et l'âge du bâtiment.
+Sois précis, factuel, professionnel. Le rapport doit être utile à un investisseur ou propriétaire."""
+
+    elif type_analyse == 'complet':
+        # ── COMPLET : Énergie + PCA combinés ─────────────────────────────────
+        seuils_str = SEUILS_LABELS.get(norme, "Voir réglementation applicable")
+        system_prompt = f"""Tu es ConformExpert, un expert en réglementation thermique ET en diagnostic technique du bâtiment.
+Tu réalises des analyses complètes combinant la conformité énergétique réglementaire et la pré-analyse technique (PCA).
+
+Contexte du dossier :
+- Référence : {ref}
+- Projet : {document.name}
+- Client : {document.client_name or 'Non renseigné'}
+- Type d'analyse : Analyse complète (Énergie + Technique)
+- Norme applicable : {norme}
+- Informations du bâtiment :
+{infos_batiment}
+- Source des données : {source_donnees}
+- Valeurs thermiques extraites :
+{valeurs_str}
+- Seuils réglementaires {norme} :
+  {seuils_str}
+
+Tu dois générer un rapport complet combinant conformité thermique ET état technique.
+Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication, sans balises.
+
+Structure JSON attendue :
+{{
+  "verdict_energie": "Conforme" | "Non Conforme" | "Données insuffisantes",
+  "verdict_technique": "Bon état général" | "État moyen — travaux à prévoir" | "État dégradé — intervention urgente" | "Données insuffisantes",
+  "score_global": 68,
+  "resume_executif": "Paragraphe de 4-6 phrases résumant les conclusions énergétiques ET techniques.",
+  "criteres": [
+    {{
+      "nom": "Nom du critère thermique",
+      "valeur": 72.0,
+      "seuil": 50.0,
+      "unite": "kWh ep/m².an",
+      "conforme": false,
+      "ecart_pct": 44.0,
+      "commentaire": "Explication courte."
+    }}
+  ],
+  "etat_technique": [
+    {{
+      "composant": "Toiture",
+      "etat": "Bon" | "Moyen" | "Mauvais",
+      "observation": "Description précise.",
+      "risque": "faible" | "modéré" | "élevé"
+    }}
+  ],
+  "travaux": [
+    {{
+      "horizon": "Immédiat" | "1-3 ans" | "3-5 ans" | "5-10 ans",
+      "titre": "Intitulé des travaux",
+      "description": "Description.",
+      "cout_estime": "15 000 — 25 000 €",
+      "priorite": "URGENT" | "IMPORTANT" | "PLANIFIABLE",
+      "impact_energetique": "Impact sur la performance énergétique si applicable, sinon null"
+    }}
+  ],
+  "non_conformites": [
+    {{
+      "critere": "Nom",
+      "gravite": "bloquant" | "majeur" | "mineur",
+      "description": "Description du problème.",
+      "action": "Action corrective.",
+      "delai": "2 à 6 semaines",
+      "cout_estime": "8 000 — 15 000 €"
+    }}
+  ],
+  "recommandations": [
+    {{
+      "priorite": "URGENT" | "RECOMMANDÉ" | "OPTIONNEL",
+      "titre": "Titre",
+      "description": "Description détaillée.",
+      "impact_reglementaire": "Impact sur la conformité énergétique.",
+      "delai": "2 à 6 semaines"
+    }}
+  ],
+  "enveloppe": {{
+    "synthese": "Analyse de l'enveloppe : performance thermique + état physique.",
+    "points_attention": ["Point 1", "Point 2"]
+  }},
+  "systemes_energetiques": {{
+    "synthese": "Analyse des systèmes CVC, ECS, état et performance.",
+    "equipements": [
+      {{"poste": "Chauffage", "equipement": "PAC air-eau", "performance": "COP 3,24", "evaluation": "Performant"}}
+    ]
+  }},
+  "risques": [
+    {{
+      "titre": "Titre du risque",
+      "description": "Description.",
+      "gravite": "faible" | "modéré" | "élevé",
+      "action": "Action recommandée."
+    }}
+  ],
+  "points_forts": ["Point fort 1", "Point fort 2"],
+  "enveloppe_budgetaire": {{
+    "travaux_conformite": "15 000 — 30 000 €",
+    "travaux_techniques": "25 000 — 50 000 €",
+    "total_estime": "40 000 — 80 000 €"
+  }},
+  "contexte_reglementaire": "Paragraphe expliquant la réglementation {norme} applicable.",
+  "mentions_legales": "Ce rapport est établi sur la base des documents fournis et constitue une analyse documentaire indépendante. Il ne se substitue pas à une attestation officielle de conformité ni à un diagnostic technique complet réalisé sur site."
+}}
+
+Si une valeur thermique n'est pas disponible pour un critère, omets ce critère.
+Sois précis, factuel, professionnel."""
+
+    else:
+        # ── ÉNERGIE : prompt actuel amélioré ──────────────────────────────────
+        seuils_str = SEUILS_LABELS.get(norme, "Voir réglementation applicable")
+        system_prompt = f"""Tu es ConformExpert, un expert en réglementation thermique et énergétique des bâtiments.
 Tu analyses des documents techniques (notices thermiques, attestations, CCTP, études STD) et tu génères des rapports de conformité professionnels, précis et adaptés à la réglementation applicable.
 
 Contexte du dossier :
 - Référence : {ref}
 - Projet : {document.name}
 - Client : {document.client_name or 'Non renseigné'}
+- Type d'analyse : Pré-analyse énergétique
 - Norme applicable : {norme}
-- Pays / Zone : {pays_label} — Zone climatique {zone}
-- Type de bâtiment : {batiment_label}
+- Informations du bâtiment :
+{infos_batiment}
 - Source des données : {source_donnees}
 - Valeurs extraites :
 {valeurs_str}
@@ -1689,6 +1874,7 @@ Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication, sans balise
 Structure JSON attendue :
 {{
   "verdict": "Conforme" | "Non Conforme" | "Données insuffisantes",
+  "score_global": 78,
   "resume_executif": "Paragraphe de 3-5 phrases résumant les conclusions principales.",
   "criteres": [
     {{
@@ -1731,6 +1917,11 @@ Structure JSON attendue :
       {{"poste": "Chauffage", "equipement": "PAC air-eau", "performance": "COP 3,24", "evaluation": "Performant"}}
     ]
   }},
+  "impact_financier": {{
+    "cout_non_conformite": "Estimation du surcoût lié aux non-conformités si applicable.",
+    "economies_potentielles": "Économies annuelles estimées après mise en conformité.",
+    "retour_investissement": "Délai de retour sur investissement estimé."
+  }},
   "contexte_reglementaire": "Paragraphe expliquant la réglementation {norme} applicable à ce projet.",
   "mentions_legales": "Ce rapport est établi sur la base des documents fournis et constitue une analyse documentaire indépendante. Il ne se substitue pas à une attestation officielle de conformité."
 }}
@@ -1739,17 +1930,26 @@ Si une valeur n'est pas disponible pour un critère, omets ce critère du tablea
 Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {norme}."""
 
     # ── 4. Message Claude ─────────────────────────────────────────────────────
-    if pdf_b64:
-        user_content = [
-            {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_b64}},
-            {"type": "text", "text": f"Analyse ce document thermique pour le dossier {ref} ({norme} — {pays_label}) et génère le rapport JSON complet selon les instructions."}
-        ]
+    user_content = []
+    headers_extra = {}
+
+    if pdf_b64_list:
+        for b64 in pdf_b64_list:
+            user_content.append({
+                "type": "document",
+                "source": {"type": "base64", "media_type": "application/pdf", "data": b64}
+            })
         headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
+        nb = len(pdf_b64_list)
+        user_content.append({
+            "type": "text",
+            "text": f"Analyse {'ce document' if nb == 1 else f'ces {nb} documents'} pour le dossier {ref} (type : {type_analyse}) et génère le rapport JSON complet selon les instructions."
+        })
     else:
-        user_content = [
-            {"type": "text", "text": f"Le PDF original n'est pas disponible sur le serveur. Génère le rapport JSON complet pour le dossier {ref} ({norme} — {pays_label}) en te basant exclusivement sur les valeurs extraites et les seuils fournis dans le contexte."}
-        ]
-        headers_extra = {}
+        user_content.append({
+            "type": "text",
+            "text": f"Le PDF original n'est pas disponible. Génère le rapport JSON complet pour le dossier {ref} (type : {type_analyse}) en te basant exclusivement sur les informations fournies dans le contexte."
+        })
 
     # ── 5. Appel API Claude ───────────────────────────────────────────────────
     try:
@@ -1776,7 +1976,7 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
             raw = result['content'][0]['text'].strip().replace('```json', '').replace('```', '').strip()
             rapport = json.loads(raw)
 
-            # ── Sauvegarder en BDD ────────────────────────────────────────────
+            # Sauvegarder en BDD
             document.rapport_ia_json = json.dumps(rapport, ensure_ascii=False)
             document.save(update_fields=['rapport_ia_json'])
 
@@ -1792,7 +1992,6 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
     except Exception as e:
         print(f"GENERER_RAPPORT_IA ERROR: {e}")
         return JsonResponse({'error': str(e)}, status=500)
-
 
 def rapport_ia_client(request, token):
     """Page publique rapport IA — accessible via lien de suivi, sans login."""
