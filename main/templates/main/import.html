@@ -3,175 +3,263 @@
 
 {% block content %}
 <style>
-@media (max-width: 768px) {
-  .import-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
-  /* Sur mobile : sidebar info passe en-dessous du formulaire */
-  .import-sidebar { order: 2; }
-  .import-form   { order: 1; }
-  .import-form-inner { padding: 1.5rem !important; }
-  .import-form-header { padding: 1.5rem !important; }
-  .form-row { grid-template-columns: 1fr !important; }
-  #upload-zone { padding: 1.2rem !important; }
-}
-@media (max-width: 480px) {
-  .import-form-inner { padding: 1rem !important; }
-  .import-form-header { padding: 1.2rem !important; }
+.import-wrap { max-width:780px;margin:0 auto;padding:2.5rem 1.5rem 4rem }
+.form-card { background:var(--navy-3);border:1px solid rgba(200,168,75,.15);border-radius:14px;overflow:hidden }
+.form-hd { background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.8rem 2.2rem;border-bottom:1px solid rgba(200,168,75,.1) }
+.form-hd h2 { font-family:'Playfair Display',serif;font-size:1.25rem;margin-bottom:.25rem }
+.form-hd p { font-size:.8rem;color:var(--gray-1);font-weight:300 }
+.form-body { padding:2rem 2.2rem }
+.f-section { margin-bottom:1.8rem }
+.f-section-title { font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(200,168,75,.1) }
+.f-row { display:grid;grid-template-columns:1fr 1fr;gap:1rem }
+.f-group { display:flex;flex-direction:column;gap:.4rem }
+.f-group label { font-size:.75rem;color:var(--gray-2);font-weight:400;text-transform:uppercase;letter-spacing:.06em }
+.f-group label .req { color:var(--gold) }
+
+/* Type d'analyse — cards cliquables */
+.analyse-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem }
+.analyse-card { position:relative;cursor:pointer }
+.analyse-card input[type=radio] { position:absolute;opacity:0;pointer-events:none }
+.analyse-label { display:flex;flex-direction:column;gap:.4rem;padding:1rem 1.1rem;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.02);cursor:pointer;transition:all .2s }
+.analyse-label .a-icon { font-size:1.4rem }
+.analyse-label .a-title { font-size:.82rem;font-weight:600;color:var(--white) }
+.analyse-label .a-desc { font-size:.72rem;color:var(--gray-1);line-height:1.45 }
+.analyse-card input:checked + .analyse-label { border-color:rgba(200,168,75,.5);background:rgba(200,168,75,.06) }
+.analyse-card input:checked + .analyse-label .a-title { color:var(--gold) }
+
+/* Zone upload multi-fichiers */
+#upload-zone { border:2px dashed rgba(200,168,75,.25);border-radius:8px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .25s;background:rgba(200,168,75,.03) }
+#upload-zone:hover { border-color:rgba(200,168,75,.5);background:rgba(200,168,75,.06) }
+#upload-zone.drag-over { border-color:rgba(200,168,75,.7);background:rgba(200,168,75,.09) }
+#file-list { display:flex;flex-direction:column;gap:.5rem;margin-top:1rem }
+.file-item { display:flex;align-items:center;justify-content:space-between;padding:.5rem .8rem;background:rgba(200,168,75,.05);border:1px solid rgba(200,168,75,.15);border-radius:7px;font-size:.8rem }
+.file-item-name { color:var(--white);font-weight:500;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.file-item-size { color:var(--gray-1);font-size:.72rem }
+.file-remove { background:none;border:none;color:var(--gray-1);cursor:pointer;font-size:.9rem;padding:0 .3rem;transition:color .2s }
+.file-remove:hover { color:#ef5350 }
+
+@media(max-width:640px) {
+  .f-row { grid-template-columns:1fr }
+  .analyse-grid { grid-template-columns:1fr }
+  .form-body,.form-hd { padding:1.3rem 1.2rem }
+  .import-wrap { padding:1.5rem .9rem 3rem }
 }
 </style>
 
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Dépôt de dossier</span>
-    <h1>Soumettre un document pour analyse</h1>
-    <p>Délai garanti : 15 jours ouvrés après acceptation du devis</p>
+    <h1>Soumettre un dossier pour analyse</h1>
+    <p>Délai garanti : 10 jours ouvrés après acceptation du devis</p>
   </div>
 </div>
 
-<div class="container">
-  <div class="import-grid" style="display:grid;grid-template-columns:1fr 1.4fr;gap:3rem;align-items:start">
+<div class="import-wrap">
+  <div class="form-card fade-up">
 
-    <!-- Info sidebar -->
-    <div class="import-sidebar fade-up">
-      <div class="card" style="padding:2rem;margin-bottom:1.5rem">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem">
-          <span class="text-gold">📎</span> Documents acceptés
-        </h3>
-        <ul style="list-style:none;display:flex;flex-direction:column;gap:.6rem">
-          {% for item in doc_items %}
-          <li style="font-size:.85rem;color:var(--gray-2);font-weight:300;display:flex;align-items:center;gap:.5rem">
-            <span class="text-gold" style="font-size:.7rem">→</span> {{ item }}
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-
-      <div class="card" style="padding:2rem;margin-bottom:1.5rem;border-color:rgba(200,168,75,.2)">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem">
-          <span class="text-gold">⏱</span> Ce qui se passe ensuite
-        </h3>
-        <div style="display:flex;flex-direction:column;gap:.8rem">
-          {% for step in steps %}
-          <div style="display:flex;gap:.8rem;align-items:flex-start">
-            <span style="width:20px;height:20px;border-radius:50%;background:rgba(200,168,75,.12);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--gold);flex-shrink:0">{{ forloop.counter }}</span>
-            <span style="font-size:.84rem;color:var(--gray-2);font-weight:300">{{ step }}</span>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="card" style="padding:1.5rem;background:rgba(200,168,75,.05);border-color:rgba(200,168,75,.2)">
-        <p style="font-size:.82rem;color:var(--gray-2);font-weight:300;line-height:1.7;font-style:italic">
-          "Après envoi, vous recevrez un lien de suivi unique pour suivre l'avancement de votre dossier en temps réel."
-        </p>
-      </div>
+    <div class="form-hd">
+      <h2>Formulaire de dépôt</h2>
+      <p>Vos données sont traitées de manière confidentielle · Réponse sous 24h</p>
     </div>
 
-    <!-- Form -->
-    <div class="import-form card card-gold fade-up-2" style="overflow:hidden">
-      <div class="import-form-header" style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:2rem 2.5rem;border-bottom:1px solid rgba(200,168,75,.1)">
-        <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">Formulaire de dépôt</h2>
-        <p style="font-size:.82rem;color:var(--gray-1);font-weight:300">Vos données sont traitées de manière confidentielle.</p>
-      </div>
-      <div class="import-form-inner" style="padding:2.5rem">
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %}
+    <div class="form-body">
+      <form method="post" enctype="multipart/form-data" id="import-form">
+        {% csrf_token %}
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ form.name.label }} *</label>
+        <!-- SECTION 1 : Contact -->
+        <div class="f-section">
+          <div class="f-section-title">Informations client</div>
+          <div class="f-row">
+            <div class="f-group">
+              <label>Nom du projet <span class="req">*</span></label>
               {{ form.name }}
               {% if form.name.errors %}<span class="form-error">{{ form.name.errors.0 }}</span>{% endif %}
             </div>
-            <div class="form-group">
-              <label>{{ form.client_name.label }}</label>
+            <div class="f-group">
+              <label>Nom du client</label>
               {{ form.client_name }}
             </div>
           </div>
-
-          <div class="form-group">
-            <label>{{ form.client_email.label }}</label>
+          <div class="f-group" style="margin-top:1rem">
+            <label>Email client</label>
             {{ form.client_email }}
           </div>
+        </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ form.building_type.label }} *</label>
+        <!-- SECTION 2 : Bâtiment -->
+        <div class="f-section">
+          <div class="f-section-title">Informations du bâtiment</div>
+          <div class="f-row">
+            <div class="f-group">
+              <label>Type de bâtiment <span class="req">*</span></label>
               {{ form.building_type }}
               {% if form.building_type.errors %}<span class="form-error">{{ form.building_type.errors.0 }}</span>{% endif %}
             </div>
-            <div class="form-group">
-              <label>{{ form.climate_zone.label }} *</label>
-              {{ form.climate_zone }}
-              {% if form.climate_zone.errors %}<span class="form-error">{{ form.climate_zone.errors.0 }}</span>{% endif %}
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ form.pays.label }} *</label>
+            <div class="f-group">
+              <label>Pays du projet <span class="req">*</span></label>
               {{ form.pays }}
               {% if form.pays.errors %}<span class="form-error">{{ form.pays.errors.0 }}</span>{% endif %}
             </div>
-            <div class="form-group">
-              <label>{{ form.norme.label }} *</label>
+          </div>
+          <div class="f-row" style="margin-top:1rem">
+            <div class="f-group">
+              <label>Zone climatique <span class="req">*</span></label>
+              {{ form.climate_zone }}
+              {% if form.climate_zone.errors %}<span class="form-error">{{ form.climate_zone.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="f-group">
+              <label>Norme applicable <span class="req">*</span></label>
               {{ form.norme }}
               {% if form.norme.errors %}<span class="form-error">{{ form.norme.errors.0 }}</span>{% endif %}
             </div>
           </div>
+          <div class="f-row" style="margin-top:1rem">
+            <div class="f-group">
+              <label>Surface totale (m²)</label>
+              {{ form.surface_totale }}
+            </div>
+            <div class="f-group">
+              <label>Année de construction</label>
+              {{ form.annee_construction }}
+            </div>
+          </div>
+          <div class="f-group" style="margin-top:1rem">
+            <label>Nombre de logements / unités</label>
+            {{ form.nombre_logements }}
+          </div>
+        </div>
 
-          <div class="form-group">
-            <label>{{ form.upload.label }} *</label>
-            <label id="upload-zone" style="border:2px dashed rgba(200,168,75,.25);border-radius:6px;padding:2rem;text-align:center;cursor:pointer;transition:all .25s;background:rgba(200,168,75,.03);display:block">
-              {{ form.upload }}
-              <div id="upload-icon" style="font-size:2rem;color:var(--gold);margin-bottom:.8rem;opacity:.7">📁</div>
-              <p id="upload-text" style="font-size:.85rem;color:var(--gray-2);font-weight:300;margin-bottom:.3rem">Glissez votre PDF ici ou cliquez pour sélectionner</p>
-              <span id="upload-sub" style="font-size:.72rem;color:var(--muted)">PDF uniquement · Max 20 Mo</span>
-            </label>
-            {% if form.upload.errors %}<span class="form-error">{{ form.upload.errors.0 }}</span>{% endif %}
+        <!-- SECTION 3 : Type d'analyse -->
+        <div class="f-section">
+          <div class="f-section-title">Type d'analyse souhaitée <span class="req">*</span></div>
+          <div class="analyse-grid">
+
+            <div class="analyse-card">
+              <input type="radio" name="type_analyse" id="ta-energie" value="energie" checked>
+              <label class="analyse-label" for="ta-energie">
+                <span class="a-icon">⚡</span>
+                <span class="a-title">Pré-analyse énergétique</span>
+                <span class="a-desc">Conformité RT2012 / RE2020 / PEB · Critères, non-conformités, recommandations</span>
+              </label>
+            </div>
+
+            <div class="analyse-card">
+              <input type="radio" name="type_analyse" id="ta-pca" value="pca">
+              <label class="analyse-label" for="ta-pca">
+                <span class="a-icon">🏗️</span>
+                <span class="a-title">Pré-analyse technique</span>
+                <span class="a-desc">État enveloppe, systèmes, risques techniques · Inspirée du PCA immobilier</span>
+              </label>
+            </div>
+
+            <div class="analyse-card">
+              <input type="radio" name="type_analyse" id="ta-complet" value="complet">
+              <label class="analyse-label" for="ta-complet">
+                <span class="a-icon">📊</span>
+                <span class="a-title">Analyse complète</span>
+                <span class="a-desc">Énergie + technique + score global + impact financier + scénarios</span>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 4 : Documents -->
+        <div class="f-section">
+          <div class="f-section-title">Documents à analyser <span class="req">*</span></div>
+
+          <div id="upload-zone">
+            <input type="file" id="file-input" name="uploads" multiple accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" style="display:none">
+            <div style="font-size:2rem;color:var(--gold);margin-bottom:.6rem;opacity:.7">📁</div>
+            <p style="font-size:.85rem;color:var(--gray-2);font-weight:300;margin-bottom:.25rem">Glissez vos fichiers ici ou <span style="color:var(--gold);text-decoration:underline;cursor:pointer" onclick="document.getElementById('file-input').click()">cliquez pour sélectionner</span></p>
+            <span style="font-size:.72rem;color:var(--muted)">PDF, DWG, Word, Excel · Max 20 Mo par fichier · Plusieurs fichiers acceptés</span>
           </div>
 
-          <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;font-size:.95rem;padding:1rem">
-            Envoyer mon dossier →
-          </button>
-          <p style="text-align:center;font-size:.73rem;color:var(--muted);margin-top:.8rem">🔒 Données confidentielles · Réponse sous 24h</p>
-        </form>
-      </div>
-    </div>
+          <div id="file-list"></div>
 
+          <div style="margin-top:.9rem;padding:.8rem 1rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:8px">
+            <p style="font-size:.75rem;color:var(--gray-1);line-height:1.6;margin:0">
+              <span style="color:var(--gold)">Documents utiles :</span>
+              {% for item in doc_items %}{{ item }}{% if not forloop.last %} · {% endif %}{% endfor %}
+            </p>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;font-size:.92rem;padding:.95rem">
+          Envoyer mon dossier →
+        </button>
+        <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:.7rem">🔒 Données confidentielles · Réponse sous 24h</p>
+
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-const fileInput = document.querySelector('input[type="file"]');
+const fileInput = document.getElementById('file-input');
 const zone = document.getElementById('upload-zone');
-const txt = document.getElementById('upload-text');
-const sub = document.getElementById('upload-sub');
+const fileList = document.getElementById('file-list');
+let selectedFiles = [];
 
-fileInput.style.display = 'none';
+function formatSize(bytes) {
+  return (bytes / 1024 / 1024).toFixed(2) + ' Mo';
+}
 
-fileInput.addEventListener('change', () => {
-  if (fileInput.files.length) {
-    txt.textContent = fileInput.files[0].name;
-    sub.textContent = (fileInput.files[0].size / 1024 / 1024).toFixed(2) + ' Mo';
-    zone.style.borderColor = 'rgba(200,168,75,.5)';
-    zone.style.background = 'rgba(200,168,75,.07)';
-  }
+function renderFiles() {
+  fileList.innerHTML = '';
+  selectedFiles.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `
+      <div style="display:flex;align-items:center;gap:.6rem;min-width:0">
+        <span style="font-size:1rem">📄</span>
+        <span class="file-item-name">${f.name}</span>
+        <span class="file-item-size">${formatSize(f.size)}</span>
+      </div>
+      <button type="button" class="file-remove" onclick="removeFile(${i})">✕</button>`;
+    fileList.appendChild(item);
+  });
+  // Sync to real input
+  const dt = new DataTransfer();
+  selectedFiles.forEach(f => dt.items.add(f));
+  fileInput.files = dt.files;
+}
+
+function addFiles(files) {
+  Array.from(files).forEach(f => {
+    if (!selectedFiles.find(x => x.name === f.name && x.size === f.size)) {
+      selectedFiles.push(f);
+    }
+  });
+  renderFiles();
+}
+
+function removeFile(i) {
+  selectedFiles.splice(i, 1);
+  renderFiles();
+}
+
+zone.addEventListener('click', e => {
+  if (e.target.tagName !== 'SPAN') fileInput.click();
 });
-zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'rgba(200,168,75,.6)'; });
-zone.addEventListener('dragleave', () => { zone.style.borderColor = 'rgba(200,168,75,.25)'; });
+fileInput.addEventListener('change', () => addFiles(fileInput.files));
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
 zone.addEventListener('drop', e => {
   e.preventDefault();
-  const files = e.dataTransfer.files;
-  if (files.length) {
-    const dt = new DataTransfer();
-    dt.items.add(files[0]);
-    fileInput.files = dt.files;
-    txt.textContent = files[0].name;
-    sub.textContent = (files[0].size / 1024 / 1024).toFixed(2) + ' Mo';
-    zone.style.borderColor = 'rgba(200,168,75,.5)';
-    zone.style.background = 'rgba(200,168,75,.07)';
+  zone.classList.remove('drag-over');
+  addFiles(e.dataTransfer.files);
+});
+
+// Validation avant submit
+document.getElementById('import-form').addEventListener('submit', function(e) {
+  if (selectedFiles.length === 0) {
+    e.preventDefault();
+    zone.style.borderColor = '#ef5350';
+    zone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => zone.style.borderColor = 'rgba(200,168,75,.25)', 3000);
   }
 });
 </script>
