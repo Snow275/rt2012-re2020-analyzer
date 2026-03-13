@@ -60,6 +60,62 @@
   </div>
   {% endfor %}
 
+<div style="margin-top:3rem">
+
+  <h2 style="
+      font-family:'Playfair Display',serif;
+      font-size:1rem;
+      color:var(--gray-1);
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      margin-bottom:1.2rem;
+      display:flex;
+      align-items:center;
+      gap:.6rem">
+    <span>PCA — Analyse technique</span>
+      <p style="
+        font-size:.8rem;
+        color:var(--gray-2);
+        margin-bottom:1rem;
+        max-width:600px">
+      Seuils utilisés pour l’analyse technique du bâtiment (PCA) : âge des systèmes,
+      risques techniques et paramètres structurels.
+      </p>
+    <span style="display:inline-block;width:32px;height:1px;background:rgba(255,255,255,.1)"></span>
+  </h2>
+
+  <div class="card fade-up" style="padding:1.4rem 1.8rem">
+
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      {% for label, val, unit in pca_seuils %}
+
+      <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:.55rem .8rem;
+          background:var(--navy-3);
+          border-radius:6px">
+
+        <span style="font-size:.82rem;color:var(--gray-2)">
+          {{ label }}
+          {% if unit %}
+          <span style="font-size:.7rem;color:var(--muted)">({{ unit }})</span>
+          {% endif %}
+        </span>
+
+        <span style="font-family:monospace;color:var(--gold);font-size:.88rem">
+          {{ val }}
+        </span>
+
+      </div>
+
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
 </div>
 
 <script>
