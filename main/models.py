@@ -89,6 +89,17 @@ class Document(models.Model):
     pays = models.CharField(max_length=5, choices=PAYS_CHOICES, default="FR")
     norme = models.CharField(max_length=10, choices=NORME_CHOICES, default="RE2020")
 
+    # ── Nouveaux champs bâtiment ──
+    TYPE_ANALYSE_CHOICES = (
+        ('energie',  'Pré-analyse énergétique'),
+        ('pca',      'Pré-analyse technique (PCA)'),
+        ('complet',  'Analyse complète'),
+    )
+    surface_totale       = models.FloatField(null=True, blank=True)
+    annee_construction   = models.IntegerField(null=True, blank=True)
+    nombre_logements     = models.IntegerField(null=True, blank=True)
+    type_analyse         = models.CharField(max_length=10, choices=TYPE_ANALYSE_CHOICES, default='energie')
+
     # ── Rapport IA (JSON sauvegardé en BDD pour éviter de régénérer) ──
     rapport_ia_json = models.TextField(null=True, blank=True)
 
@@ -175,6 +186,23 @@ class Document(models.Model):
         if self.norme != 'RT2012':
             return None
         return self.is_conform
+
+
+class DocumentFile(models.Model):
+    """Fichiers multiples associés à un dossier."""
+    document   = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='fichiers')
+    fichier    = models.FileField(upload_to='documents/')
+    nom        = models.CharField(max_length=255, blank=True)
+    taille     = models.IntegerField(null=True, blank=True)  # en octets
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.nom and self.fichier:
+            self.nom = self.fichier.name.split('/')[-1]
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.document.name} — {self.nom}"
 
 
 class Analysis(models.Model):
