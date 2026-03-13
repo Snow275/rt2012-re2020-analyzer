@@ -204,18 +204,21 @@ const fileList = document.getElementById('file-list');
 let selectedFiles = [];
 
 const analyseRadios = document.querySelectorAll('input[name="type_analyse"]');
-const climateGroup = document.getElementById("id_climate_zone").closest(".f-group");
-const normeGroup = document.getElementById("id_norme").closest(".f-group");
+const climateField = document.getElementById("id_climate_zone");
+const normeField = document.getElementById("id_norme");
+
+const climateGroup = climateField ? climateField.closest(".f-group") : null;
+const normeGroup = normeField ? normeField.closest(".f-group") : null;
 
 function toggleEnergyFields(){
   const selected = document.querySelector('input[name="type_analyse"]:checked').value;
 
   if(selected === "pca"){
-    climateGroup.style.display = "none";
-    normeGroup.style.display = "none";
+    if(climateGroup) climateGroup.style.display = "none";
+    if(normeGroup) normeGroup.style.display = "none";
   }else{
-    climateGroup.style.display = "flex";
-    normeGroup.style.display = "flex";
+    if(climateGroup) climateGroup.style.display = "flex";
+    if(normeGroup) normeGroup.style.display = "flex";
   }
 }
 
