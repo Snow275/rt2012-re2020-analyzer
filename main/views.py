@@ -473,11 +473,10 @@ def import_document(request):
     return render(request, "main/import.html", {
         "form": form,
         "doc_items": [
-            "Notice thermique / étude thermique",
-            "Attestation RT2012 ou RE2020",
+            "Notice ou étude thermique (RT2012, RE2020, PEB, Minergie, CNEB, LENOZ…)",
             "Plans architecturaux (PDF)",
-            "DPE si disponible",
-            "CCTP / descriptif technique",
+            "Tout document technique lié à la conformité énergétique du bâtiment",
+            "DPE ou équivalent si disponible",
         ],
         "steps": [
             "Accusé de réception sous 24h",
