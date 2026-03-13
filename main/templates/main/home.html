@@ -2,6 +2,24 @@
 {% block title %}Dashboard Admin — ConformExpert{% endblock %}
 
 {% block content %}
+<style>
+@media (max-width: 768px) {
+  .stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important; }
+  .main-grid { grid-template-columns: 1fr !important; }
+  .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table td:nth-child(2),
+  .data-table th:nth-child(2) { display: none; } /* cache colonne Client */
+  .data-table td:nth-child(5),
+  .data-table th:nth-child(5) { display: none; } /* cache colonne Norme */
+  .alert-old-pending { flex-wrap: wrap; }
+  .alert-old-pending a { margin-left: 0 !important; margin-top: .5rem; width: 100%; text-align: center; }
+}
+@media (max-width: 480px) {
+  .stats-grid-4 { grid-template-columns: 1fr 1fr !important; }
+  .stat-card .stat-value { font-size: 1.8rem !important; }
+}
+</style>
+
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Administration</span>
@@ -13,7 +31,7 @@
 <div class="container">
 
   <!-- STATS -->
-  <div class="stats-grid fade-up" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stats-grid stats-grid-4 fade-up" style="grid-template-columns:repeat(4,1fr)">
     <div class="stat-card">
       <div class="stat-label">Dossiers actifs</div>
       <div class="stat-value">{{ total_projects }}</div>
@@ -38,9 +56,9 @@
 
   <!-- ALERTE dossiers anciens -->
   {% if old_pending %}
-  <div style="background:rgba(229,169,58,.08);border:1px solid rgba(229,169,58,.25);border-radius:8px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem" class="fade-up">
+  <div class="alert-old-pending fade-up" style="background:rgba(229,169,58,.08);border:1px solid rgba(229,169,58,.25);border-radius:8px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
     <span style="font-size:1.3rem">⚠️</span>
-    <div>
+    <div style="flex:1;min-width:200px">
       <div style="font-size:.88rem;color:#E5A93A;font-weight:500">{{ old_pending }} dossier{{ old_pending|pluralize }} reçu{{ old_pending|pluralize }} depuis plus de 5 jours sans traitement</div>
       <div style="font-size:.78rem;color:var(--gray-1);margin-top:.2rem">Pensez à mettre à jour leur statut.</div>
     </div>
@@ -48,7 +66,7 @@
   </div>
   {% endif %}
 
-  <div style="display:grid;grid-template-columns:2fr 1fr;gap:2rem;align-items:start">
+  <div class="main-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:2rem;align-items:start">
 
     <!-- DOSSIERS RÉCENTS -->
     <div class="fade-up-2">
@@ -59,50 +77,52 @@
 
       {% if documents %}
       <div class="card">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Projet</th>
-              <th>Client</th>
-              <th>Date</th>
-              <th>Statut</th>
-              <th>Norme</th>
-              <th>Conformité</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for doc in documents|slice:":6" %}
-            <tr>
-              <td><strong style="color:var(--white);font-size:.88rem">{{ doc.name }}</strong></td>
-              <td style="font-size:.83rem;color:var(--gray-1)">{{ doc.client_name|default:"—" }}</td>
-              <td style="font-size:.8rem;color:var(--gray-1)">{{ doc.upload_date|date:"d/m/Y" }}</td>
-              <td>
-                {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
-                {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
-                {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if doc.norme %}
-                  <span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;letter-spacing:.04em;padding:.18rem .55rem;border-radius:3px;background:rgba(200,168,75,.1);color:#C8A84B;border:1px solid rgba(200,168,75,.25)">{{ doc.norme }}</span>
-                {% else %}
-                  <span class="text-muted">—</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if doc.is_conform is None %}<span class="text-muted">—</span>
-                {% elif doc.is_conform %}<span class="badge badge-success">Conforme</span>
-                {% else %}<span class="badge badge-danger">Non conforme</span>
-                {% endif %}
-              </td>
-              <td>
-                <a href="{% url 'edit_document' doc.id %}" class="btn btn-outline btn-sm">Éditer</a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Projet</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Statut</th>
+                <th>Norme</th>
+                <th>Conformité</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents|slice:":6" %}
+              <tr>
+                <td><strong style="color:var(--white);font-size:.88rem">{{ doc.name }}</strong></td>
+                <td style="font-size:.83rem;color:var(--gray-1)">{{ doc.client_name|default:"—" }}</td>
+                <td style="font-size:.8rem;color:var(--gray-1)">{{ doc.upload_date|date:"d/m/Y" }}</td>
+                <td>
+                  {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
+                  {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
+                  {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if doc.norme %}
+                    <span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;letter-spacing:.04em;padding:.18rem .55rem;border-radius:3px;background:rgba(200,168,75,.1);color:#C8A84B;border:1px solid rgba(200,168,75,.25)">{{ doc.norme }}</span>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if doc.is_conform is None %}<span class="text-muted">—</span>
+                  {% elif doc.is_conform %}<span class="badge badge-success">Conforme</span>
+                  {% else %}<span class="badge badge-danger">Non conforme</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{% url 'edit_document' doc.id %}" class="btn btn-outline btn-sm">Éditer</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
       {% else %}
       <div class="card" style="padding:2.5rem;text-align:center">
@@ -160,12 +180,12 @@
         {% if recent_devis %}
         <div class="card" style="overflow:hidden">
           {% for d in recent_devis %}
-          <a href="{% url 'devis_edit' d.id %}" style="display:flex;justify-content:space-between;align-items:center;padding:.8rem 1rem;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
-            <div>
-              <div style="font-size:.85rem;color:var(--white)">{{ d.client_nom }}</div>
+          <a href="{% url 'devis_edit' d.id %}" style="display:flex;justify-content:space-between;align-items:center;padding:.8rem 1rem;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;gap:.5rem" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+            <div style="min-width:0">
+              <div style="font-size:.85rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.client_nom }}</div>
               <div style="font-size:.73rem;color:var(--gray-1)">{{ d.created_at|date:"d/m/Y" }} · {% if d.montant %}{{ d.montant }}€{% else %}Non chiffré{% endif %}</div>
             </div>
-            <span class="badge {% if d.statut == 'accepte' %}badge-success{% elif d.statut == 'refuse' %}badge-danger{% elif d.statut == 'facture' %}badge-gold{% else %}badge-gray{% endif %}" style="font-size:.7rem">
+            <span class="badge {% if d.statut == 'accepte' %}badge-success{% elif d.statut == 'refuse' %}badge-danger{% elif d.statut == 'facture' %}badge-gold{% else %}badge-gray{% endif %}" style="font-size:.7rem;flex-shrink:0">
               {{ d.get_statut_display }}
             </span>
           </a>
