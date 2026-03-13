@@ -311,6 +311,8 @@ const zoneSelect = document.getElementById("id_climate_zone");
 const normeSelect = document.getElementById("id_norme");
 
 function filterOptions(select, allowedValues){
+  if(!select) return;
+
   Array.from(select.options).forEach(opt=>{
     if(opt.value === ""){
       opt.hidden = false;
@@ -323,6 +325,8 @@ function filterOptions(select, allowedValues){
 }
 
 function updateFields(){
+  if(!paysSelect) return;
+
   const country = paysSelect.value;
 
   if(zonesByCountry[country]){
@@ -334,6 +338,8 @@ function updateFields(){
   }
 }
 
-paysSelect.addEventListener("change", updateFields);
+if(paysSelect){
+  paysSelect.addEventListener("change", updateFields);
+}
 </script>
 {% endblock %}
