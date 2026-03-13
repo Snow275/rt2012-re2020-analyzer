@@ -1020,17 +1020,118 @@ footer {
 /* ════════════════════════════════════════
    RESPONSIVE
 ════════════════════════════════════════ */
+/* ════ HAMBURGER BUTTON ════ */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: .4rem;
+  z-index: 1001;
+}
+.nav-hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--white);
+  border-radius: 2px;
+  transition: transform .3s, opacity .3s;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ════ MOBILE MENU OVERLAY ════ */
+.nav-mobile-menu {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(8, 16, 28, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 1000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+.nav-mobile-menu.open { display: flex; }
+.nav-mobile-menu a {
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gray-2);
+  text-decoration: none;
+  transition: color .2s;
+}
+.nav-mobile-menu a:hover { color: var(--gold); }
+.nav-mobile-menu .nav-cta {
+  background: var(--gold) !important;
+  color: var(--navy) !important;
+  padding: .8rem 2rem !important;
+  border-radius: 3px;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+}
+
 @media (max-width: 900px) {
+  nav { padding: 1rem 5vw; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+
   .hero, .offre-layout, .suivi-layout, .contact-layout, .tarif-intro, .footer-top {
     grid-template-columns: 1fr;
   }
-  .hero { padding-top: 8rem; }
+  .hero { padding-top: 7rem; padding-bottom: 3rem; }
+  .hero h1 { font-size: clamp(2rem, 8vw, 3.2rem); }
+  .hero-sub { font-size: clamp(.85rem, 3vw, 1rem); }
+
   .process-cols { grid-template-columns: repeat(2, 1fr); }
   .process-cols::before { display: none; }
   .tarif-grid { grid-template-columns: 1fr; }
   .tarif-card.featured { transform: none; }
   .form-row { grid-template-columns: 1fr; }
-  nav ul { display: none; }
+
+  /* Trust bar horizontal scroll */
+  .trust-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    gap: 1.2rem !important;
+    padding: .8rem 1.2rem !important;
+    scrollbar-width: none;
+  }
+  .trust-bar::-webkit-scrollbar { display: none; }
+  .trust-item { flex-shrink: 0; }
+
+  /* Stats grid */
+  .hero-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important; }
+
+  /* Sections padding */
+  .section { padding: 3.5rem 1.2rem !important; }
+  .section-label, h2.section-title { font-size: clamp(1.5rem, 6vw, 2.2rem) !important; }
+
+  /* Contact form */
+  .contact-form { padding: 1.5rem !important; }
+
+  /* Footer */
+  .footer-top { gap: 2rem !important; }
+  .footer-bottom { flex-direction: column !important; gap: .5rem !important; text-align: center !important; }
+}
+
+@media (max-width: 480px) {
+  .process-cols { grid-template-columns: 1fr; }
+  nav { padding: .8rem 4vw; }
+  .nav-logo span:last-child { font-size: 1.1rem !important; }
 }
 </style>
 </head>
@@ -1053,7 +1154,47 @@ footer {
     <li style="margin-left:.5rem"><a href="{% url 'home' %}" style="font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gray-2)'">Dashboard</a></li>
     {% endif %}
 </ul>
+
+  <!-- Hamburger button (mobile only) -->
+  <button class="nav-hamburger" id="hamburgerBtn" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- Mobile menu overlay -->
+<div class="nav-mobile-menu" id="mobileMenu" role="dialog" aria-modal="true">
+  <a href="#offre" class="mobile-link">Offre</a>
+  <a href="#process" class="mobile-link">Processus</a>
+  <a href="#tarifs" class="mobile-link">Tarifs</a>
+  <a href="#suivi" class="mobile-link">Suivi</a>
+  <a href="{% url 'import' %}" class="nav-cta mobile-link">Déposer un dossier</a>
+  {% if user.is_authenticated and user.is_staff %}
+  <a href="{% url 'home' %}" class="mobile-link" style="font-size:1rem">Dashboard</a>
+  {% endif %}
+</div>
+
+<script>
+(function() {
+  var btn = document.getElementById('hamburgerBtn');
+  var menu = document.getElementById('mobileMenu');
+  if (!btn || !menu) return;
+  function toggleMenu() {
+    var open = menu.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
+  btn.addEventListener('click', toggleMenu);
+  menu.querySelectorAll('.mobile-link').forEach(function(a) {
+    a.addEventListener('click', function() {
+      menu.classList.remove('open');
+      btn.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+</script>
 
 <!-- ████ HERO ████ -->
 <section class="hero">
