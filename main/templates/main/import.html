@@ -277,11 +277,16 @@ zone.addEventListener('drop', e => {
 
 // Validation avant submit
 document.getElementById('import-form').addEventListener('submit', function(e) {
-  if (selectedFiles.length === 0) {
+
+  if (fileInput.files.length === 0) {
     e.preventDefault();
+
     zone.style.borderColor = '#ef5350';
     zone.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => zone.style.borderColor = 'rgba(200,168,75,.25)', 3000);
+
+    setTimeout(() => {
+      zone.style.borderColor = 'rgba(200,168,75,.25)';
+    }, 3000);
   }
 });
 
