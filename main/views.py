@@ -515,7 +515,7 @@ def home(request):
         'count_complet': count_complet,
     }
     return render(request, 'main/home.html', context)
-    return render(request, "main/rapport_ia_client.html", context)
+    
 
 
 def import_document(request):
@@ -2092,22 +2092,27 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
 
 def rapport_ia_client(request, token):
     """Page publique rapport IA — accessible via lien de suivi, sans login."""
+
     import json as _json
+
     document = get_object_or_404(Document, tracking_token=token, status='termine')
+
     rapport = None
+
+    # si un rapport IA existe déjà
     if document.rapport_ia_json:
         try:
             rapport = _json.loads(document.rapport_ia_json)
         except Exception:
             rapport = None
-            
-    rapport = None
-    if document.type_analyse == "pca":
+
+    # si c'est un PCA sans rapport IA
+    if document.type_analyse == "pca" and not rapport:
         rapport = analyse_pca(document)
-        
-    return render(request, 'main/rapport_ia_client.html', {
-        'document': document,
-        'rapport': rapport,
+
+    return render(request, "main/rapport_ia_client.html", {
+        "document": document,
+        "rapport": rapport,
     })
 
 
