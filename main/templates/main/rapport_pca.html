@@ -1,0 +1,19 @@
+<div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+  <div class="section-title" style="color:var(--gold)">📋 Résumé technique</div>
+  <p>{{ rapport.resume_executif }}</p>
+</div>
+
+{% if rapport.etat_technique %}
+<div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+  <div class="section-title">État technique</div>
+
+  {% for e in rapport.etat_technique %}
+  <div style="margin-bottom:1rem">
+    <strong>{{ e.composant }}</strong>
+    <div>État : {{ e.etat }}</div>
+    <div>{{ e.observation }}</div>
+  </div>
+  {% endfor %}
+
+</div>
+{% endif %}
