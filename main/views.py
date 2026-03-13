@@ -403,7 +403,31 @@ def analyze_document(document, data):
     # Ne pas changer le statut ici — il reste 'recu' jusqu'à validation manuelle
     document.save()
 
+def analyse_pca(document):
 
+    risques = []
+    score = 100
+
+    # année de construction
+    if document.annee_construction and document.annee_construction < 1997:
+        risques.append("Présence potentielle d’amiante (bâtiment construit avant 1997)")
+        score -= 10
+
+    # surface
+    if document.surface_totale and document.surface_totale > 100000:
+        risques.append("Surface du bâtiment atypique – vérification structure recommandée")
+        score -= 5
+
+    # nombre de logements
+    if document.nombre_logements and document.nombre_logements > 500:
+        risques.append("Bâtiment de grande capacité – contrôle technique approfondi recommandé")
+        score -= 5
+
+    return {
+        "risques": risques,
+        "score": score
+    }
+    
 # ──────────────────────────────────────────────
 # VUES PUBLIQUES
 # ──────────────────────────────────────────────
@@ -1657,6 +1681,26 @@ def generer_rapport_ia(request, doc_id):
     annee = getattr(document, 'annee_construction', None)
     logements = getattr(document, 'nombre_logements', None)
 
+    # ── Seuils PCA internes ─────────────────────────────────────
+    PCA_SEUILS = {
+        "age_toiture_max": 30,
+        "age_chauffage_max": 25,
+        "humidite_mur_max": 5,
+        "annee_amiante": 1997,
+        "surface_max": 100000,
+        "logements_max": 1000
+    }
+
+    pca_seuils_str = f"""
+    Seuils techniques internes (PCA) :
+    - Âge max toiture recommandé : {PCA_SEUILS['age_toiture_max']} ans
+    - Âge max système chauffage : {PCA_SEUILS['age_chauffage_max']} ans
+    - Humidité mur tolérée : {PCA_SEUILS['humidite_mur_max']} %
+    - Risque amiante si bâtiment construit avant : {PCA_SEUILS['annee_amiante']}
+    - Surface bâtiment considérée atypique au-delà de : {PCA_SEUILS['surface_max']} m²
+    - Nombre logements élevé au-delà de : {PCA_SEUILS['logements_max']}
+    """
+
     infos_batiment = f"""- Type : {batiment_label}
 - Pays / Zone : {pays_label} — Zone climatique {zone}
 {"- Surface totale : " + str(surface) + " m²" if surface else ""}
@@ -1735,6 +1779,8 @@ Contexte du dossier :
 - Informations du bâtiment :
 {infos_batiment}
 - Source des données : {source_donnees}
+- Référentiel technique interne (PCA) :
+{pca_seuils_str}
 
 Tu dois générer un rapport PCA structuré et professionnel.
 Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication, sans balises.
