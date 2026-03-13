@@ -369,7 +369,13 @@
     <span class="cover-logo-w">Conform</span><span class="cover-logo-g">Expert</span>
   </div>
   <div class="cover-body">
-    <div class="cover-label">RAPPORT D'ANALYSE THERMIQUE</div>
+    {% if document.type_analyse == "pca" %}
+    RAPPORT D'ANALYSE TECHNIQUE
+    {% elif document.type_analyse == "complet" %}
+    RAPPORT D'ANALYSE TECHNIQUE ET ÉNERGÉTIQUE
+    {% else %}
+    RAPPORT D'ANALYSE THERMIQUE
+    {% endif %}
     <div class="cover-title" id="cover-doc-name">{{ document.name }}</div>
     <div class="cover-meta">
       <div class="cover-meta-row"><span class="cover-meta-label">Référence</span><span class="cover-meta-val" style="color:#C8A84B;font-family:monospace">DOC-{{ document.id|stringformat:"04d" }}</span></div>
