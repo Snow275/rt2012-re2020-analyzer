@@ -2,6 +2,33 @@
 {% block title %}Historique{% endblock %}
 
 {% block content %}
+<style>
+@media (max-width: 768px) {
+  .history-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Sur mobile : cache Ref et Norme pour gagner de la place */
+  .data-table td:nth-child(1),
+  .data-table th:nth-child(1) { display: none; }
+  .data-table td:nth-child(6),
+  .data-table th:nth-child(6) { display: none; }
+  /* Nom projet peut se couper */
+  .data-table td:nth-child(2) strong {
+    display: block;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Boutons actions plus compacts */
+  .action-btns { gap: .25rem !important; }
+  .action-btns .btn { padding: .25rem .45rem !important; font-size: .75rem !important; }
+}
+@media (max-width: 480px) {
+  /* Cache aussi Client sur très petits écrans */
+  .data-table td:nth-child(3),
+  .data-table th:nth-child(3) { display: none; }
+}
+</style>
+
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Historique</span>
@@ -19,51 +46,53 @@
   </div>
   {% else %}
   <div class="card fade-up">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Ref</th>
-          <th>Projet</th>
-          <th>Client</th>
-          <th>Date</th>
-          <th>Statut</th>
-          <th>Norme</th>
-          <th>Conformité</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for doc in documents %}
-        <tr>
-          <td><span style="font-family:monospace;font-size:.78rem;color:var(--gold)">DOC-{{ doc.id|stringformat:"04d" }}</span></td>
-          <td><strong style="color:var(--white)">{{ doc.name }}</strong></td>
-          <td>{{ doc.client_name|default:"—" }}</td>
-          <td>{{ doc.upload_date|date:"d/m/Y" }}</td>
-          <td>
-            {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
-            {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
-            {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>{% endif %}
-          </td>
-          <td><span class="badge" style="background:rgba(200,168,75,.15);color:var(--gold);font-size:.72rem">{{ doc.norme }}</span></td>
-          <td>
-            {% if doc.is_conform is None %}<span class="text-muted">—</span>
-            {% elif doc.is_conform %}<span class="badge badge-success">✓</span>
-            {% else %}<span class="badge badge-danger">✗</span>{% endif %}
-          </td>
-          <td>
-            <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-              <a href="{% url 'tracking' doc.tracking_token %}" class="btn btn-outline btn-sm">🔗</a>
-              <a href="{% url 'download_report' doc.id %}" class="btn btn-outline btn-sm">📄</a>
-              <form method="post" action="{% url 'delete_document' doc.id %}" style="display:inline" onsubmit="return confirm('Supprimer ce dossier ?')">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger btn-sm">🗑</button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="history-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Ref</th>
+            <th>Projet</th>
+            <th>Client</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Norme</th>
+            <th>Conformité</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in documents %}
+          <tr>
+            <td><span style="font-family:monospace;font-size:.78rem;color:var(--gold)">DOC-{{ doc.id|stringformat:"04d" }}</span></td>
+            <td><strong style="color:var(--white)">{{ doc.name }}</strong></td>
+            <td>{{ doc.client_name|default:"—" }}</td>
+            <td style="white-space:nowrap">{{ doc.upload_date|date:"d/m/Y" }}</td>
+            <td>
+              {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
+              {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
+              {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>{% endif %}
+            </td>
+            <td><span class="badge" style="background:rgba(200,168,75,.15);color:var(--gold);font-size:.72rem">{{ doc.norme }}</span></td>
+            <td>
+              {% if doc.is_conform is None %}<span class="text-muted">—</span>
+              {% elif doc.is_conform %}<span class="badge badge-success">✓</span>
+              {% else %}<span class="badge badge-danger">✗</span>{% endif %}
+            </td>
+            <td>
+              <div class="action-btns" style="display:flex;gap:.4rem;flex-wrap:nowrap">
+                <a href="{% url 'tracking' doc.tracking_token %}" class="btn btn-outline btn-sm" title="Suivi client">🔗</a>
+                <a href="{% url 'download_report' doc.id %}" class="btn btn-outline btn-sm" title="Télécharger">📄</a>
+                <form method="post" action="{% url 'delete_document' doc.id %}" style="display:inline" onsubmit="return confirm('Supprimer ce dossier ?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">🗑</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
   {% endif %}
 </div>
