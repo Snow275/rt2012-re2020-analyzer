@@ -447,6 +447,9 @@ def home(request):
 
     context = {
         'documents': documents,
+        'energie_docs': energie_docs,
+        'pca_docs': pca_docs,
+        'complet_docs': complet_docs,
         'total_projects': total_projects,
         'compliance_rate': compliance_rate,
         'pending_count': pending_count,
