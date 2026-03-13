@@ -3,26 +3,101 @@
   <p>{{ rapport.resume_executif }}</p>
 </div>
 
-{% if rapport.etat_technique %}
+{% if rapport.score_global %}
 <div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
-  <div class="section-title">État technique</div>
+  <div class="section-title">Score bâtiment</div>
 
-  {% for e in rapport.etat_technique %}
-  <div style="margin-bottom:1rem">
-    <strong>{{ e.composant }}</strong>
-    <div>État : {{ e.etat }}</div>
-    <div>{{ e.observation }}</div>
+  <div style="
+  font-size:2rem;
+  font-weight:600;
+  color:var(--gold)">
+  {{ rapport.score_global }}/100
   </div>
-  {% endfor %}
 
 </div>
 {% endif %}
+
+
+<div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+
+<div class="section-title">Critères techniques</div>
+
+<div style="display:flex;gap:1rem;margin-bottom:1.2rem">
+
+<div style="
+flex:1;
+background:rgba(39,201,63,.08);
+border:1px solid rgba(39,201,63,.25);
+padding:1rem;
+border-radius:10px;
+text-align:center">
+
+<div style="font-size:1.6rem;color:#27C93F;font-weight:600">
+{{ rapport.points_forts|length }}
+</div>
+
+<div style="font-size:.8rem;color:var(--gray-2)">
+Composants corrects
+</div>
+
+</div>
+
+
+<div style="
+flex:1;
+background:rgba(255,69,58,.08);
+border:1px solid rgba(255,69,58,.25);
+padding:1rem;
+border-radius:10px;
+text-align:center">
+
+<div style="font-size:1.6rem;color:#FF453A;font-weight:600">
+{{ rapport.risques|length }}
+</div>
+
+<div style="font-size:.8rem;color:var(--gray-2)">
+Risques
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+{% if rapport.etat_technique %}
+<div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+
+<div class="section-title">État technique</div>
+
+{% for e in rapport.etat_technique %}
+
+<div style="margin-bottom:1rem">
+
+<strong>{{ e.composant }}</strong>
+
+<div>État : {{ e.etat }}</div>
+
+<div>{{ e.observation }}</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+{% endif %}
+
+
+
 {% if rapport.travaux %}
 <div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
 
 <div class="section-title">Travaux recommandés</div>
 
 {% for t in rapport.travaux %}
+
 <div style="margin-bottom:1rem">
 
 <strong>{{ t.titre }}</strong>
@@ -35,16 +110,21 @@ Coût estimé : {{ t.cout_estime }}
 </div>
 
 </div>
+
 {% endfor %}
 
 </div>
 {% endif %}
+
+
+
 {% if rapport.risques %}
 <div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
 
 <div class="section-title">Risques identifiés</div>
 
 {% for r in rapport.risques %}
+
 <div style="margin-bottom:1rem">
 
 <strong>{{ r.titre }}</strong>
@@ -54,10 +134,13 @@ Coût estimé : {{ t.cout_estime }}
 <div>Gravité : {{ r.gravite }}</div>
 
 </div>
+
 {% endfor %}
 
 </div>
 {% endif %}
+
+
 
 {% if rapport.enveloppe_budgetaire %}
 <div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
@@ -68,6 +151,68 @@ Coût estimé : {{ t.cout_estime }}
 <div>Moyen terme : {{ rapport.enveloppe_budgetaire.moyen_terme }}</div>
 <div>Long terme : {{ rapport.enveloppe_budgetaire.long_terme }}</div>
 <div>Total : {{ rapport.enveloppe_budgetaire.total_estime }}</div>
+
+</div>
+{% endif %}
+
+
+
+{% if rapport.etat_technique %}
+<div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+
+<div class="section-title">Indice de vétusté par composant</div>
+
+<div style="display:flex;flex-direction:column;gap:.7rem">
+
+{% for e in rapport.etat_technique %}
+
+<div>
+
+<div style="
+display:flex;
+justify-content:space-between;
+font-size:.75rem;
+color:var(--gray-2);
+margin-bottom:.25rem">
+
+<span>{{ e.composant }}</span>
+
+<span>{{ e.etat }}</span>
+
+</div>
+
+
+<div style="
+height:6px;
+background:rgba(255,255,255,.05);
+border-radius:4px;
+overflow:hidden">
+
+<div style="
+height:100%;
+width:
+{% if e.etat == 'Bon' %}90%
+{% elif e.etat == 'Moyen' %}55%
+{% else %}25%
+{% endif %};
+
+background:
+{% if e.etat == 'Bon' %}#27C93F
+{% elif e.etat == 'Moyen' %}#E5A93A
+{% else %}#FF453A
+{% endif %};
+
+border-radius:4px">
+
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
 
 </div>
 {% endif %}
