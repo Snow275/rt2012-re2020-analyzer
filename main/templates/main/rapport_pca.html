@@ -39,3 +39,35 @@ Coût estimé : {{ t.cout_estime }}
 
 </div>
 {% endif %}
+{% if rapport.risques %}
+<div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+
+<div class="section-title">Risques identifiés</div>
+
+{% for r in rapport.risques %}
+<div style="margin-bottom:1rem">
+
+<strong>{{ r.titre }}</strong>
+
+<div>{{ r.description }}</div>
+
+<div>Gravité : {{ r.gravite }}</div>
+
+</div>
+{% endfor %}
+
+</div>
+{% endif %}
+
+{% if rapport.enveloppe_budgetaire %}
+<div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+
+<div class="section-title">Budget estimatif</div>
+
+<div>Court terme : {{ rapport.enveloppe_budgetaire.court_terme }}</div>
+<div>Moyen terme : {{ rapport.enveloppe_budgetaire.moyen_terme }}</div>
+<div>Long terme : {{ rapport.enveloppe_budgetaire.long_terme }}</div>
+<div>Total : {{ rapport.enveloppe_budgetaire.total_estime }}</div>
+
+</div>
+{% endif %}
