@@ -608,6 +608,68 @@
     </div>
     {% endif %}
 
+    <!-- ── SECTION FACTURES ─────────────────────────────── -->
+    {% if has_factures %}
+    <div style="margin-bottom:1.6rem">
+      <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1.1rem;padding-bottom:.7rem;border-bottom:1px solid rgba(255,255,255,.05)">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(200,168,75,.1);display:flex;align-items:center;justify-content:center;font-size:.95rem">⚡</div>
+        <div>
+          <h3 style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;margin:0;color:var(--gold)">Analyse des consommations énergétiques</h3>
+          <span style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gray1)">Basée sur vos factures réelles</span>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div id="facl-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.2rem"></div>
+
+      <!-- Chart + répartition -->
+      <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:1.1rem;margin-bottom:1.2rem">
+        <div class="card" style="padding:1.2rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+            <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0">Consommation mensuelle</h4>
+            <div style="display:flex;gap:.4rem">
+              <button onclick="faclSw('conso')" id="faclbc" style="padding:.2rem .55rem;border-radius:5px;font-size:.66rem;cursor:pointer;font-family:inherit;background:rgba(200,168,75,.15);border:1px solid rgba(200,168,75,.3);color:var(--gold)">kWh</button>
+              <button onclick="faclSw('cout')"  id="faclbk" style="padding:.2rem .55rem;border-radius:5px;font-size:.66rem;cursor:pointer;font-family:inherit;background:transparent;border:1px solid rgba(255,255,255,.08);color:var(--gray1)">Coût</button>
+            </div>
+          </div>
+          <div id="facl-chart" style="display:flex;align-items:flex-end;gap:5px;height:100px;padding:.3rem 0 0"></div>
+          <div style="display:flex;gap:1rem;margin-top:.5rem;font-size:.6rem;color:var(--gray1)">
+            <span style="display:flex;align-items:center;gap:.3rem"><span style="width:8px;height:8px;border-radius:2px;background:#C8A84B;display:inline-block"></span>Électricité</span>
+            <span style="display:flex;align-items:center;gap:.3rem"><span style="width:8px;height:8px;border-radius:2px;background:#60a5fa;display:inline-block"></span>Gaz</span>
+          </div>
+        </div>
+        <div class="card" style="padding:1.2rem">
+          <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">Répartition</h4>
+          <div id="facl-rep" style="display:flex;flex-direction:column;gap:.5rem"></div>
+        </div>
+      </div>
+
+      <!-- Tableau -->
+      <div class="card" style="padding:1.2rem;overflow-x:auto;margin-bottom:1.2rem">
+        <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.7rem">Détail par période</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+          <thead><tr style="background:rgba(0,0,0,.15)">
+            <th style="padding:.5rem .8rem;text-align:left;color:var(--gray1);font-size:.62rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Période</th>
+            <th style="padding:.5rem .8rem;text-align:right;color:var(--gray1);font-size:.62rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Conso.</th>
+            <th style="padding:.5rem .8rem;text-align:right;color:var(--gray1);font-size:.62rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Montant</th>
+            <th style="padding:.5rem .8rem;text-align:right;color:var(--gray1);font-size:.62rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">¢/kWh</th>
+            <th style="padding:.5rem .8rem;border-bottom:1px solid rgba(255,255,255,.06)"></th>
+          </tr></thead>
+          <tbody id="facl-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Projections -->
+      <div class="card" style="padding:1.2rem">
+        <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.9rem">🔄 Projection après rénovation</h4>
+        <div id="facl-proj" style="display:flex;flex-direction:column;gap:.55rem"></div>
+        <div style="margin-top:.8rem;padding:.7rem .9rem;background:rgba(39,201,63,.04);border:1px solid rgba(39,201,63,.12);border-radius:7px;font-size:.76rem;color:var(--gray2);line-height:1.6">
+          💡 Projections calculées sur la base de votre consommation actuelle et des mesures recommandées dans ce rapport.
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Mentions légales -->
     {% if rapport.mentions_legales %}
     <div style="padding:.9rem 1.2rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:8px;font-size:.72rem;color:var(--muted);line-height:1.6;margin-bottom:1.5rem">
@@ -646,6 +708,114 @@
   var elKo = document.getElementById('kpi-ko');
   if(elOk) elOk.textContent = ok;
   if(elKo) elKo.textContent = ko;
+})();
+
+// ── FACTURES CÔTÉ CLIENT ─────────────────────────────────
+(function(){
+  var MOIS = {{ factures_data|safe }};
+  if (!MOIS || !MOIS.length) return;
+
+  var faclMode  = 'conso';
+  var consoTot  = MOIS.reduce(function(s,m){return s+(m.consommation||0);},0);
+  var coutTot   = MOIS.reduce(function(s,m){return s+(m.montant_ttc||0);},0);
+  var cpkMoy    = consoTot>0 ? coutTot/consoTot : null;
+  var moy       = consoTot / (MOIS.length||1);
+  var symb      = (MOIS[0]&&MOIS[0].devise==='EUR') ? '€' : '$';
+
+  // KPIs
+  var picM = MOIS.reduce(function(a,b){return (b.consommation||0)>(a.consommation||0)?b:a;}, MOIS[0]);
+  document.getElementById('facl-kpis').innerHTML =
+    kpiBox(Math.round(consoTot).toLocaleString('fr')+' kWh', 'Consommation totale', 'var(--gold)') +
+    kpiBox(symb+' '+(coutTot||0).toLocaleString('fr',{minimumFractionDigits:2}), 'Coût total facturé', 'var(--white)') +
+    kpiBox(cpkMoy ? (cpkMoy*100).toFixed(2)+' ¢' : '—', 'Coût moyen / kWh', 'var(--white)') +
+    kpiBox(Math.round(picM.consommation||0).toLocaleString('fr')+' kWh', 'Pic mensuel', (picM.consommation||0)>moy*1.4?'#E5A93A':'var(--white)');
+
+  function kpiBox(val, lbl, color) {
+    return '<div style="background:var(--navy3);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:1rem;text-align:center">' +
+      '<div style="font-size:1.3rem;font-weight:700;color:'+color+'">'+val+'</div>' +
+      '<div style="font-size:.68rem;color:var(--gray1);margin-top:.25rem">'+lbl+'</div></div>';
+  }
+
+  // Chart
+  function dessiner() {
+    var vals = MOIS.map(function(m){ return faclMode==='conso'?(m.consommation||0):(m.montant_ttc||0); });
+    var maxV = Math.max.apply(null, vals.concat([1]));
+    var H = 85;
+    document.getElementById('facl-chart').innerHTML = MOIS.map(function(m,i){
+      var v   = vals[i]||0;
+      var pct = (v/maxV)*H;
+      var col = m.type_energie==='gaz' ? '#60a5fa' : '#C8A84B';
+      var lbl = m.periode_debut ? m.periode_debut.substring(5,7)+'/'+m.periode_debut.substring(2,4) : 'M'+(i+1);
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">' +
+        '<div style="width:100%;border-radius:3px 3px 0 0;min-height:4px;height:'+Math.max(pct,4)+'px;background:'+col+';opacity:.85" title="'+(faclMode==='conso'?Math.round(v).toLocaleString('fr')+' kWh':v.toFixed(2)+'$')+'"></div>' +
+        '<span style="font-size:.55rem;color:var(--gray1)">'+lbl+'</span></div>';
+    }).join('');
+  }
+
+  window.faclSw = function(mode) {
+    faclMode = mode;
+    var bc = document.getElementById('faclbc'), bk = document.getElementById('faclbk');
+    if (mode==='conso') {
+      bc.style.background='rgba(200,168,75,.15)'; bc.style.borderColor='rgba(200,168,75,.3)'; bc.style.color='var(--gold)';
+      bk.style.background='transparent'; bk.style.borderColor='rgba(255,255,255,.08)'; bk.style.color='var(--gray1)';
+    } else {
+      bk.style.background='rgba(200,168,75,.15)'; bk.style.borderColor='rgba(200,168,75,.3)'; bk.style.color='var(--gold)';
+      bc.style.background='transparent'; bc.style.borderColor='rgba(255,255,255,.08)'; bc.style.color='var(--gray1)';
+    }
+    dessiner();
+  };
+
+  // Répartition
+  var items = [
+    {label:'⚡ Électricité', color:'#C8A84B', conso:MOIS.filter(function(m){return m.type_energie!=='gaz';}).reduce(function(s,m){return s+(m.consommation||0);},0)},
+    {label:'🔥 Gaz naturel',  color:'#60a5fa', conso:MOIS.filter(function(m){return m.type_energie==='gaz';}).reduce(function(s,m){return s+(m.consommation||0);},0)},
+  ].filter(function(i){return i.conso>0;});
+  document.getElementById('facl-rep').innerHTML = items.map(function(it){
+    var pct = consoTot>0 ? Math.round((it.conso/consoTot)*100) : 0;
+    return '<div><div style="display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:.2rem">' +
+      '<span style="color:var(--gray2)">'+it.label+'</span>' +
+      '<span style="color:'+it.color+';font-weight:600">'+pct+'%</span></div>' +
+      '<div style="height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">' +
+      '<div style="width:'+pct+'%;height:100%;background:'+it.color+';border-radius:99px"></div></div>' +
+      '<div style="font-size:.67rem;color:var(--gray1);margin-top:.16rem">'+Math.round(it.conso).toLocaleString('fr')+' kWh</div></div>';
+  }).join('');
+
+  // Tableau
+  document.getElementById('facl-tbody').innerHTML = MOIS.map(function(m,i){
+    var c    = m.consommation||0;
+    var anom = c > moy*1.5;
+    var cpk  = m.cout_par_kwh ? (m.cout_par_kwh*100).toFixed(2)+' ¢' : '—';
+    var mnt  = m.montant_ttc  ? m.montant_ttc.toLocaleString('fr',{minimumFractionDigits:2}) : '—';
+    var icon = m.type_energie==='gaz' ? '🔥' : '⚡';
+    return '<tr style="border-bottom:1px solid rgba(255,255,255,.04);'+(i%2===0?'background:rgba(255,255,255,.01)':'')+'">' +
+      '<td style="padding:.5rem .8rem;color:var(--gray2);font-size:.76rem">'+icon+' '+(m.periode_debut||'—')+' → '+(m.periode_fin||'—')+'</td>' +
+      '<td style="padding:.5rem .8rem;text-align:right;font-weight:600;color:'+(anom?'#E5A93A':'var(--white)')+'">'+Math.round(c).toLocaleString('fr')+' <span style="font-size:.63rem;color:var(--gray1)">'+(m.unite||'kWh')+'</span></td>' +
+      '<td style="padding:.5rem .8rem;text-align:right;color:var(--gray2)">'+symb+' '+mnt+'</td>' +
+      '<td style="padding:.5rem .8rem;text-align:right;color:var(--gray1);font-size:.74rem">'+cpk+'</td>' +
+      '<td style="padding:.5rem .8rem;text-align:center">'+(anom?'<span style="font-size:.63rem;background:rgba(229,169,58,.12);color:#E5A93A;border:1px solid rgba(229,169,58,.25);padding:.1rem .38rem;border-radius:4px">Élevé</span>':'')+'</td>' +
+      '</tr>';
+  }).join('');
+
+  // Projections
+  if (cpkMoy && document.getElementById('facl-proj')) {
+    var scenarios = [
+      {label:'Rénovation légère (−15%)',  gain:0.15},
+      {label:'Rénovation standard (−30%)', gain:0.30},
+      {label:'Rénovation BBC (−50%)',       gain:0.50},
+    ];
+    document.getElementById('facl-proj').innerHTML = scenarios.map(function(sc){
+      var cAp  = consoTot*(1-sc.gain);
+      var coutA = cAp*cpkMoy;
+      var ecoAn = coutTot - coutA;
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)">' +
+        '<div><span style="font-size:.81rem;color:var(--white);font-weight:500">'+sc.label+'</span>' +
+        '<div style="font-size:.71rem;color:var(--gray1);margin-top:.12rem">'+Math.round(cAp).toLocaleString('fr')+' kWh/an</div></div>' +
+        '<div style="text-align:right"><div style="font-size:.88rem;font-weight:700;color:#27c93f">− '+symb+' '+ecoAn.toLocaleString('fr',{minimumFractionDigits:2})+' / an</div>' +
+        '<div style="font-size:.68rem;color:var(--gray1)">'+symb+' '+coutA.toLocaleString('fr',{minimumFractionDigits:2})+' / an après</div></div></div>';
+    }).join('');
+  }
+
+  dessiner();
 })();
 </script>
 
