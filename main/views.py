@@ -2119,9 +2119,28 @@ def rapport_ia_client(request, token):
     if document.type_analyse == "pca" and not rapport:
         rapport = analyse_pca(document)
 
+    # Données factures côté client
+    factures_data = []
+    if document.type_analyse in ('energie', 'complet'):
+        for f in document.factures.filter(analyse_ok=True).order_by('uploaded_at'):
+            d = f.analyse_json or {}
+            if d.get('consommation') is not None:
+                factures_data.append({
+                    'periode_debut': d.get('periode_debut'),
+                    'periode_fin':   d.get('periode_fin'),
+                    'consommation':  d.get('consommation'),
+                    'unite':         d.get('unite', 'kWh'),
+                    'montant_ttc':   d.get('montant_ttc'),
+                    'cout_par_kwh':  d.get('cout_par_kwh'),
+                    'type_energie':  f.type_energie,
+                    'devise':        d.get('devise', 'CAD'),
+                })
+
     return render(request, "main/rapport_ia_client.html", {
-        "document": document,
-        "rapport": rapport,
+        "document":     document,
+        "rapport":      rapport,
+        "factures_data": json.dumps(factures_data, ensure_ascii=False),
+        "has_factures":  len(factures_data) > 0,
     })
 
 
