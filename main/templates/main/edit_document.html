@@ -506,17 +506,79 @@
       </div>
       {% endif %}
 
-      <!-- PCA : tableau état technique (remplace tableau critères) -->
+      <!-- PCA : état technique + risques + travaux + budget -->
       {% if document.type_analyse == 'pca' or document.type_analyse == 'complet' %}
-      <div id="pca-etat-wrap" class="card" style="padding:1.4rem;margin-bottom:1.4rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin-bottom:.9rem">🏗️ État technique — Composants</h4>
-        <div id="pca-etat-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
+
+      <!-- Score + stat row -->
+      <div id="pca-stats-wrap" style="display:none;margin-bottom:1.2rem">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem">
+          <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
+            <div id="pca-nb-composants" style="font-size:1.8rem;font-weight:700;color:var(--white)">—</div>
+            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">Composants</div>
+          </div>
+          <div style="background:var(--navy-3);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1rem;text-align:center">
+            <div id="pca-nb-bons" style="font-size:1.8rem;font-weight:700;color:#27c93f">—</div>
+            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">En bon état</div>
+          </div>
+          <div style="background:var(--navy-3);border:1px solid rgba(239,83,80,.2);border-radius:10px;padding:1rem;text-align:center">
+            <div id="pca-nb-risques" style="font-size:1.8rem;font-weight:700;color:#ef5350">—</div>
+            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">Risques</div>
+          </div>
+          <div style="background:var(--navy-3);border:1px solid rgba(200,168,75,.2);border-radius:10px;padding:1rem;text-align:center">
+            <div id="pca-nb-travaux" style="font-size:1.8rem;font-weight:700;color:var(--gold)">—</div>
+            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">Travaux</div>
+          </div>
+        </div>
       </div>
 
-      <div id="pca-travaux-wrap" class="card" style="padding:1.4rem;margin-bottom:1.4rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin-bottom:.9rem">🔧 Travaux identifiés</h4>
-        <div id="pca-travaux-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
+      <!-- État technique -->
+      <div id="pca-etat-wrap" class="card" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem">
+          🏗️ État technique — Composants
+        </h4>
+        <div style="border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1.8fr 1fr 2.5fr 80px;gap:.8rem;padding:.5rem 1rem;background:rgba(0,0,0,.2);font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-1)">
+            <span>Composant</span><span>État</span><span>Observation</span><span>Vétusté</span>
+          </div>
+          <div id="pca-etat-list"></div>
+        </div>
       </div>
+
+      <!-- Risques identifiés -->
+      <div id="pca-risques-wrap" style="margin-bottom:1.2rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#ef5350;margin-bottom:.8rem">⚠️ Risques identifiés</h4>
+        <div id="pca-risques-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
+      </div>
+
+      <!-- Travaux -->
+      <div id="pca-travaux-wrap" class="card" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#60a5fa;margin-bottom:.9rem">🔧 Plan de travaux</h4>
+        <div id="pca-travaux-list" style="display:flex;flex-direction:column;gap:.55rem"></div>
+      </div>
+
+      <!-- Budget -->
+      <div id="pca-budget-wrap" class="card" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.9rem">💰 Enveloppe budgétaire</h4>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:.9rem">
+          <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.9rem 1rem">
+            <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Court terme</div>
+            <div id="budget-court" style="font-size:1.1rem;font-weight:700;color:var(--gold)">—</div>
+          </div>
+          <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.9rem 1rem">
+            <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Moyen terme</div>
+            <div id="budget-moyen" style="font-size:1.1rem;font-weight:700;color:var(--gold)">—</div>
+          </div>
+          <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.9rem 1rem">
+            <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Long terme</div>
+            <div id="budget-long" style="font-size:1.1rem;font-weight:700;color:var(--gold)">—</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.18);border-radius:8px">
+          <span style="font-size:.75rem;color:var(--gray-1)">Total estimé</span>
+          <span id="budget-total" style="font-size:1.3rem;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif">—</span>
+        </div>
+      </div>
+
       {% endif %}
 
       <!-- Points forts -->
@@ -753,34 +815,76 @@ function afficherRapport(r) {
     }).join('');
   }
 
-  // Tableau état technique PCA
+  // Tableau état technique PCA — version enrichie
+  if (el('pca-stats-wrap') && (r.etat_technique||[]).length) {
+    el('pca-stats-wrap').style.display = 'block';
+    const nbBons = (r.etat_technique||[]).filter(e => e.etat === 'Bon').length;
+    el('pca-nb-composants').textContent = (r.etat_technique||[]).length;
+    el('pca-nb-bons').textContent       = nbBons;
+    el('pca-nb-risques').textContent    = (r.risques||[]).length;
+    el('pca-nb-travaux').textContent    = (r.travaux||[]).length;
+  }
+
   if (el('pca-etat-wrap') && (r.etat_technique||[]).length) {
     el('pca-etat-wrap').style.display = 'block';
     el('pca-etat-list').innerHTML = r.etat_technique.map(e => {
-      const ec = e.etat === 'Bon' ? '#27c93f' : e.etat === 'Moyen' ? '#E5A93A' : '#ef5350';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)">
+      const ec  = e.etat === 'Bon' ? '#27c93f' : e.etat === 'Moyen' ? '#E5A93A' : '#ef5350';
+      const pct = e.etat === 'Bon' ? '88' : e.etat === 'Moyen' ? '52' : '22';
+      return `<div style="display:grid;grid-template-columns:1.8fr 1fr 2.5fr 80px;gap:.8rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.04)">
+        <span style="color:var(--white);font-size:.84rem;font-weight:500">${e.composant}</span>
+        <span style="display:inline-block;font-size:.7rem;font-weight:600;padding:.16rem .6rem;border-radius:99px;background:${ec}22;color:${ec};border:1px solid ${ec}44">${e.etat}</span>
+        <span style="font-size:.78rem;color:var(--gray-1);line-height:1.4">${e.observation||'—'}</span>
         <div>
-          <span style="color:var(--white);font-weight:500;font-size:.86rem">${e.composant}</span>
-          ${e.observation ? `<p style="font-size:.78rem;color:var(--gray-1);margin:.2rem 0 0">${e.observation}</p>` : ''}
+          <div style="height:5px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${ec};border-radius:99px"></div>
+          </div>
         </div>
-        <span style="font-size:.75rem;padding:.2rem .65rem;border-radius:99px;background:${ec}22;color:${ec};border:1px solid ${ec}44;flex-shrink:0">${e.etat}</span>
       </div>`;
     }).join('');
   }
 
-  // Travaux PCA
+  // Risques PCA
+  if (el('pca-risques-wrap') && (r.risques||[]).length) {
+    el('pca-risques-wrap').style.display = 'block';
+    el('pca-risques-list').innerHTML = r.risques.map(rv => {
+      const gc = rv.gravite==='critique'?'#ef5350':rv.gravite==='important'?'#ff9800':rv.gravite==='modere'?'#C8A84B':'#60a5fa';
+      const gb = rv.gravite==='critique'?'rgba(239,83,80,.06)':rv.gravite==='important'?'rgba(255,152,0,.05)':rv.gravite==='modere'?'rgba(200,168,75,.04)':'rgba(96,165,250,.04)';
+      return `<div style="padding:1rem 1.2rem;border-radius:9px;border:1px solid ${gc}44;background:${gb};border-left:3px solid ${gc}">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem">
+          <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.12rem .5rem;border-radius:5px;background:${gc}22;color:${gc}">${rv.gravite||''}</span>
+          <strong style="font-size:.86rem;color:var(--white)">${rv.titre}</strong>
+        </div>
+        <p style="font-size:.8rem;color:var(--gray-2);line-height:1.55;margin:0">${rv.description||''}</p>
+      </div>`;
+    }).join('');
+  }
+
+  // Travaux PCA — version enrichie
   if (el('pca-travaux-wrap') && (r.travaux||[]).length) {
     el('pca-travaux-wrap').style.display = 'block';
     el('pca-travaux-list').innerHTML = r.travaux.map(t => {
-      const hc = t.horizon === 'Immédiat' ? '#ef5350' : t.horizon === '1-2 ans' ? '#E5A93A' : '#60a5fa';
-      return `<div style="display:flex;align-items:center;gap:1rem;padding:.7rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,.05)">
-        <span style="font-size:.7rem;padding:.2rem .55rem;border-radius:99px;background:${hc}22;color:${hc};border:1px solid ${hc}44;white-space:nowrap;flex-shrink:0">${t.horizon}</span>
+      const hc = ['Urgent','Immédiat'].includes(t.priorite)||['Urgent','Immédiat'].includes(t.horizon) ? '#ef5350'
+               : ['Court terme','1-2 ans'].includes(t.priorite)||['Court terme','1-2 ans'].includes(t.horizon) ? '#E5A93A'
+               : '#60a5fa';
+      const horizon = t.horizon || t.priorite || '—';
+      return `<div style="display:flex;align-items:center;gap:.9rem;padding:.7rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)">
+        <span style="font-size:.67rem;padding:.18rem .55rem;border-radius:99px;background:${hc}22;color:${hc};border:1px solid ${hc}44;white-space:nowrap;flex-shrink:0">${horizon}</span>
         <div style="flex:1">
-          <span style="color:var(--white);font-size:.84rem;font-weight:500">${t.titre}</span>
-          ${t.cout_estime ? `<span style="color:var(--gold);font-size:.78rem;margin-left:.6rem">${t.cout_estime}</span>` : ''}
+          <span style="color:var(--white);font-size:.83rem;font-weight:500">${t.titre}</span>
+          ${t.description ? `<p style="font-size:.76rem;color:var(--gray-1);margin:.15rem 0 0;line-height:1.4">${t.description}</p>` : ''}
         </div>
+        ${t.cout_estime ? `<span style="color:var(--gold);font-size:.8rem;font-weight:600;white-space:nowrap;flex-shrink:0">${t.cout_estime}</span>` : ''}
       </div>`;
     }).join('');
+  }
+
+  // Budget PCA
+  if (el('pca-budget-wrap') && r.enveloppe_budgetaire) {
+    el('pca-budget-wrap').style.display = 'block';
+    if(el('budget-court')) el('budget-court').textContent = r.enveloppe_budgetaire.court_terme || '—';
+    if(el('budget-moyen')) el('budget-moyen').textContent = r.enveloppe_budgetaire.moyen_terme || '—';
+    if(el('budget-long'))  el('budget-long').textContent  = r.enveloppe_budgetaire.long_terme  || '—';
+    if(el('budget-total')) el('budget-total').textContent = r.enveloppe_budgetaire.total_estime || '—';
   }
 
   if ((r.points_forts||[]).length) {
