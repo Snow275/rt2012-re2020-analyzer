@@ -41,6 +41,13 @@ urlpatterns = [
     path("devis/accepter/<int:devis_id>/", views.accepter_devis, name="accepter_devis"),
     path("devis/refuser/<int:devis_id>/", views.refuser_devis, name="refuser_devis"),
 
+    # ── FACTURES ÉNERGIE ────────────────────────────────────
+    path('dossier/<int:doc_id>/factures/upload/',          views.upload_facture,           name='upload_facture'),
+    path('dossier/<int:doc_id>/factures/analyser-toutes/', views.analyser_toutes_factures, name='analyser_toutes_factures'),
+    path('dossier/<int:doc_id>/factures/donnees/',         views.get_donnees_factures,     name='get_donnees_factures'),
+    path('facture/<int:facture_id>/analyser/',             views.analyser_facture,         name='analyser_facture'),
+    path('facture/<int:facture_id>/supprimer/',            views.supprimer_facture,        name='supprimer_facture'),
+
     # ── API ─────────────────────────────────────────
     path('api/documents/', views.api_document_list, name='api_document_list'),
     path('api/documents/<int:pk>/', views.api_document_detail, name='api_document_detail'),
