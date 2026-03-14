@@ -188,6 +188,37 @@ class Document(models.Model):
         return self.is_conform
 
 
+class FactureEnergie(models.Model):
+    """Factures PDF d'énergie uploadées par le client — analysées par l'IA."""
+    ENERGIE_CHOICES = [
+        ('electricite', 'Électricité'),
+        ('gaz',         'Gaz naturel'),
+    ]
+    document      = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='factures')
+    fichier       = models.FileField(upload_to='factures/%Y/%m/')
+    nom           = models.CharField(max_length=255, blank=True)
+    type_energie  = models.CharField(max_length=20, choices=ENERGIE_CHOICES, default='electricite')
+    uploaded_at   = models.DateTimeField(auto_now_add=True)
+    analyse_json  = models.JSONField(null=True, blank=True)
+    analyse_ok    = models.BooleanField(default=False)
+    analyse_error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['uploaded_at']
+
+    def save(self, *args, **kwargs):
+        if not self.nom and self.fichier:
+            self.nom = self.fichier.name.split('/')[-1]
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.nom} ({self.document})"
+
+    @property
+    def donnees(self):
+        return self.analyse_json or {}
+
+
 class DocumentFile(models.Model):
     """Fichiers multiples associés à un dossier."""
     document   = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='fichiers')
