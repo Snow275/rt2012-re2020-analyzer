@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Document, DocumentFile, Analysis, Devis
+from .models import Document, DocumentFile, Analysis, Devis, FactureEnergie
 from .forms import DocumentForm, ContactForm
 from .serializers import DocumentSerializer, AnalysisSerializer
 
@@ -2099,6 +2099,183 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
         print(f"GENERER_RAPPORT_IA ERROR: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
+
+# ══════════════════════════════════════════════════════════════════
+#  FACTURES ÉNERGIE — Analyse par IA
+# ══════════════════════════════════════════════════════════════════
+
+_PROMPT_FACTURE = """
+Tu es un expert en analyse de factures d'énergie (électricité et gaz naturel).
+Analyse attentivement cette facture et extrais toutes les données disponibles.
+
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni après, sans balises markdown.
+Schéma exact :
+
+{
+  "fournisseur": "nom du fournisseur (ex: Hydro-Québec, Énergir, EDF...)",
+  "type_energie": "electricite" ou "gaz",
+  "periode_debut": "YYYY-MM-DD",
+  "periode_fin": "YYYY-MM-DD",
+  "nb_jours": 30,
+  "consommation": 1250.5,
+  "unite": "kWh",
+  "montant_ht": 145.20,
+  "montant_ttc": 162.50,
+  "devise": "CAD",
+  "tarif": "nom du tarif (ex: Tarif D, G, DM...)",
+  "puissance_souscrite_kw": null,
+  "numero_client": null,
+  "numero_compteur": null,
+  "adresse_consommation": null,
+  "cout_par_kwh": 0.115,
+  "notes": "toute observation pertinente"
+}
+
+Si une valeur est absente, utilise null.
+Pour cout_par_kwh : calcule-le si possible (montant_ht / consommation).
+Pour le gaz : convertis en kWh équivalent si possible (1 m³ ≈ 10.55 kWh).
+"""
+
+
+def _analyser_facture_ia(fichier_path):
+    """Envoie un PDF de facture à Claude et retourne le dict extrait."""
+    import json, base64, re as _re
+    import anthropic
+    client = anthropic.Anthropic()
+    with open(fichier_path, 'rb') as f:
+        pdf_b64 = base64.standard_b64encode(f.read()).decode('utf-8')
+    resp = client.messages.create(
+        model="claude-opus-4-5",
+        max_tokens=1200,
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_b64}},
+                {"type": "text", "text": _PROMPT_FACTURE},
+            ],
+        }]
+    )
+    raw = resp.content[0].text.strip()
+    raw = _re.sub(r'^```(?:json)?\s*', '', raw)
+    raw = _re.sub(r'\s*```$', '', raw)
+    return json.loads(raw)
+
+
+@login_required(login_url='/login/')
+def upload_facture(request, doc_id):
+    """Upload d'une facture PDF pour un dossier."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
+    document = get_object_or_404(Document, id=doc_id)
+    fichier = request.FILES.get('fichier')
+    if not fichier:
+        return JsonResponse({'success': False, 'error': 'Aucun fichier reçu'})
+    if not fichier.name.lower().endswith('.pdf'):
+        return JsonResponse({'success': False, 'error': 'Seuls les PDF sont acceptés'})
+    type_energie = request.POST.get('type_energie', 'electricite')
+    facture = FactureEnergie.objects.create(
+        document=document,
+        fichier=fichier,
+        nom=fichier.name,
+        type_energie=type_energie,
+    )
+    return JsonResponse({'success': True, 'facture_id': facture.id, 'nom': facture.nom})
+
+
+@login_required(login_url='/login/')
+def analyser_facture(request, facture_id):
+    """Analyse IA d'une seule facture."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
+    facture = get_object_or_404(FactureEnergie, id=facture_id)
+    try:
+        donnees = _analyser_facture_ia(facture.fichier.path)
+        facture.analyse_json  = donnees
+        facture.analyse_ok    = True
+        facture.analyse_error = ''
+        facture.save()
+        return JsonResponse({'success': True, 'donnees': donnees})
+    except Exception as e:
+        facture.analyse_error = str(e)
+        facture.analyse_ok    = False
+        facture.save()
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required(login_url='/login/')
+def analyser_toutes_factures(request, doc_id):
+    """Analyse IA de toutes les factures non encore analysées d'un dossier."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
+    document = get_object_or_404(Document, id=doc_id)
+    factures = document.factures.filter(analyse_ok=False)
+    resultats = []
+    for facture in factures:
+        try:
+            donnees = _analyser_facture_ia(facture.fichier.path)
+            facture.analyse_json  = donnees
+            facture.analyse_ok    = True
+            facture.analyse_error = ''
+            facture.save()
+            resultats.append({'id': facture.id, 'nom': facture.nom, 'ok': True})
+        except Exception as e:
+            facture.analyse_error = str(e)
+            facture.analyse_ok    = False
+            facture.save()
+            resultats.append({'id': facture.id, 'nom': facture.nom, 'ok': False, 'error': str(e)})
+    return JsonResponse({'success': True, 'resultats': resultats})
+
+
+@login_required(login_url='/login/')
+def supprimer_facture(request, facture_id):
+    """Suppression d'une facture et de son fichier."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
+    facture = get_object_or_404(FactureEnergie, id=facture_id)
+    try:
+        facture.fichier.delete(save=False)
+        facture.delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+def get_donnees_factures(request, doc_id):
+    """Retourne les données agrégées des factures analysées — public (via token) ou admin."""
+    import json as _json
+    document = get_object_or_404(Document, id=doc_id)
+    factures = document.factures.filter(analyse_ok=True).order_by('uploaded_at')
+    mois = []
+    for f in factures:
+        d = f.analyse_json or {}
+        if d.get('consommation') is not None:
+            mois.append({
+                'periode_debut':  d.get('periode_debut'),
+                'periode_fin':    d.get('periode_fin'),
+                'consommation':   d.get('consommation'),
+                'unite':          d.get('unite', 'kWh'),
+                'montant_ttc':    d.get('montant_ttc'),
+                'cout_par_kwh':   d.get('cout_par_kwh'),
+                'type_energie':   f.type_energie,
+                'fournisseur':    d.get('fournisseur'),
+                'devise':         d.get('devise', 'CAD'),
+                'nom':            f.nom,
+            })
+    conso_totale = sum(m['consommation'] for m in mois if m['consommation'])
+    cout_total   = sum(m['montant_ttc']  for m in mois if m['montant_ttc'])
+    cout_moyen   = round(cout_total / conso_totale, 4) if conso_totale else None
+    pic          = max((m['consommation'] for m in mois if m['consommation']), default=None)
+    return JsonResponse({
+        'success':        True,
+        'mois':           mois,
+        'conso_totale':   round(conso_totale, 1),
+        'cout_total':     round(cout_total, 2),
+        'cout_moyen_kwh': cout_moyen,
+        'pic_mensuel':    pic,
+        'nb_factures':    len(mois),
+    })
+
+
 def rapport_ia_client(request, token):
     """Page publique rapport IA — accessible via lien de suivi, sans login."""
 
@@ -2120,6 +2297,7 @@ def rapport_ia_client(request, token):
         rapport = analyse_pca(document)
 
     # Données factures côté client
+    import json as _json2
     factures_data = []
     if document.type_analyse in ('energie', 'complet'):
         for f in document.factures.filter(analyse_ok=True).order_by('uploaded_at'):
@@ -2137,9 +2315,9 @@ def rapport_ia_client(request, token):
                 })
 
     return render(request, "main/rapport_ia_client.html", {
-        "document":     document,
-        "rapport":      rapport,
-        "factures_data": json.dumps(factures_data, ensure_ascii=False),
+        "document":      document,
+        "rapport":       rapport,
+        "factures_data": _json2.dumps(factures_data, ensure_ascii=False),
         "has_factures":  len(factures_data) > 0,
     })
 
