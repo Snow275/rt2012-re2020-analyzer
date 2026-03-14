@@ -254,3 +254,29 @@ def get_norme_fields(norme):
 @register.simple_tag
 def get_normes_pays(pays):
     return NORMES_PAR_PAYS.get(pays, [])
+
+
+@register.filter
+def factures_json(factures_qs):
+    """
+    Sérialise un queryset FactureEnergie en JSON pour le template client.
+    Usage : {{ factures_data|safe }}  (données déjà injectées par la vue)
+    Ce filtre est disponible pour usage direct sur un queryset si besoin.
+    """
+    import json
+    result = []
+    for f in factures_qs.order_by('uploaded_at'):
+        d = f.analyse_json or {}
+        if d.get('consommation') is not None:
+            result.append({
+                'periode_debut': d.get('periode_debut'),
+                'periode_fin':   d.get('periode_fin'),
+                'consommation':  d.get('consommation'),
+                'unite':         d.get('unite', 'kWh'),
+                'montant_ttc':   d.get('montant_ttc'),
+                'cout_par_kwh':  d.get('cout_par_kwh'),
+                'type_energie':  f.type_energie,
+                'fournisseur':   d.get('fournisseur'),
+                'devise':        d.get('devise', 'CAD'),
+            })
+    return json.dumps(result, ensure_ascii=False)
