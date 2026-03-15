@@ -934,6 +934,29 @@ def edit_document(request, doc_id):
     norme_fields  = ALL_NORME_FIELDS.get(document.norme, [])
 
     if request.method == 'POST':
+
+        if "upload_openstudio" in request.POST:
+            fichier = request.FILES.get("openstudio_file")
+
+            if fichier:
+                type_fichier = "openstudio_html"
+
+                if fichier.name.endswith(".csv"):
+                    type_fichier = "openstudio_csv"
+                elif fichier.name.endswith(".sql"):
+                    type_fichier = "openstudio_sql"
+
+                DocumentFile.objects.create(
+                    document=document,
+                    fichier=fichier,
+                    nom=fichier.name,
+                    taille=fichier.size,
+                    type_fichier=type_fichier
+                )
+
+                messages.success(request, "Rapport OpenStudio importé avec succès.")
+
+            return redirect('edit_document', doc_id=doc_id)
         # Statut
         new_status = request.POST.get('status')
         old_status = document.status
