@@ -2147,6 +2147,9 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
         Données issues des simulations OpenStudio :
         {openstudio_str}
 
+        Compare les consommations réelles issues des factures avec les consommations simulées OpenStudio et identifie les écarts énergétiques éventuels.
+        Explique les causes possibles (isolation, systèmes HVAC, infiltration d'air, comportement des occupants, etc.).
+        
         Génère ensuite le rapport complet en respectant le format JSON demandé.
         """
         })
