@@ -74,6 +74,10 @@
       style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
       🤖 Rapport IA
     </button>
+    <button onclick="showTab('observations')" id="tab-observations"
+      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
+      🔍 Observations
+    </button>
     <button onclick="showTab('factures')" id="tab-factures"
       style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
       ⚡ Factures
@@ -645,6 +649,345 @@
   </div><!-- /panel-rapport-ia -->
 
   <!-- ══════════════════════════════════════════════════════
+       ONGLET OBSERVATIONS EXPERT
+  ══════════════════════════════════════════════════════ -->
+  <div id="panel-observations" style="display:none">
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="_obs_save" value="1">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.6rem;padding:1.1rem 1.4rem;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.18);border-radius:10px">
+      <div>
+        <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin:0 0 .2rem">🔍 Observations expert</p>
+        <p style="font-size:.83rem;color:var(--gray-1);margin:0">Ces données sont injectées dans le prompt IA pour enrichir le rapport généré.</p>
+      </div>
+      <button type="submit" class="btn btn-gold">Enregistrer</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+
+      <!-- COLONNE GAUCHE : Enveloppe du bâtiment -->
+      <div style="display:flex;flex-direction:column;gap:1.2rem">
+
+        <!-- Toiture -->
+        <div class="card" style="padding:1.3rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">🏠 Toiture</h3>
+          <div style="display:flex;flex-direction:column;gap:.7rem">
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">État général</label>
+              <select name="obs_toiture_etat" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="bon" {% if document.obs_toiture_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
+                <option value="moyen" {% if document.obs_toiture_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
+                <option value="mauvais" {% if document.obs_toiture_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Âge estimé (ans)</label>
+              <input type="number" name="obs_toiture_age" min="0" max="100"
+                value="{{ document.obs_toiture_age|default:'' }}"
+                placeholder="ex: 15" class="f-input">
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Observations</label>
+              <textarea name="obs_toiture_notes" rows="2" placeholder="Fissures, étanchéité, végétation..." class="f-input" style="resize:vertical">{{ document.obs_toiture_notes|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Façades -->
+        <div class="card" style="padding:1.3rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">🧱 Façades & murs</h3>
+          <div style="display:flex;flex-direction:column;gap:.7rem">
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">État général</label>
+              <select name="obs_facade_etat" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="bon" {% if document.obs_facade_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
+                <option value="moyen" {% if document.obs_facade_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
+                <option value="mauvais" {% if document.obs_facade_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Isolation existante</label>
+              <select name="obs_facade_isolation" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="ite" {% if document.obs_facade_isolation == 'ite' %}selected{% endif %}>ITE (extérieur)</option>
+                <option value="iti" {% if document.obs_facade_isolation == 'iti' %}selected{% endif %}>ITI (intérieur)</option>
+                <option value="aucune" {% if document.obs_facade_isolation == 'aucune' %}selected{% endif %}>Aucune</option>
+                <option value="inconnue" {% if document.obs_facade_isolation == 'inconnue' %}selected{% endif %}>Inconnue</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Observations</label>
+              <textarea name="obs_facade_notes" rows="2" placeholder="Fissures, humidité, décollements..." class="f-input" style="resize:vertical">{{ document.obs_facade_notes|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Menuiseries -->
+        <div class="card" style="padding:1.3rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">🪟 Menuiseries</h3>
+          <div style="display:flex;flex-direction:column;gap:.7rem">
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Type de vitrage</label>
+              <select name="obs_menuiseries_type" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="simple" {% if document.obs_menuiseries_type == 'simple' %}selected{% endif %}>Simple vitrage</option>
+                <option value="double" {% if document.obs_menuiseries_type == 'double' %}selected{% endif %}>Double vitrage</option>
+                <option value="triple" {% if document.obs_menuiseries_type == 'triple' %}selected{% endif %}>Triple vitrage</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">État général</label>
+              <select name="obs_menuiseries_etat" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="bon" {% if document.obs_menuiseries_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
+                <option value="moyen" {% if document.obs_menuiseries_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
+                <option value="mauvais" {% if document.obs_menuiseries_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Observations</label>
+              <textarea name="obs_menuiseries_notes" rows="2" placeholder="Condensation, joints défaillants, cadres..." class="f-input" style="resize:vertical">{{ document.obs_menuiseries_notes|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /col gauche -->
+
+      <!-- COLONNE DROITE : Systèmes + Risques -->
+      <div style="display:flex;flex-direction:column;gap:1.2rem">
+
+        <!-- Chauffage -->
+        <div class="card" style="padding:1.3rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">🔥 Chauffage</h3>
+          <div style="display:flex;flex-direction:column;gap:.7rem">
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Type de système</label>
+              <select name="obs_chauffage_type" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="gaz" {% if document.obs_chauffage_type == 'gaz' %}selected{% endif %}>Chaudière gaz</option>
+                <option value="fioul" {% if document.obs_chauffage_type == 'fioul' %}selected{% endif %}>Chaudière fioul</option>
+                <option value="pac_air_eau" {% if document.obs_chauffage_type == 'pac_air_eau' %}selected{% endif %}>PAC air/eau</option>
+                <option value="pac_air_air" {% if document.obs_chauffage_type == 'pac_air_air' %}selected{% endif %}>PAC air/air</option>
+                <option value="electrique" {% if document.obs_chauffage_type == 'electrique' %}selected{% endif %}>Électrique direct</option>
+                <option value="bois" {% if document.obs_chauffage_type == 'bois' %}selected{% endif %}>Bois / pellets</option>
+                <option value="reseau" {% if document.obs_chauffage_type == 'reseau' %}selected{% endif %}>Réseau de chaleur</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Âge estimé (ans)</label>
+              <input type="number" name="obs_chauffage_age" min="0" max="60"
+                value="{{ document.obs_chauffage_age|default:'' }}"
+                placeholder="ex: 12" class="f-input">
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">État général</label>
+              <select name="obs_chauffage_etat" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="bon" {% if document.obs_chauffage_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
+                <option value="moyen" {% if document.obs_chauffage_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
+                <option value="mauvais" {% if document.obs_chauffage_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plomberie + Électricité + VMC -->
+        <div class="card" style="padding:1.3rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">⚙️ Autres systèmes</h3>
+          <div style="display:flex;flex-direction:column;gap:.9rem">
+            <!-- Plomberie -->
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem">
+                💧 Plomberie / ECS
+              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                <select name="obs_plomberie_etat" class="f-input">
+                  <option value="">État —</option>
+                  <option value="bon" {% if document.obs_plomberie_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
+                  <option value="moyen" {% if document.obs_plomberie_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
+                  <option value="mauvais" {% if document.obs_plomberie_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                </select>
+                <input type="number" name="obs_ecs_age" min="0" max="60"
+                  value="{{ document.obs_ecs_age|default:'' }}"
+                  placeholder="Âge ECS (ans)" class="f-input">
+              </div>
+            </div>
+            <!-- Électricité -->
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem">
+                ⚡ Installation électrique
+              </label>
+              <select name="obs_elec_etat" class="f-input">
+                <option value="">État —</option>
+                <option value="bon" {% if document.obs_elec_etat == 'bon' %}selected{% endif %}>✅ Bon — tableau récent</option>
+                <option value="moyen" {% if document.obs_elec_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen — à vérifier</option>
+                <option value="mauvais" {% if document.obs_elec_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais — mise aux normes requise</option>
+              </select>
+            </div>
+            <!-- VMC -->
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem">
+                💨 Ventilation (VMC)
+              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                <select name="obs_vmc_type" class="f-input">
+                  <option value="">Type —</option>
+                  <option value="simple_flux" {% if document.obs_vmc_type == 'simple_flux' %}selected{% endif %}>Simple flux</option>
+                  <option value="double_flux" {% if document.obs_vmc_type == 'double_flux' %}selected{% endif %}>Double flux</option>
+                  <option value="aucune" {% if document.obs_vmc_type == 'aucune' %}selected{% endif %}>Aucune</option>
+                </select>
+                <select name="obs_vmc_etat" class="f-input">
+                  <option value="">État —</option>
+                  <option value="bon" {% if document.obs_vmc_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
+                  <option value="moyen" {% if document.obs_vmc_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
+                  <option value="mauvais" {% if document.obs_vmc_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risques identifiés -->
+        <div class="card" style="padding:1.3rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#ef5350">⚠️ Risques identifiés</h3>
+          <div style="display:flex;flex-direction:column;gap:.7rem">
+            <!-- Amiante auto-calculé -->
+            {% if document.annee_construction and document.annee_construction < 1997 %}
+            <div style="padding:.6rem .9rem;background:rgba(239,83,80,.08);border:1px solid rgba(239,83,80,.25);border-radius:7px;font-size:.78rem;color:#ef5350">
+              ⚠️ Bâtiment construit avant 1997 — risque amiante détecté automatiquement
+            </div>
+            {% endif %}
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Humidité / infiltrations</label>
+              <select name="obs_humidite" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="aucune" {% if document.obs_humidite == 'aucune' %}selected{% endif %}>Aucune constatée</option>
+                <option value="ponctuelle" {% if document.obs_humidite == 'ponctuelle' %}selected{% endif %}>Ponctuelle / localisée</option>
+                <option value="importante" {% if document.obs_humidite == 'importante' %}selected{% endif %}>Importante — traitement requis</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Fissures structurelles</label>
+              <select name="obs_fissures" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="aucune" {% if document.obs_fissures == 'aucune' %}selected{% endif %}>Aucune</option>
+                <option value="superficielles" {% if document.obs_fissures == 'superficielles' %}selected{% endif %}>Superficielles (esthétique)</option>
+                <option value="actives" {% if document.obs_fissures == 'actives' %}selected{% endif %}>Actives — expertise requise</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Autres risques (libre)</label>
+              <textarea name="obs_risques_notes" rows="3" placeholder="Plomb, amiante confirmé, termites, affaissement..." class="f-input" style="resize:vertical">{{ document.obs_risques_notes|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estimation travaux -->
+        <div class="card" style="padding:1.3rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:var(--gold)">💶 Estimation travaux expert</h3>
+          <div style="display:flex;flex-direction:column;gap:.7rem">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+              <div>
+                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Toiture (€)</label>
+                <input type="number" name="obs_cout_toiture" min="0"
+                  value="{{ document.obs_cout_toiture|default:'' }}"
+                  placeholder="ex: 25000" class="f-input">
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Isolation (€)</label>
+                <input type="number" name="obs_cout_isolation" min="0"
+                  value="{{ document.obs_cout_isolation|default:'' }}"
+                  placeholder="ex: 40000" class="f-input">
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Chauffage (€)</label>
+                <input type="number" name="obs_cout_chauffage" min="0"
+                  value="{{ document.obs_cout_chauffage|default:'' }}"
+                  placeholder="ex: 18000" class="f-input">
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Menuiseries (€)</label>
+                <input type="number" name="obs_cout_menuiseries" min="0"
+                  value="{{ document.obs_cout_menuiseries|default:'' }}"
+                  placeholder="ex: 12000" class="f-input">
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Plomberie / ECS (€)</label>
+                <input type="number" name="obs_cout_plomberie" min="0"
+                  value="{{ document.obs_cout_plomberie|default:'' }}"
+                  placeholder="ex: 8000" class="f-input">
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Autres travaux (€)</label>
+                <input type="number" name="obs_cout_autres" min="0"
+                  value="{{ document.obs_cout_autres|default:'' }}"
+                  placeholder="ex: 5000" class="f-input">
+              </div>
+            </div>
+            <!-- Total calculé JS -->
+            <div style="padding:.7rem 1rem;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:.8rem;color:var(--gray-1)">Total estimé</span>
+              <span id="obs-total-travaux" style="font-size:1.1rem;font-weight:700;color:var(--gold)">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation énergétique simplifiée -->
+        <div class="card" style="padding:1.3rem">
+          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:var(--gold)">⚡ Données énergétiques</h3>
+          <div style="display:flex;flex-direction:column;gap:.7rem">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+              <div>
+                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Consommation actuelle (kWh/an)</label>
+                <input type="number" name="obs_conso_kwh" min="0"
+                  value="{{ document.obs_conso_kwh|default:'' }}"
+                  placeholder="ex: 85000" class="f-input">
+              </div>
+              <div>
+                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Coût énergie annuel (€)</label>
+                <input type="number" name="obs_cout_energie" min="0"
+                  value="{{ document.obs_cout_energie|default:'' }}"
+                  placeholder="ex: 7200" class="f-input">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Classe DPE actuelle</label>
+              <select name="obs_classe_dpe" class="f-input">
+                <option value="">— Non renseigné —</option>
+                {% for cls in 'A,B,C,D,E,F,G'|split:',' %}
+                <option value="{{ cls }}" {% if document.obs_classe_dpe == cls %}selected{% endif %}>{{ cls }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Potentiel d'économies estimé</label>
+              <select name="obs_potentiel_economies" class="f-input">
+                <option value="">— Non renseigné —</option>
+                <option value="faible" {% if document.obs_potentiel_economies == 'faible' %}selected{% endif %}>Faible (moins de 15%)</option>
+                <option value="moyen" {% if document.obs_potentiel_economies == 'moyen' %}selected{% endif %}>Moyen (15–35%)</option>
+                <option value="eleve" {% if document.obs_potentiel_economies == 'eleve' %}selected{% endif %}>Élevé (35–60%)</option>
+                <option value="tres_eleve" {% if document.obs_potentiel_economies == 'tres_eleve' %}selected{% endif %}>Très élevé (plus de 60%)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /col droite -->
+    </div><!-- /grid -->
+
+    <!-- Bouton bas -->
+    <div style="display:flex;justify-content:flex-end;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,.06)">
+      <button type="submit" class="btn btn-gold">Enregistrer les observations</button>
+    </div>
+
+  </form>
+  </div><!-- /panel-observations -->
+
+  <!-- ══════════════════════════════════════════════════════
        ONGLET FACTURES
   ══════════════════════════════════════════════════════ -->
   <div id="panel-factures" style="display:none">
@@ -809,7 +1152,7 @@ let rapportDejaRendu = false;
 
 // ── Onglets ───────────────────────────────────────────────
 function showTab(name) {
-  ['infos','documents','emails','rapport-ia','factures'].forEach(t => {
+  ['infos','documents','emails','rapport-ia','observations','factures'].forEach(t => {
     document.getElementById('panel-' + t).style.display = t === name ? 'block' : 'none';
     const btn = document.getElementById('tab-' + t);
     if (t === name) {
@@ -1358,6 +1701,31 @@ function recalcCmp() {
   document.getElementById('cmp-co2').textContent     = Math.round(co2) + ' kg CO₂';
   document.getElementById('cmp-gains').style.display = 'flex';
 }
+
+// ── Total travaux estimés (onglet observations) ───────────
+(function() {
+  const CHAMPS = ['obs_cout_toiture','obs_cout_isolation','obs_cout_chauffage',
+                  'obs_cout_menuiseries','obs_cout_plomberie','obs_cout_autres'];
+  function calcTotal() {
+    const el = document.getElementById('obs-total-travaux');
+    if (!el) return;
+    let total = 0;
+    CHAMPS.forEach(function(name) {
+      const input = document.querySelector('[name="' + name + '"]');
+      if (input && input.value) total += parseFloat(input.value) || 0;
+    });
+    el.textContent = total > 0
+      ? total.toLocaleString('fr', {minimumFractionDigits:0}) + ' €'
+      : '—';
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    CHAMPS.forEach(function(name) {
+      const input = document.querySelector('[name="' + name + '"]');
+      if (input) input.addEventListener('input', calcTotal);
+    });
+    calcTotal();
+  });
+})();
 </script>
 
 {% endblock %}
