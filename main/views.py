@@ -2161,9 +2161,10 @@ def _analyser_facture_ia(fichier_path):
     return json.loads(raw)
 
 
-@login_required(login_url='/login/')
 def upload_facture(request, doc_id):
     """Upload d'une facture PDF pour un dossier."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Non authentifié'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
     document = get_object_or_404(Document, id=doc_id)
@@ -2182,9 +2183,10 @@ def upload_facture(request, doc_id):
     return JsonResponse({'success': True, 'facture_id': facture.id, 'nom': facture.nom})
 
 
-@login_required(login_url='/login/')
 def analyser_facture(request, facture_id):
     """Analyse IA d'une seule facture."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Non authentifié'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
     facture = get_object_or_404(FactureEnergie, id=facture_id)
@@ -2202,9 +2204,10 @@ def analyser_facture(request, facture_id):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
-@login_required(login_url='/login/')
 def analyser_toutes_factures(request, doc_id):
     """Analyse IA de toutes les factures non encore analysées d'un dossier."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Non authentifié'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
     document = get_object_or_404(Document, id=doc_id)
@@ -2226,9 +2229,10 @@ def analyser_toutes_factures(request, doc_id):
     return JsonResponse({'success': True, 'resultats': resultats})
 
 
-@login_required(login_url='/login/')
 def supprimer_facture(request, facture_id):
     """Suppression d'une facture et de son fichier."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Non authentifié'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
     facture = get_object_or_404(FactureEnergie, id=facture_id)
