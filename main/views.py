@@ -1680,16 +1680,15 @@ def generer_rapport_ia(request, doc_id):
     pdf_b64 = None
     pdf_b64_list = []
 
-    # Essayer d'abord les fichiers multi-upload (DocumentFile)
-    try:
-        for doc_file in document.fichiers.all()[:3]:  # max 3 PDFs
-    try:
-        with open(doc_file.fichier.path, "rb") as f:
-            pdf_bytes = f.read()
-            pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
-            pdf_b64_list.append(pdf_b64)
-    except Exception as e:
-        print(f"Erreur lecture PDF : {e}")
+    for doc_file in document.fichiers.all()[:3]:  # max 3 PDFs
+        try:
+            with open(doc_file.fichier.path, "rb") as f:
+                pdf_bytes = f.read()
+                pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+                pdf_b64_list.append(pdf_b64)
+
+        except Exception as e:
+            print(f"Erreur lecture PDF : {e}")
     
 
     # Fallback sur l'ancien champ upload
