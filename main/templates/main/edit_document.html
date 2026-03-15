@@ -958,9 +958,13 @@
               <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Classe DPE actuelle</label>
               <select name="obs_classe_dpe" class="f-input">
                 <option value="">— Non renseigné —</option>
-                {% for cls in 'A,B,C,D,E,F,G'|split:',' %}
-                <option value="{{ cls }}" {% if document.obs_classe_dpe == cls %}selected{% endif %}>{{ cls }}</option>
-                {% endfor %}
+                <option value="A" {% if document.obs_classe_dpe == 'A' %}selected{% endif %}>A</option>
+                <option value="B" {% if document.obs_classe_dpe == 'B' %}selected{% endif %}>B</option>
+                <option value="C" {% if document.obs_classe_dpe == 'C' %}selected{% endif %}>C</option>
+                <option value="D" {% if document.obs_classe_dpe == 'D' %}selected{% endif %}>D</option>
+                <option value="E" {% if document.obs_classe_dpe == 'E' %}selected{% endif %}>E</option>
+                <option value="F" {% if document.obs_classe_dpe == 'F' %}selected{% endif %}>F</option>
+                <option value="G" {% if document.obs_classe_dpe == 'G' %}selected{% endif %}>G</option>
               </select>
             </div>
             <div>
