@@ -2074,6 +2074,53 @@ Structure JSON attendue :
 Si une valeur n'est pas disponible pour un critère, omets ce critère du tableau.
 Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {norme}."""
 
+
+    # Observations expert
+    observations_expert = document.admin_notes if document.admin_notes else "Aucune observation expert fournie."
+
+    # Données factures énergie
+    factures_data = []
+
+    try:
+        for f in document.factures.filter(analyse_ok=True):
+
+            d = f.analyse_json or {}
+
+            factures_data.append({
+                "energie": f.type_energie,
+                "periode_debut": d.get("periode_debut"),
+                "periode_fin": d.get("periode_fin"),
+                "consommation": d.get("consommation"),
+                "montant_ttc": d.get("montant_ttc")
+            })
+
+    except Exception as e:
+        print("Erreur lecture factures:", e)
+
+    factures_str = json.dumps(factures_data, ensure_ascii=False)
+
+    # Données OpenStudio
+    openstudio_files = document.fichiers.filter(type_fichier__startswith="openstudio")
+
+    openstudio_data = []
+
+    for f in openstudio_files:
+
+        try:
+            with open(f.fichier.path, "r", encoding="utf-8", errors="ignore") as file:
+
+                contenu = file.read()
+
+            openstudio_data.append({
+                "nom": f.nom,
+                "contenu": contenu[:12000]
+            })
+
+        except Exception as e:
+            print("Erreur OpenStudio:", e)
+
+    openstudio_str = json.dumps(openstudio_data, ensure_ascii=False)
+
     # ── 4. Message Claude ─────────────────────────────────────────────────────
     user_content = []
     headers_extra = {}
@@ -2087,8 +2134,21 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
         headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
         nb = len(pdf_b64_list)
         user_content.append({
-            "type": "text",
-            "text": f"Analyse {'ce document' if nb == 1 else f'ces {nb} documents'} pour le dossier {ref} (type : {type_analyse}) et génère le rapport JSON complet selon les instructions."
+        "type": "text",
+        "text": f"""
+        Analyse les documents fournis pour le dossier {ref}.
+
+        Observations expert :
+        {observations_expert}
+
+        Factures énergie analysées :
+        {factures_str}
+
+        Données issues des simulations OpenStudio :
+        {openstudio_str}
+
+        Génère ensuite le rapport complet en respectant le format JSON demandé.
+        """
         })
     else:
         user_content.append({
