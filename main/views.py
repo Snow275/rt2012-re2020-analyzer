@@ -2164,23 +2164,29 @@ def _analyser_facture_ia(fichier_path):
 def upload_facture(request, doc_id):
     """Upload d'une facture PDF pour un dossier."""
     if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Non authentifié'}, status=401)
+        return JsonResponse({'success': False, 'error': 'Non authentifié — rechargez la page'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
-    document = get_object_or_404(Document, id=doc_id)
-    fichier = request.FILES.get('fichier')
-    if not fichier:
-        return JsonResponse({'success': False, 'error': 'Aucun fichier reçu'})
-    if not fichier.name.lower().endswith('.pdf'):
-        return JsonResponse({'success': False, 'error': 'Seuls les PDF sont acceptés'})
-    type_energie = request.POST.get('type_energie', 'electricite')
-    facture = FactureEnergie.objects.create(
-        document=document,
-        fichier=fichier,
-        nom=fichier.name,
-        type_energie=type_energie,
-    )
-    return JsonResponse({'success': True, 'facture_id': facture.id, 'nom': facture.nom})
+    try:
+        document = get_object_or_404(Document, id=doc_id)
+        fichier = request.FILES.get('fichier')
+        if not fichier:
+            return JsonResponse({'success': False, 'error': 'Aucun fichier reçu'})
+        if not fichier.name.lower().endswith('.pdf'):
+            return JsonResponse({'success': False, 'error': 'Seuls les PDF sont acceptés'})
+        type_energie = request.POST.get('type_energie', 'electricite')
+        facture = FactureEnergie.objects.create(
+            document=document,
+            fichier=fichier,
+            nom=fichier.name,
+            type_energie=type_energie,
+        )
+        return JsonResponse({'success': True, 'facture_id': facture.id, 'nom': facture.nom})
+    except Exception as e:
+        err = str(e)
+        if 'no such table' in err or 'does not exist' in err:
+            return JsonResponse({'success': False, 'error': 'Migration manquante — lancez : python manage.py makemigrations && python manage.py migrate'})
+        return JsonResponse({'success': False, 'error': err})
 
 
 def analyser_facture(request, facture_id):
@@ -2247,8 +2253,12 @@ def supprimer_facture(request, facture_id):
 def get_donnees_factures(request, doc_id):
     """Retourne les données agrégées des factures analysées — public (via token) ou admin."""
     import json as _json
-    document = get_object_or_404(Document, id=doc_id)
-    factures = document.factures.filter(analyse_ok=True).order_by('uploaded_at')
+    try:
+        document = get_object_or_404(Document, id=doc_id)
+        factures = document.factures.filter(analyse_ok=True).order_by('uploaded_at')
+    except Exception as e:
+        # Table FactureEnergie inexistante (migration manquante)
+        return JsonResponse({'success': False, 'error': f'Migration manquante : {str(e)}', 'mois': [], 'nb_factures': 0})
     mois = []
     for f in factures:
         d = f.analyse_json or {}
