@@ -19,6 +19,7 @@ from .serializers import DocumentSerializer, AnalysisSerializer
 import PyPDF2
 import re
 import threading
+import base64
 
 
 def send_mail_async(sujet, corps, from_email, recipient_list):
@@ -1682,21 +1683,23 @@ def generer_rapport_ia(request, doc_id):
     # Essayer d'abord les fichiers multi-upload (DocumentFile)
     try:
         for doc_file in document.fichiers.all()[:3]:  # max 3 PDFs
-            try:
-                with open(doc_file.fichier.path, 'rb') as f:
-                    b64 = base64.standard_b64encode(f.read()).decode('utf-8')
-                    pdf_b64_list.append(b64)
-            except Exception as e:
-                print(f"Fichier multi indisponible : {e}")
-    except Exception:
-        pass
+    try:
+        with open(doc_file.fichier.path, "rb") as f:
+            pdf_bytes = f.read()
+            pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            pdf_b64_list.append(pdf_b64)
+    except Exception as e:
+        print(f"Erreur lecture PDF : {e}")
+    
 
     # Fallback sur l'ancien champ upload
     if not pdf_b64_list:
         try:
             if document.upload and document.upload.name:
-                with open(document.upload.path, 'rb') as f:
-                    pdf_b64_list.append(base64.standard_b64encode(f.read()).decode('utf-8'))
+                with open(document.upload.path, "rb") as f:
+                    pdf_bytes = f.read()
+                    pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+                    pdf_b64_list.append(pdf_b64)
         except Exception as e:
             print(f"PDF upload indisponible : {e}")
 
