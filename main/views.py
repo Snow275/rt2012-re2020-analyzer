@@ -1680,15 +1680,29 @@ def generer_rapport_ia(request, doc_id):
     pdf_b64 = None
     pdf_b64_list = []
 
-    for doc_file in document.fichiers.all()[:3]:  # max 3 PDFs
+    for doc_file in document.fichiers.all()[:3]:
+
+        file_path = doc_file.fichier.path
+
+        # Vérifie que le fichier est bien un PDF
+        if not file_path.lower().endswith(".pdf"):
+            print("Fichier ignoré (pas un PDF):", file_path)
+            continue
+
         try:
-            with open(doc_file.fichier.path, "rb") as f:
+            with open(file_path, "rb") as f:
                 pdf_bytes = f.read()
-                pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
-                pdf_b64_list.append(pdf_b64)
+
+            # Vérifie que le fichier commence bien par %PDF
+            if not pdf_bytes.startswith(b"%PDF"):
+                print("Fichier invalide (pas un vrai PDF):", file_path)
+                continue
+
+            pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            pdf_b64_list.append(pdf_b64)
 
         except Exception as e:
-            print(f"Erreur lecture PDF : {e}")
+            print("Erreur lecture PDF:", e)
     
 
     # Fallback sur l'ancien champ upload
