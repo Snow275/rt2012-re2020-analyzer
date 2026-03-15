@@ -2136,21 +2136,135 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
         user_content.append({
         "type": "text",
         "text": f"""
-        Analyse les documents fournis pour le dossier {ref}.
+        Tu es un ingénieur expert en performance énergétique des bâtiments.
 
-        Observations expert :
+        Tu réalises une pré-analyse énergétique professionnelle basée sur :
+        - les données réglementaires
+        - les observations techniques
+        - les factures énergétiques réelles
+        - les résultats de simulation énergétique OpenStudio
+
+        Ton objectif est d’identifier :
+        - la conformité réglementaire
+        - les écarts entre simulation et consommation réelle
+        - les risques énergétiques
+        - les pistes d'amélioration.
+
+        ---
+
+        INFORMATIONS BÂTIMENT
+
+        {infos_batiment}
+
+        ---
+
+        OBSERVATIONS EXPERT
+
         {observations_expert}
 
-        Factures énergie analysées :
+        Ces observations peuvent contenir :
+        - défauts d’isolation
+        - problèmes d’étanchéité
+        - systèmes énergétiques observés
+        - travaux récents
+
+        Utilise ces informations pour enrichir ton analyse.
+
+        ---
+
+        FACTURES ÉNERGÉTIQUES
+
         {factures_str}
 
-        Données issues des simulations OpenStudio :
+        Ces factures représentent la consommation réelle du bâtiment.
+
+        Analyse :
+        - la cohérence des consommations
+        - les niveaux de consommation
+        - les anomalies éventuelles.
+
+        ---
+
+        SIMULATION ÉNERGÉTIQUE OPENSTUDIO
+
         {openstudio_str}
 
-        Compare les consommations réelles issues des factures avec les consommations simulées OpenStudio et identifie les écarts énergétiques éventuels.
-        Explique les causes possibles (isolation, systèmes HVAC, infiltration d'air, comportement des occupants, etc.).
-        
-        Génère ensuite le rapport complet en respectant le format JSON demandé.
+        Ces données proviennent d’une simulation énergétique du bâtiment.
+
+        Analyse :
+        - la consommation simulée
+        - les performances de l’enveloppe
+        - les systèmes énergétiques simulés.
+
+        ---
+
+        MISSION D’ANALYSE
+
+        1. Vérifier la conformité réglementaire selon la norme du projet.
+        2. Comparer les consommations réelles (factures) avec les consommations simulées (OpenStudio).
+        3. Identifier les écarts énergétiques éventuels.
+        4. Proposer des explications techniques possibles :
+           - isolation insuffisante
+           - infiltration d’air
+           - systèmes énergétiques inefficaces
+           - comportement des occupants
+        5. Identifier les points forts énergétiques du bâtiment.
+        6. Formuler des recommandations d'amélioration réalistes.
+
+        ---
+
+        STRUCTURE DU RAPPORT
+
+        Le rapport doit être structuré de la manière suivante :
+
+        1. Résumé exécutif  
+        Présenter une synthèse claire de la performance énergétique du bâtiment, du niveau de conformité réglementaire et des principaux constats.
+
+        2. Vérification réglementaire  
+        Analyser chaque critère réglementaire applicable à la norme du projet et indiquer :
+        - la valeur observée
+        - le seuil réglementaire
+        - le niveau de conformité.
+
+        3. Analyse des performances énergétiques  
+        Évaluer la performance globale du bâtiment en tenant compte :
+        - des données techniques
+        - des observations expert
+        - des simulations énergétiques OpenStudio.
+
+        4. Comparaison simulation / consommation réelle  
+        Comparer les consommations issues des factures avec les consommations simulées.  
+        Identifier les écarts éventuels et proposer des explications techniques possibles.
+
+        5. Analyse de l’enveloppe thermique  
+        Analyser les performances des murs, toiture, planchers, fenêtres et l’étanchéité à l’air.
+
+        6. Analyse des systèmes énergétiques  
+        Évaluer les systèmes de chauffage, ventilation, climatisation et production d’eau chaude si les données sont disponibles.
+
+        7. Points forts du bâtiment  
+        Identifier les éléments positifs contribuant à la performance énergétique.
+
+        8. Points de vigilance  
+        Identifier les éléments pouvant dégrader la performance énergétique ou réduire la marge de conformité.
+
+        9. Recommandations techniques  
+        Proposer des améliorations réalistes permettant d’améliorer la performance énergétique du bâtiment.
+
+        10. Contexte réglementaire  
+        Rappeler brièvement les exigences de la norme énergétique applicable au projet.
+
+        ---
+
+        IMPORTANT
+
+        - Ne jamais inventer de données.
+        - Si certaines informations sont manquantes, le mentionner.
+        - Utiliser uniquement les données fournies dans le dossier.
+
+        ---
+
+        Génère ensuite le rapport complet en respectant le format JSON attendu par l'application.
         """
         })
     else:
