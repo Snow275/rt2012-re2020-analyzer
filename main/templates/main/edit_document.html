@@ -775,14 +775,18 @@
           <div style="font-size:.6rem;color:var(--gray-1)">économies</div>
         </div>
         <div style="background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1rem 1.2rem">
-          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#27c93f;margin-bottom:.4rem">Après rénovation (objectif)</div>
-          <div style="display:flex;align-items:center;gap:.45rem">
-            <input type="number" id="cmp-apres-input" placeholder="ex: 8500" oninput="recalcCmp()"
-              style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.35rem .55rem;color:var(--white);font-size:.84rem;outline:none;font-family:inherit"
-              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'">
-            <span style="font-size:.7rem;color:var(--gray-1)">kWh/an</span>
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#27c93f;margin-bottom:.6rem">Après rénovation (objectif)</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+            <span style="font-size:.72rem;color:var(--gray-1)">Économies ciblées</span>
+            <span id="cmp-pct-label" style="font-size:1.1rem;font-weight:700;color:#27c93f">30%</span>
           </div>
-          <div id="cmp-apres-cout" style="font-size:.85rem;color:#27c93f;margin-top:.35rem;font-weight:600">—</div>
+          <input type="range" id="cmp-apres-input" min="5" max="80" step="5" value="30" oninput="recalcCmp()"
+            style="width:100%;margin-bottom:.5rem;accent-color:#27c93f">
+          <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--gray-1);margin-bottom:.4rem">
+            <span>5%</span><span>40%</span><span>80%</span>
+          </div>
+          <div id="cmp-apres-conso" style="font-size:.82rem;color:var(--gray-2);margin-top:.2rem">— kWh / an</div>
+          <div id="cmp-apres-cout" style="font-size:.85rem;color:#27c93f;margin-top:.2rem;font-weight:600">—</div>
         </div>
       </div>
       <div id="cmp-gains" style="display:none;margin-top:1rem;padding:.8rem 1rem;background:rgba(39,201,63,.05);border:1px solid rgba(39,201,63,.15);border-radius:8px;display:flex;gap:2rem;flex-wrap:wrap">
@@ -1338,20 +1342,21 @@ function initFacCmp(d, symb) {
 }
 
 function recalcCmp() {
-  const apres   = parseFloat(document.getElementById('cmp-apres-input').value);
-  if (isNaN(apres) || apres <= 0) return;
-  const avant   = window._facAvant || 0;
-  const cpk     = window._facCpk   || 0.10;
-  const symb    = window._facSymb  || '$';
-  const gainPct = avant > 0 ? Math.round(((avant-apres)/avant)*100) : 0;
-  const ecoAn   = (avant - apres) * cpk;
-  const co2     = (avant - apres) * 0.026;
-  document.getElementById('cmp-gain-pct').textContent   = gainPct + '%';
-  document.getElementById('cmp-apres-cout').textContent = symb + ' ' + (apres*cpk).toLocaleString('fr',{minimumFractionDigits:2}) + ' / an';
-  document.getElementById('cmp-eco-an').textContent     = symb + ' ' + ecoAn.toLocaleString('fr',{minimumFractionDigits:2}) + ' / an';
-  document.getElementById('cmp-eco-10').textContent     = symb + ' ' + (ecoAn*10).toLocaleString('fr',{minimumFractionDigits:0});
-  document.getElementById('cmp-co2').textContent        = Math.round(co2) + ' kg CO₂';
-  document.getElementById('cmp-gains').style.display    = 'flex';
+  const pct     = parseFloat(document.getElementById('cmp-apres-input').value) || 30;
+  const avant   = window._facAvant  || 0;
+  const cpk     = window._facCpk    || 0.10;
+  const symb    = window._facSymb   || '$';
+  const apres   = avant * (1 - pct / 100);
+  document.getElementById('cmp-pct-label').textContent   = pct + '%';
+  document.getElementById('cmp-gain-pct').textContent    = pct + '%';
+  document.getElementById('cmp-apres-conso').textContent = Math.round(apres).toLocaleString('fr') + ' kWh / an';
+  document.getElementById('cmp-apres-cout').textContent  = symb + ' ' + (apres * cpk).toLocaleString('fr', {minimumFractionDigits:2}) + ' / an';
+  const ecoAn = (avant - apres) * cpk;
+  const co2   = (avant - apres) * 0.026;
+  document.getElementById('cmp-eco-an').textContent  = symb + ' ' + ecoAn.toLocaleString('fr', {minimumFractionDigits:2}) + ' / an';
+  document.getElementById('cmp-eco-10').textContent  = symb + ' ' + (ecoAn * 10).toLocaleString('fr', {minimumFractionDigits:0});
+  document.getElementById('cmp-co2').textContent     = Math.round(co2) + ' kg CO₂';
+  document.getElementById('cmp-gains').style.display = 'flex';
 }
 </script>
 
