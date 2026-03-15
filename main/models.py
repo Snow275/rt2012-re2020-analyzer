@@ -221,10 +221,19 @@ class FactureEnergie(models.Model):
 
 class DocumentFile(models.Model):
     """Fichiers multiples associés à un dossier."""
-    document   = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='fichiers')
-    fichier    = models.FileField(upload_to='documents/')
-    nom        = models.CharField(max_length=255, blank=True)
-    taille     = models.IntegerField(null=True, blank=True)  # en octets
+
+    TYPE_CHOICES = [
+        ("document", "Document"),
+        ("openstudio_html", "Rapport OpenStudio HTML"),
+        ("openstudio_csv", "Résultats OpenStudio CSV"),
+        ("openstudio_sql", "Base OpenStudio SQL"),
+    ]
+
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='fichiers')
+    fichier = models.FileField(upload_to='documents/')
+    nom = models.CharField(max_length=255, blank=True)
+    taille = models.IntegerField(null=True, blank=True)
+    type_fichier = models.CharField(max_length=50, choices=TYPE_CHOICES, default="document")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
