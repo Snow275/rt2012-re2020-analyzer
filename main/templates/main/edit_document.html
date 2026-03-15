@@ -319,6 +319,31 @@
       </div>
       {% endif %}
     </div>
+    <div class="card" style="padding:1.8rem;margin-top:2rem">
+
+<h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">
+⚡ Import rapport OpenStudio
+</h3>
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+<input type="hidden" name="upload_openstudio" value="1">
+
+<input type="file" name="openstudio_file" accept=".html,.csv,.sql"
+style="margin-bottom:1rem">
+
+<button type="submit" class="btn btn-gold">
+Importer rapport OpenStudio
+</button>
+
+</form>
+
+<p style="font-size:.8rem;color:var(--gray-1);margin-top:.7rem">
+Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
+</p>
+
+</div>
   </div>
 
   <!-- ══════════════════════════════════════════════════════
