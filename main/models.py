@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Standard(models.Model):
     TYPE_CHOICES = (
         ("RE2020", "RE2020"),
@@ -19,11 +20,10 @@ class Standard(models.Model):
 
 class Document(models.Model):
     STATUS_CHOICES = (
-        ("recu", "Reçu"),
+        ("recu",     "Reçu"),
         ("en_cours", "En cours d'analyse"),
-        ("termine", "Terminé"),
+        ("termine",  "Terminé"),
     )
-
     BUILDING_TYPE_CHOICES = (
         ('maison',    'Maison individuelle'),
         ('collectif', 'Logement collectif'),
@@ -73,75 +73,139 @@ class Document(models.Model):
         ('CNEB2020', 'CNEB 2020'),
         ('LENOZ',    'LENOZ'),
     )
-
-    name = models.CharField(max_length=255)
-    client_name = models.CharField(max_length=255, blank=True, default="")
-    client_email = models.EmailField(blank=True, default="")
-    admin_notes = models.TextField(blank=True, default="")
-    building_type = models.CharField(max_length=20, choices=BUILDING_TYPE_CHOICES, default='maison')
-    climate_zone = models.CharField(max_length=6, choices=ZONE_CHOICES, default='H2')
-    upload = models.FileField(upload_to="documents/")
-    upload_date = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="recu")
-    tracking_token = models.CharField(max_length=64, unique=True, blank=True)
-    rapport_pdf = models.FileField(upload_to="rapports/", null=True, blank=True)
-    pays = models.CharField(max_length=5, choices=PAYS_CHOICES, default="FR")
-    norme = models.CharField(max_length=10, choices=NORME_CHOICES, default="RE2020")
-
-    # ── Nouveaux champs bâtiment ──
     TYPE_ANALYSE_CHOICES = (
-        ('energie',  'Pré-analyse énergétique'),
-        ('pca',      'Pré-analyse technique (PCA)'),
-        ('complet',  'Analyse complète'),
+        ('energie', 'Pré-analyse énergétique'),
+        ('pca',     'Pré-analyse technique (PCA)'),
+        ('complet', 'Analyse complète'),
     )
-    surface_totale       = models.FloatField(null=True, blank=True)
-    annee_construction   = models.IntegerField(null=True, blank=True)
-    nombre_logements     = models.IntegerField(null=True, blank=True)
-    type_analyse         = models.CharField(max_length=10, choices=TYPE_ANALYSE_CHOICES, default='energie')
 
-    # ── Rapport IA (JSON sauvegardé en BDD pour éviter de régénérer) ──
+    # ── Nouveau : type de rapport détecté automatiquement ──────────────
+    TYPE_RAPPORT_CHOICES = (
+        ('inconnu',           'Non détecté'),
+        ('climawin_rt2012',   'Climawin — RT2012'),
+        ('climawin_re2020',   'Climawin — RE2020'),
+        ('pleiades_rt2012',   'Pléiades — RT2012'),
+        ('pleiades_re2020',   'Pléiades — RE2020'),
+        ('dpe',               'DPE'),
+        ('attestation_rt2012','Attestation RT2012'),
+        ('attestation_re2020','Attestation RE2020'),
+        ('etude_thermique',   'Étude thermique générique'),
+        ('facture',           'Facture énergie'),
+        ('autre',             'Autre document'),
+    )
+
+    name          = models.CharField(max_length=255)
+    client_name   = models.CharField(max_length=255, blank=True, default="")
+    client_email  = models.EmailField(blank=True, default="")
+    admin_notes   = models.TextField(blank=True, default="")
+    building_type = models.CharField(max_length=20, choices=BUILDING_TYPE_CHOICES, default='maison')
+    climate_zone  = models.CharField(max_length=6,  choices=ZONE_CHOICES, default='H2')
+    upload        = models.FileField(upload_to="documents/")
+    upload_date   = models.DateTimeField(auto_now_add=True)
+    is_active     = models.BooleanField(default=True)
+    status        = models.CharField(max_length=20, choices=STATUS_CHOICES, default="recu")
+    tracking_token= models.CharField(max_length=64, unique=True, blank=True)
+    rapport_pdf   = models.FileField(upload_to="rapports/", null=True, blank=True)
+    pays          = models.CharField(max_length=5,  choices=PAYS_CHOICES, default="FR")
+    norme         = models.CharField(max_length=10, choices=NORME_CHOICES, default="RE2020")
+
+    # ── Infos bâtiment ─────────────────────────────────────────────────
+    surface_totale     = models.FloatField(null=True, blank=True)
+    annee_construction = models.IntegerField(null=True, blank=True)
+    nombre_logements   = models.IntegerField(null=True, blank=True)
+    type_analyse       = models.CharField(max_length=10, choices=TYPE_ANALYSE_CHOICES, default='energie')
+
+    # ── Rapport IA sauvegardé ──────────────────────────────────────────
     rapport_ia_json = models.TextField(null=True, blank=True)
 
-    # Champs RE2020
-    re2020_energy_efficiency = models.FloatField(null=True, blank=True)
-    re2020_thermal_comfort = models.FloatField(null=True, blank=True)
-    re2020_carbon_emissions = models.FloatField(null=True, blank=True)
-    re2020_water_management = models.FloatField(null=True, blank=True)
+    # ── Type de rapport détecté + métadonnées extraction ──────────────
+    type_rapport         = models.CharField(max_length=30, choices=TYPE_RAPPORT_CHOICES, default='inconnu')
+    extraction_ok        = models.BooleanField(default=False)
+    extraction_json      = models.JSONField(null=True, blank=True)   # résumé brut extrait par Claude
+    extraction_alertes   = models.JSONField(null=True, blank=True)   # liste d'alertes de cohérence
+    logiciel_detecte     = models.CharField(max_length=100, blank=True, default='')  # ex: "Climawin v4.2"
+    version_norme_detectee = models.CharField(max_length=50, blank=True, default='') # ex: "RT2012 - Arrêté 2010"
+
+    # ── Champs RE2020 ──────────────────────────────────────────────────
+    re2020_energy_efficiency  = models.FloatField(null=True, blank=True)
+    re2020_thermal_comfort    = models.FloatField(null=True, blank=True)
+    re2020_carbon_emissions   = models.FloatField(null=True, blank=True)
+    re2020_water_management   = models.FloatField(null=True, blank=True)
     re2020_indoor_air_quality = models.FloatField(null=True, blank=True)
 
-    # Champs RT2012
-    rt2012_bbio = models.FloatField(null=True, blank=True)
-    rt2012_cep = models.FloatField(null=True, blank=True)
-    rt2012_tic = models.FloatField(null=True, blank=True)
+    # ── Champs RT2012 ──────────────────────────────────────────────────
+    rt2012_bbio         = models.FloatField(null=True, blank=True)
+    rt2012_cep          = models.FloatField(null=True, blank=True)
+    rt2012_tic          = models.FloatField(null=True, blank=True)
     rt2012_airtightness = models.FloatField(null=True, blank=True)
-    rt2012_enr = models.FloatField(null=True, blank=True)
+    rt2012_enr          = models.FloatField(null=True, blank=True)
 
-    # Champs PEB (Belgique)
-    peb_espec = models.FloatField(null=True, blank=True)
-    peb_ew = models.FloatField(null=True, blank=True)
-    peb_u_mur = models.FloatField(null=True, blank=True)
-    peb_u_toit = models.FloatField(null=True, blank=True)
-    peb_u_plancher = models.FloatField(null=True, blank=True)
+    # ── Champs PEB (Belgique) ──────────────────────────────────────────
+    peb_espec     = models.FloatField(null=True, blank=True)
+    peb_ew        = models.FloatField(null=True, blank=True)
+    peb_u_mur     = models.FloatField(null=True, blank=True)
+    peb_u_toit    = models.FloatField(null=True, blank=True)
+    peb_u_plancher= models.FloatField(null=True, blank=True)
 
-    # Champs Minergie / SIA380 (Suisse)
-    minergie_qh = models.FloatField(null=True, blank=True)
+    # ── Champs Minergie / SIA380 (Suisse) ─────────────────────────────
+    minergie_qh   = models.FloatField(null=True, blank=True)
     minergie_qtot = models.FloatField(null=True, blank=True)
-    minergie_n50 = models.FloatField(null=True, blank=True)
-    sia380_qh = models.FloatField(null=True, blank=True)
+    minergie_n50  = models.FloatField(null=True, blank=True)
+    sia380_qh     = models.FloatField(null=True, blank=True)
 
-    # Champs CNEB (Canada)
-    cneb_ei = models.FloatField(null=True, blank=True)
-    cneb_u_mur = models.FloatField(null=True, blank=True)
-    cneb_u_toit = models.FloatField(null=True, blank=True)
-    cneb_u_fenetre = models.FloatField(null=True, blank=True)
-    cneb_infiltration = models.FloatField(null=True, blank=True)
+    # ── Champs CNEB (Canada) ───────────────────────────────────────────
+    cneb_ei          = models.FloatField(null=True, blank=True)
+    cneb_u_mur       = models.FloatField(null=True, blank=True)
+    cneb_u_toit      = models.FloatField(null=True, blank=True)
+    cneb_u_fenetre   = models.FloatField(null=True, blank=True)
+    cneb_infiltration= models.FloatField(null=True, blank=True)
 
-    # Champs LENOZ (Luxembourg)
-    lenoz_ep = models.FloatField(null=True, blank=True)
-    lenoz_ew = models.FloatField(null=True, blank=True)
+    # ── Champs LENOZ (Luxembourg) ──────────────────────────────────────
+    lenoz_ep    = models.FloatField(null=True, blank=True)
+    lenoz_ew    = models.FloatField(null=True, blank=True)
     lenoz_u_mur = models.FloatField(null=True, blank=True)
-    lenoz_u_toit = models.FloatField(null=True, blank=True)
+    lenoz_u_toit= models.FloatField(null=True, blank=True)
+
+    # ── Champs DPE ────────────────────────────────────────────────────
+    dpe_classe_energie  = models.CharField(max_length=1, blank=True, default='')  # A à G
+    dpe_classe_ges      = models.CharField(max_length=1, blank=True, default='')  # A à G
+    dpe_conso_ep        = models.FloatField(null=True, blank=True)   # kWh ep/m².an
+    dpe_emission_ges    = models.FloatField(null=True, blank=True)   # kgCO2eq/m².an
+    dpe_surface_ref     = models.FloatField(null=True, blank=True)   # m²
+    dpe_date_visite     = models.CharField(max_length=20, blank=True, default='')
+    dpe_diagnostiqueur  = models.CharField(max_length=255, blank=True, default='')
+
+    # ── Champs observations expert (PCA) ──────────────────────────────
+    obs_toiture_etat      = models.CharField(max_length=20, blank=True, default='')
+    obs_toiture_age       = models.IntegerField(null=True, blank=True)
+    obs_toiture_notes     = models.TextField(blank=True, default='')
+    obs_facade_etat       = models.CharField(max_length=20, blank=True, default='')
+    obs_facade_isolation  = models.CharField(max_length=20, blank=True, default='')
+    obs_facade_notes      = models.TextField(blank=True, default='')
+    obs_menuiseries_type  = models.CharField(max_length=20, blank=True, default='')
+    obs_menuiseries_etat  = models.CharField(max_length=20, blank=True, default='')
+    obs_menuiseries_notes = models.TextField(blank=True, default='')
+    obs_chauffage_type    = models.CharField(max_length=20, blank=True, default='')
+    obs_chauffage_age     = models.IntegerField(null=True, blank=True)
+    obs_chauffage_etat    = models.CharField(max_length=20, blank=True, default='')
+    obs_plomberie_etat    = models.CharField(max_length=20, blank=True, default='')
+    obs_ecs_age           = models.IntegerField(null=True, blank=True)
+    obs_elec_etat         = models.CharField(max_length=20, blank=True, default='')
+    obs_vmc_type          = models.CharField(max_length=20, blank=True, default='')
+    obs_vmc_etat          = models.CharField(max_length=20, blank=True, default='')
+    obs_humidite          = models.CharField(max_length=20, blank=True, default='')
+    obs_fissures          = models.CharField(max_length=20, blank=True, default='')
+    obs_risques_notes     = models.TextField(blank=True, default='')
+    obs_cout_toiture      = models.FloatField(null=True, blank=True)
+    obs_cout_isolation    = models.FloatField(null=True, blank=True)
+    obs_cout_chauffage    = models.FloatField(null=True, blank=True)
+    obs_cout_menuiseries  = models.FloatField(null=True, blank=True)
+    obs_cout_plomberie    = models.FloatField(null=True, blank=True)
+    obs_cout_autres       = models.FloatField(null=True, blank=True)
+    obs_conso_kwh         = models.FloatField(null=True, blank=True)
+    obs_cout_energie      = models.FloatField(null=True, blank=True)
+    obs_classe_dpe        = models.CharField(max_length=1, blank=True, default='')
+    obs_potentiel_economies = models.CharField(max_length=20, blank=True, default='')
 
     def __str__(self):
         return self.name
@@ -154,7 +218,6 @@ class Document(models.Model):
 
     @property
     def is_conform(self):
-        """Vérifie la conformité selon le pays et la norme du dossier."""
         from main.templatetags.conformity_tags import get_seuils, NORME_FIELDS, CRITERIA_GREATER_EQUAL
         norme_fields = NORME_FIELDS.get(self.norme, [])
         if not norme_fields:
@@ -177,19 +240,22 @@ class Document(models.Model):
 
     @property
     def re2020_is_conform(self):
-        if self.norme != 'RE2020':
-            return None
-        return self.is_conform
+        return self.is_conform if self.norme == 'RE2020' else None
 
     @property
     def rt2012_is_conform(self):
-        if self.norme != 'RT2012':
-            return None
-        return self.is_conform
+        return self.is_conform if self.norme == 'RT2012' else None
+
+    @property
+    def type_rapport_label(self):
+        return dict(self.TYPE_RAPPORT_CHOICES).get(self.type_rapport, 'Non détecté')
+
+    @property
+    def has_dpe(self):
+        return bool(self.dpe_classe_energie)
 
 
 class FactureEnergie(models.Model):
-    """Factures PDF d'énergie uploadées par le client — analysées par l'IA."""
     ENERGIE_CHOICES = [
         ('electricite', 'Électricité'),
         ('gaz',         'Gaz naturel'),
@@ -220,21 +286,25 @@ class FactureEnergie(models.Model):
 
 
 class DocumentFile(models.Model):
-    """Fichiers multiples associés à un dossier."""
-
     TYPE_CHOICES = [
-        ("document", "Document"),
-        ("openstudio_html", "Rapport OpenStudio HTML"),
-        ("openstudio_csv", "Résultats OpenStudio CSV"),
-        ("openstudio_sql", "Base OpenStudio SQL"),
+        ("document",        "Document"),
+        ("etude_thermique", "Étude thermique"),
+        ("dpe",             "DPE"),
+        ("attestation",     "Attestation de conformité"),
+        ("climawin",        "Rapport Climawin"),
+        ("pleiades",        "Rapport Pléiades"),
     ]
-
-    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='fichiers')
-    fichier = models.FileField(upload_to='documents/')
-    nom = models.CharField(max_length=255, blank=True)
-    taille = models.IntegerField(null=True, blank=True)
+    document     = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='fichiers')
+    fichier      = models.FileField(upload_to='documents/')
+    nom          = models.CharField(max_length=255, blank=True)
+    taille       = models.IntegerField(null=True, blank=True)
     type_fichier = models.CharField(max_length=50, choices=TYPE_CHOICES, default="document")
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_at  = models.DateTimeField(auto_now_add=True)
+
+    # ── Résultat de l'analyse de ce fichier spécifique ────────────────
+    type_rapport_detecte = models.CharField(max_length=30, blank=True, default='')
+    extraction_ok        = models.BooleanField(default=False)
+    extraction_json      = models.JSONField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.nom and self.fichier:
@@ -246,12 +316,12 @@ class DocumentFile(models.Model):
 
 
 class Analysis(models.Model):
-    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="analyses")
-    standard = models.ForeignKey(Standard, on_delete=models.CASCADE, null=True, blank=True, related_name="analyses")
-    criteria = models.CharField(max_length=255)
-    value = models.FloatField()
+    document    = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="analyses")
+    standard    = models.ForeignKey(Standard, on_delete=models.CASCADE, null=True, blank=True, related_name="analyses")
+    criteria    = models.CharField(max_length=255)
+    value       = models.FloatField()
     requirement = models.FloatField()
-    compliance = models.BooleanField()
+    compliance  = models.BooleanField()
 
     def __str__(self):
         return f"{self.document.name} - {self.criteria}"
@@ -264,35 +334,25 @@ class Devis(models.Model):
         ('refuse',     'Refusé'),
         ('facture',    'Facturé'),
     ]
-
     TYPE_CHOICES = [
-        ('maison',     'Maison individuelle'),
-        ('collectif',  'Logement collectif'),
-        ('tertiaire',  'Bâtiment tertiaire'),
-        ('autre',      'Autre'),
+        ('maison',    'Maison individuelle'),
+        ('collectif', 'Logement collectif'),
+        ('tertiaire', 'Bâtiment tertiaire'),
+        ('autre',     'Autre'),
     ]
 
-    # Client
-    client_nom   = models.CharField(max_length=255)
-    client_email = models.EmailField()
-    client_phone = models.CharField(max_length=30, blank=True, default='')
-
-    # Projet
-    projet_nom   = models.CharField(max_length=255, blank=True, default='')
+    client_nom    = models.CharField(max_length=255)
+    client_email  = models.EmailField()
+    client_phone  = models.CharField(max_length=30, blank=True, default='')
+    projet_nom    = models.CharField(max_length=255, blank=True, default='')
     type_batiment = models.CharField(max_length=20, choices=TYPE_CHOICES, default='maison')
-    norme        = models.CharField(max_length=20, choices=[('RT2012','RT2012'),('RE2020','RE2020'),('Les deux','Les deux')], default='RE2020')
-
-    # Devis
-    montant      = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    statut       = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
-    notes        = models.TextField(blank=True, default='')
-
-    # Dates
-    created_at   = models.DateTimeField(auto_now_add=True)
-    updated_at   = models.DateTimeField(auto_now=True)
-
-    # Lien optionnel avec un dossier
-    document     = models.ForeignKey(Document, on_delete=models.SET_NULL, null=True, blank=True, related_name='devis')
+    norme         = models.CharField(max_length=20, choices=[('RT2012','RT2012'),('RE2020','RE2020'),('Les deux','Les deux')], default='RE2020')
+    montant       = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    statut        = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
+    notes         = models.TextField(blank=True, default='')
+    created_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
+    document      = models.ForeignKey(Document, on_delete=models.SET_NULL, null=True, blank=True, related_name='devis')
 
     class Meta:
         ordering = ['-created_at']
