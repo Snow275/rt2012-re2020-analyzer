@@ -2080,8 +2080,8 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
 
     # Données factures énergie
     factures_data = []
+    
     try:
-
         for f in document.factures.all():
 
             d = f.analyse_json or {}
@@ -2132,6 +2132,7 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
               for ligne in contenu.splitlines():
                   for mot in mots_cles:
                       if mot in ligne:
+                          
               sections_importantes.append(ligne)
 
               contenu_filtre = "\n".join(sections_importantes)
