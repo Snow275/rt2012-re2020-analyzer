@@ -2556,21 +2556,25 @@ def rapport_ia_client(request, token):
 
     # Données factures côté client
     import json as _json2
-    factures_data = []
-    if document.type_analyse in ('energie', 'complet'):
-        for f in document.factures.filter(analyse_ok=True).order_by('uploaded_at'):
-            d = f.analyse_json or {}
-            if d.get('consommation') is not None:
-                factures_data.append({
-                    'periode_debut': d.get('periode_debut'),
-                    'periode_fin':   d.get('periode_fin'),
-                    'consommation':  d.get('consommation'),
-                    'unite':         d.get('unite', 'kWh'),
-                    'montant_ttc':   d.get('montant_ttc'),
-                    'cout_par_kwh':  d.get('cout_par_kwh'),
-                    'type_energie':  f.type_energie,
-                    'devise':        d.get('devise', 'CAD'),
-                })
+    # Données factures énergie
+factures_data = []
+
+try:
+    for f in document.factures.all():
+
+        d = f.analyse_json or {}
+
+        factures_data.append({
+            "energie": f.type_energie,
+            "periode_debut": d.get("periode_debut"),
+            "periode_fin": d.get("periode_fin"),
+            "consommation": d.get("consommation"),
+            "montant_ttc": d.get("montant_ttc"),
+            "analyse_ok": f.analyse_ok
+        })
+
+except Exception as e:
+    print("Erreur lecture factures:", e)
 
     return render(request, "main/rapport_ia_client.html", {
         "document":      document,
