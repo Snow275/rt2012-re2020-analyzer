@@ -785,6 +785,62 @@ select.f-input option { background: #0c1929; }
   ══════════════════════════════════════════════════════ -->
   <div id="panel-documents" style="display:none">
 
+    <!-- ── Bandeau résultat analyse ────────────────────────── -->
+    {% if document.extraction_ok or document.type_rapport != 'inconnu' %}
+    <div style="margin-bottom:1.5rem;padding:1.1rem 1.4rem;border-radius:10px;
+      background:{% if document.extraction_ok %}rgba(39,201,63,.06){% else %}rgba(255,193,7,.06){% endif %};
+      border:1px solid {% if document.extraction_ok %}rgba(39,201,63,.2){% else %}rgba(255,193,7,.2){% endif %}">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem">
+        <div>
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:{% if document.extraction_ok %}var(--success){% else %}#ffc107{% endif %};margin-bottom:.3rem">
+            {% if document.extraction_ok %}✓ Rapport analysé avec succès{% else %}⚠ Analyse partielle{% endif %}
+          </div>
+          <div style="font-size:.88rem;color:var(--white);font-weight:600">
+            {{ document.type_rapport_label }}
+            {% if document.logiciel_detecte %}<span style="font-weight:400;color:var(--gray-1)"> — {{ document.logiciel_detecte }}</span>{% endif %}
+          </div>
+          {% if document.version_norme_detectee %}
+          <div style="font-size:.78rem;color:var(--gray-1);margin-top:.2rem">{{ document.version_norme_detectee }}</div>
+          {% endif %}
+        </div>
+        <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+          {% if document.extraction_ok %}
+          <span style="font-size:.75rem;padding:.25rem .7rem;background:rgba(39,201,63,.1);border:1px solid rgba(39,201,63,.25);border-radius:20px;color:var(--success)">
+            Norme : {{ document.norme }}
+          </span>
+          {% endif %}
+          <button id="btn-analyser-doc" onclick="analyserDocument()"
+            style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:7px;color:var(--gold);font-size:.82rem;cursor:pointer;font-weight:500">
+            🔄 Ré-analyser
+          </button>
+        </div>
+      </div>
+      {% if document.extraction_alertes %}
+      <div style="margin-top:.9rem;padding:.7rem .9rem;background:rgba(229,169,58,.06);border:1px solid rgba(229,169,58,.2);border-radius:7px">
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#E5A93A;margin-bottom:.4rem">⚠ Alertes de cohérence</div>
+        {% for alerte in document.extraction_alertes %}
+        <div style="font-size:.79rem;color:var(--gray-2);margin-bottom:.2rem">• {{ alerte }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <!-- Pas encore analysé -->
+    <div style="margin-bottom:1.5rem;padding:1rem 1.4rem;border-radius:10px;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.12);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div>
+        <div style="font-size:.82rem;color:var(--white);font-weight:500">🔍 Documents non encore analysés</div>
+        <div style="font-size:.76rem;color:var(--gray-1);margin-top:.2rem">Cliquez sur Analyser pour détecter automatiquement le type de rapport et extraire les valeurs thermiques.</div>
+      </div>
+      <button id="btn-analyser-doc" onclick="analyserDocument()"
+        style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;background:linear-gradient(135deg,#C8A84B,#e0c070);border:none;border-radius:7px;color:#0C1929;font-size:.83rem;cursor:pointer;font-weight:700;white-space:nowrap">
+        ✨ Analyser les documents
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- ── Résultat live après analyse AJAX ─────────────────── -->
+    <div id="analyse-result" style="display:none;margin-bottom:1.5rem"></div>
+
     <div class="card card--pad" style="padding:1.8rem">
       <h3 class="section-title" style="margin-bottom:1.4rem">📁 Documents déposés par le client</h3>
 
@@ -822,20 +878,6 @@ select.f-input option { background: #0c1929; }
         <p class="doc-empty__text">Aucun document déposé.</p>
       </div>
       {% endif %}
-    </div>
-
-    <!-- Import OpenStudio -->
-    <div class="card card--pad" style="padding:1.8rem;margin-top:2rem">
-      <h3 class="section-title" style="margin-bottom:1rem">⚡ Import rapport OpenStudio</h3>
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" name="upload_openstudio" value="1">
-        <input type="file" name="openstudio_file" accept=".html,.csv,.sql" style="margin-bottom:1rem">
-        <button type="submit" class="btn btn-gold">Importer rapport OpenStudio</button>
-      </form>
-      <p style="font-size:.8rem;color:var(--gray-1);margin-top:.7rem">
-        Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
-      </p>
     </div>
 
   </div><!-- /panel-documents -->
@@ -2255,5 +2297,68 @@ function recalcCmp() {
     calcTotal();
   });
 })();
+
+// ── Analyse intelligente du dossier ──────────────────────
+async function analyserDocument() {
+  const btn = document.getElementById('btn-analyser-doc');
+  const resultDiv = document.getElementById('analyse-result');
+  if (!btn || !resultDiv) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyse en cours…';
+  resultDiv.style.display = 'none';
+
+  try {
+    const resp = await fetch(`/dossier/${DOC_ID}/analyser/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrf() },
+    });
+    const d = await resp.json();
+
+    if (!resp.ok || !d.success) throw new Error(d.error || 'Erreur inconnue');
+
+    const alertesHtml = (d.alertes || []).length
+      ? `<div style="margin-top:.9rem;padding:.7rem .9rem;background:rgba(229,169,58,.06);border:1px solid rgba(229,169,58,.2);border-radius:7px">
+           <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#E5A93A;margin-bottom:.4rem">⚠ Alertes de cohérence</div>
+           ${(d.alertes).map(a => `<div style="font-size:.79rem;color:var(--gray-2);margin-bottom:.2rem">• ${a}</div>`).join('')}
+         </div>`
+      : '';
+
+    const batimentHtml = d.batiment && Object.values(d.batiment).some(v => v)
+      ? `<div style="margin-top:.9rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem">
+           ${d.batiment.nom_projet   ? `<div><div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase">Projet</div><div style="font-size:.8rem;color:var(--white)">${d.batiment.nom_projet}</div></div>` : ''}
+           ${d.batiment.surface_totale ? `<div><div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase">Surface</div><div style="font-size:.8rem;color:var(--white)">${d.batiment.surface_totale} m²</div></div>` : ''}
+           ${d.batiment.annee_construction ? `<div><div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase">Année</div><div style="font-size:.8rem;color:var(--white)">${d.batiment.annee_construction}</div></div>` : ''}
+           ${d.batiment.bureau_etudes ? `<div><div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase">Bureau d'études</div><div style="font-size:.8rem;color:var(--white)">${d.batiment.bureau_etudes}</div></div>` : ''}
+           ${d.batiment.date_etude   ? `<div><div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase">Date étude</div><div style="font-size:.8rem;color:var(--white)">${d.batiment.date_etude}</div></div>` : ''}
+         </div>`
+      : '';
+
+    resultDiv.innerHTML = `
+      <div style="padding:1.2rem 1.4rem;border-radius:10px;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--success)">✓ Analyse terminée</div>
+          <span style="font-size:.75rem;padding:.2rem .6rem;background:rgba(39,201,63,.1);border:1px solid rgba(39,201,63,.25);border-radius:20px;color:var(--success)">${d.nb_valeurs_extraites} valeur${d.nb_valeurs_extraites > 1 ? 's' : ''} extraite${d.nb_valeurs_extraites > 1 ? 's' : ''}</span>
+        </div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--white)">${d.type_rapport_label}</div>
+        <div style="font-size:.78rem;color:var(--gray-1);margin-top:.15rem">${d.logiciel_detecte || ''} ${d.version_norme ? '— ' + d.version_norme : ''}</div>
+        ${d.resume ? `<div style="font-size:.8rem;color:var(--gray-2);margin-top:.5rem;font-style:italic">${d.resume}</div>` : ''}
+        ${alertesHtml}
+        ${batimentHtml}
+        <div style="margin-top:1rem;font-size:.78rem;color:var(--gray-1)">
+          💡 Les valeurs ont été injectées dans le dossier. Rechargez la page pour voir les champs mis à jour.
+          <button onclick="location.reload()" style="margin-left:.5rem;padding:.2rem .6rem;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:5px;color:var(--gold);font-size:.75rem;cursor:pointer">Recharger</button>
+        </div>
+      </div>`;
+    resultDiv.style.display = 'block';
+
+  } catch (err) {
+    resultDiv.innerHTML = `<div style="padding:.8rem 1rem;background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.25);border-radius:8px;font-size:.83rem;color:#ef5350">❌ ${err.message}</div>`;
+    resultDiv.style.display = 'block';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Ré-analyser'; }
+  }
+}
+
 </script>
 {% endblock %}
