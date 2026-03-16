@@ -2,15 +2,40 @@
 {% block title %}Suivi dossier — {{ document.name }}{% endblock %}
 
 {% block content %}
+<style>
+.tracking-grid { display:grid;grid-template-columns:1fr 1.4fr;gap:2.5rem;align-items:start }
+.step-row { display:flex;align-items:center;gap:.9rem;padding:.55rem 0 }
+.step-dot { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.72rem;font-weight:700 }
+.step-dot.done   { background:rgba(39,201,63,.15);color:#27c93f;border:1px solid rgba(39,201,63,.25) }
+.step-dot.active { background:rgba(200,168,75,.15);color:var(--gold);border:1px solid rgba(200,168,75,.35) }
+.step-dot.pending{ background:rgba(255,255,255,.04);color:var(--muted);border:1px solid rgba(255,255,255,.07) }
+.step-connector { width:1px;height:18px;background:rgba(255,255,255,.07);margin-left:13px }
+.info-row { display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.04) }
+.info-row:last-child { border-bottom:none }
+.kpi-box { background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem 1.2rem;text-align:center }
+.badge-status { display:inline-flex;align-items:center;gap:.45rem;font-size:.85rem;font-weight:600;padding:.4rem 1.1rem;border-radius:50px }
+.badge-recu    { background:rgba(136,150,164,.1);border:1px solid rgba(136,150,164,.2);color:#c2cdd6 }
+.badge-encours { background:rgba(229,169,58,.1);border:1px solid rgba(229,169,58,.25);color:#e5a93a }
+.badge-termine { background:rgba(39,201,63,.1);border:1px solid rgba(39,201,63,.25);color:#27c93f }
+@media(max-width:768px) { .tracking-grid { grid-template-columns:1fr } }
+</style>
+
+{# ── Header ───────────────────────────────────────────────────── #}
 <div class="page-header">
   <div class="ph-inner">
-    <span class="s-label">Suivi de dossier</span>
+    <span class="s-label">Validation indépendante · ConformExpert</span>
     <h1>{{ document.name }}</h1>
-    <p>
-      {% if document.date_debut_analyse %}
-        Délai : <span style="color:var(--gold);font-weight:500">{{ document.date_livraison|date:"d M Y" }}</span>
-      {% else %}
-        Reçu le {{ document.upload_date|date:"d M" }}
+    <p style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-size:.85rem;color:var(--gray-1)">
+      <span>DOC-{{ document.id|stringformat:"04d" }}</span>
+      <span style="opacity:.3">·</span>
+      <span>Reçu le {{ document.upload_date|date:"d/m/Y" }}</span>
+      {% if document.norme and document.norme != 'RE2020' or document.type_analyse %}
+      <span style="opacity:.3">·</span>
+      <span style="color:var(--gold)">
+        {% if document.type_analyse == 'pca' %}Pré-analyse technique
+        {% elif document.type_analyse == 'complet' %}Analyse complète
+        {% else %}Validation {{ document.norme }}{% endif %}
+      </span>
       {% endif %}
     </p>
   </div>
@@ -18,139 +43,293 @@
 
 <div class="container">
 
+  {# ── Flash devis accepté ──────────────────────────────────────── #}
   {% if devis_accepte %}
-  <div style="background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
-    <span style="font-size:1.5rem">✅</span>
+  <div style="background:rgba(39,201,63,.07);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1.1rem 1.4rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
+    <span style="font-size:1.4rem">✅</span>
     <div>
-      <div style="font-size:.95rem;color:var(--success);font-weight:500">Devis accepté — l'analyse a démarré !</div>
-      <div style="font-size:.82rem;color:var(--gray-1);margin-top:.3rem">Un email de confirmation vous a été envoyé. Conservez cette page pour suivre l'avancement.</div>
+      <div style="font-size:.92rem;color:var(--success);font-weight:600">Devis accepté — la validation a démarré !</div>
+      <div style="font-size:.8rem;color:var(--gray-1);margin-top:.25rem">Un email de confirmation vous a été envoyé. Revenez sur cette page pour suivre l'avancement.</div>
     </div>
   </div>
   {% endif %}
 
-  <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:3rem;align-items:start">
+  <div class="tracking-grid">
 
-    <!-- Statut et progression -->
-    <div class="fade-up">
-      <div class="card card-gold" style="padding:2rem;margin-bottom:1.5rem">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem">
+    {# ════ COLONNE GAUCHE — Progression ════ #}
+    <div>
+
+      {# Carte statut principal #}
+      <div class="card" style="padding:1.8rem;margin-bottom:1.5rem;border-color:rgba(200,168,75,.15)">
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.6rem">
           <div>
-            <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-1);margin-bottom:.3rem">Statut actuel</div>
+            <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-1);margin-bottom:.5rem">Statut du dossier</div>
             {% if document.status == 'recu' %}
-              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(136,150,164,.12);border:1px solid rgba(136,150,164,.25);color:#C2CDD6;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">📥 Dossier reçu</span>
+              <span class="badge-status badge-recu">📥 Dossier reçu</span>
             {% elif document.status == 'en_cours' %}
-              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(229,169,58,.12);border:1px solid rgba(229,169,58,.3);color:#E5A93A;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">🔍 En cours</span>
+              <span class="badge-status badge-encours">🔍 Validation en cours</span>
             {% else %}
-              <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(39,201,63,.12);border:1px solid rgba(39,201,63,.3);color:#27C93F;font-size:.88rem;font-weight:500;padding:.4rem 1rem;border-radius:50px">✓ Analyse terminée</span>
+              <span class="badge-status badge-termine">✓ Rapport disponible</span>
             {% endif %}
           </div>
           <div style="text-align:right">
-            <div style="font-size:.72rem;color:var(--gray-1);margin-bottom:.2rem">Délai</div>
-            <div style="font-size:.88rem;color:var(--gold);font-weight:500">15 jours ouvrés</div>
+            <div style="font-size:.68rem;color:var(--gray-1);margin-bottom:.3rem">Délai garanti</div>
+            <div style="font-size:.88rem;color:var(--gold);font-weight:600">10 jours ouvrés</div>
           </div>
         </div>
 
-        <div style="margin-bottom:1.5rem">
-          <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.5rem">
-            <span>Avancement</span><span>{{ progress_pct }}%</span>
+        {# Barre de progression #}
+        <div style="margin-bottom:1.8rem">
+          <div style="display:flex;justify-content:space-between;font-size:.73rem;color:var(--gray-1);margin-bottom:.5rem">
+            <span>Avancement</span>
+            <span style="color:var(--gold);font-weight:600">{{ progress_pct }}%</span>
           </div>
-          <div style="height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden">
-            <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-lt));width:{{ progress_pct }}%;transition:width .6s ease"></div>
+          <div style="height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
+            <div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#C8A84B,#e0c070);width:{{ progress_pct }}%;transition:width .8s ease"></div>
           </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:.8rem">
+        {# Étapes #}
+        <div>
           {% for step_label, step_state in step_list %}
-          <div style="display:flex;align-items:center;gap:.8rem">
-            <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;
-              {% if step_state == 'done' %}background:rgba(39,201,63,.15);color:var(--success)
-              {% elif step_state == 'active' %}background:rgba(200,168,75,.15);color:var(--gold)
-              {% else %}background:rgba(255,255,255,.05);color:var(--muted){% endif %}">
-              {% if step_state == 'done' %}✓{% elif step_state == 'active' %}→{% else %}○{% endif %}
+          <div class="step-row">
+            <div class="step-dot {{ step_state }}">
+              {% if step_state == 'done' %}✓
+              {% elif step_state == 'active' %}→
+              {% else %}○{% endif %}
             </div>
-            <span style="font-size:.84rem;
+            <span style="font-size:.83rem;
               {% if step_state == 'done' %}color:var(--gray-2)
               {% elif step_state == 'active' %}color:var(--white);font-weight:500
-              {% else %}color:var(--muted){% endif %}">{{ step_label }}</span>
+              {% else %}color:var(--muted){% endif %}">
+              {{ step_label }}
+            </span>
           </div>
+          {% if not forloop.last %}
+          <div class="step-connector"></div>
+          {% endif %}
           {% endfor %}
         </div>
       </div>
 
-      <!-- Boutons si terminé -->
+      {# CTA rapport disponible #}
       {% if document.status == 'termine' %}
-
       <a href="{% url 'rapport_ia_client' document.tracking_token %}"
-        style="display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;padding:.9rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,#C8A84B,#e0c070);color:#0C1929;font-weight:700;font-size:.92rem;text-decoration:none;margin-bottom:.8rem;box-sizing:border-box">
-        🤖 Consulter le rapport IA
+        style="display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;padding:1rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,#C8A84B,#e0c070);color:#0C1929;font-weight:700;font-size:.92rem;text-decoration:none;margin-bottom:.8rem;box-sizing:border-box;transition:opacity .2s"
+        onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+        📄 Consulter le rapport de validation
       </a>
-
-
-
+      {% if document.rapport_pdf %}
+      <a href="{{ document.rapport_pdf.url }}" target="_blank" download
+        style="display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;padding:.75rem 1.4rem;border-radius:10px;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);color:var(--gold);font-weight:600;font-size:.85rem;text-decoration:none;box-sizing:border-box">
+        ⬇ Télécharger le PDF
+      </a>
+      {% endif %}
       {% endif %}
 
+      {# Message attente devis #}
       {% if document.status == 'recu' and not devis_accepte %}
-      <div class="card" style="padding:1.5rem;margin-top:1.5rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.2)">
-        <div style="font-size:.88rem;color:var(--gold);font-weight:500;margin-bottom:.5rem">⏳ En attente de validation</div>
-        <p style="font-size:.82rem;color:var(--gray-2);line-height:1.7">Votre dossier est en cours d'examen. Vous recevrez un email avec le devis dès qu'il sera validé par notre équipe.</p>
+      <div class="card" style="padding:1.4rem;background:rgba(200,168,75,.03);border-color:rgba(200,168,75,.15)">
+        <div style="font-size:.85rem;color:var(--gold);font-weight:500;margin-bottom:.5rem">⏳ En attente de validation</div>
+        <p style="font-size:.8rem;color:var(--gray-2);line-height:1.7;margin:0">
+          Votre dossier est en cours d'examen. Vous recevrez un email avec le devis dès qu'il sera validé par notre équipe.
+        </p>
       </div>
       {% endif %}
-    </div>
 
-    <!-- Infos dossier -->
-    <div class="fade-up-2">
-      <div class="card" style="padding:2rem;margin-bottom:1.5rem">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.2rem">Informations du dossier</h3>
-        <div style="display:flex;flex-direction:column;gap:.8rem">
+    </div>{# /col gauche #}
+
+
+    {# ════ COLONNE DROITE — Détails ════ #}
+    <div style="display:flex;flex-direction:column;gap:1.5rem">
+
+      {# Carte infos dossier #}
+      <div class="card" style="padding:1.8rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Informations du dossier</h3>
+        <div>
           {% if document.client_name %}
-          <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-            <span style="font-size:.82rem;color:var(--gray-1)">Client</span>
-            <span style="font-size:.85rem;color:var(--gray-2)">{{ document.client_name }}</span>
+          <div class="info-row">
+            <span style="font-size:.8rem;color:var(--gray-1)">Client</span>
+            <span style="font-size:.83rem;color:var(--gray-2)">{{ document.client_name }}</span>
           </div>
           {% endif %}
-          <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-            <span style="font-size:.82rem;color:var(--gray-1)">Référence</span>
-            <span style="font-size:.85rem;color:var(--gold);font-family:monospace">DOC-{{ document.id|stringformat:"04d" }}</span>
+          <div class="info-row">
+            <span style="font-size:.8rem;color:var(--gray-1)">Référence</span>
+            <span style="font-size:.83rem;color:var(--gold);font-family:monospace;font-weight:600">DOC-{{ document.id|stringformat:"04d" }}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-            <span style="font-size:.82rem;color:var(--gray-1)">Date de réception</span>
-            <span style="font-size:.85rem;color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
+          <div class="info-row">
+            <span style="font-size:.8rem;color:var(--gray-1)">Type de mission</span>
+            <span style="font-size:.83rem;color:var(--gray-2)">
+              {% if document.type_analyse == 'pca' %}Pré-analyse technique (PCA)
+              {% elif document.type_analyse == 'complet' %}Analyse complète
+              {% else %}Validation thermique{% endif %}
+            </span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:.5rem 0">
-            <span style="font-size:.82rem;color:var(--gray-1)">Votre lien de suivi</span>
-            <button onclick="navigator.clipboard.writeText('{{ request.build_absolute_uri }}');this.textContent='✓ Copié !';setTimeout(()=>this.textContent='🔗 Copier',2000)"
-              style="background:none;border:none;color:var(--gold);font-size:.78rem;cursor:pointer">🔗 Copier</button>
+          {% if document.norme and document.type_analyse != 'pca' %}
+          <div class="info-row">
+            <span style="font-size:.8rem;color:var(--gray-1)">Norme</span>
+            <span style="font-size:.83rem;color:var(--white);font-weight:500">{{ document.norme }}</span>
+          </div>
+          {% endif %}
+          {% if document.logiciel_detecte %}
+          <div class="info-row">
+            <span style="font-size:.8rem;color:var(--gray-1)">Logiciel bureau d'études</span>
+            <span style="font-size:.83rem;color:var(--gray-2)">{{ document.logiciel_detecte }}</span>
+          </div>
+          {% endif %}
+          {% if document.get_building_type_display %}
+          <div class="info-row">
+            <span style="font-size:.8rem;color:var(--gray-1)">Type de bâtiment</span>
+            <span style="font-size:.83rem;color:var(--gray-2)">{{ document.get_building_type_display }}</span>
+          </div>
+          {% endif %}
+          {% if document.surface_totale %}
+          <div class="info-row">
+            <span style="font-size:.8rem;color:var(--gray-1)">Surface</span>
+            <span style="font-size:.83rem;color:var(--gray-2)">{{ document.surface_totale }} m²</span>
+          </div>
+          {% endif %}
+          <div class="info-row">
+            <span style="font-size:.8rem;color:var(--gray-1)">Date de réception</span>
+            <span style="font-size:.83rem;color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
+          </div>
+          <div class="info-row" style="border-bottom:none">
+            <span style="font-size:.8rem;color:var(--gray-1)">Lien de suivi</span>
+            <button onclick="navigator.clipboard.writeText('{{ request.build_absolute_uri }}');this.innerHTML='✓ Copié !';setTimeout(()=>this.innerHTML='🔗 Copier le lien',2000)"
+              style="background:none;border:none;color:var(--gold);font-size:.78rem;cursor:pointer;padding:0">🔗 Copier le lien</button>
           </div>
         </div>
       </div>
 
+      {# Carte verdict — si terminé #}
       {% if document.status == 'termine' %}
-      <div class="card" style="padding:2rem;border-color:rgba(200,168,75,.2)">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem">Résumé de l'analyse</h3>
-        <div style="background:var(--navy-3);border-radius:8px;padding:1.2rem;text-align:center;margin-bottom:1rem">
-          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">{{ document.norme }}</div>
+      <div class="card" style="padding:1.8rem;border-color:rgba(200,168,75,.2)">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.3rem;color:var(--gold)">Résultat de la validation</h3>
+
+        {# Verdict conformité #}
+        <div style="background:var(--navy-3);border-radius:10px;padding:1.3rem;text-align:center;margin-bottom:1.2rem">
+          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.6rem">
+            {% if document.type_analyse == 'pca' %}État technique global{% else %}Verdict {{ document.norme }}{% endif %}
+          </div>
           {% if document.is_conform is None %}
-            <span style="color:var(--muted);font-size:.85rem">Non analysé</span>
+            <span style="color:var(--muted);font-size:.88rem">En cours d'analyse</span>
           {% elif document.is_conform %}
-            <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(39,201,63,.12);border:1px solid rgba(39,201,63,.3);color:#27C93F;font-size:.85rem;font-weight:500;padding:.3rem .9rem;border-radius:50px">✓ Conforme</span>
+            <div style="font-size:1.2rem;font-weight:700;color:#27c93f;font-family:'Playfair Display',serif">✓ Conforme</div>
+            <div style="font-size:.75rem;color:var(--gray-1);margin-top:.3rem">Le rapport du bureau d'études a été validé</div>
           {% else %}
-            <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,69,58,.12);border:1px solid rgba(255,69,58,.3);color:#FF453A;font-size:.85rem;font-weight:500;padding:.3rem .9rem;border-radius:50px">✗ Non conforme</span>
+            <div style="font-size:1.2rem;font-weight:700;color:#ef5350;font-family:'Playfair Display',serif">✗ Non conforme</div>
+            <div style="font-size:.75rem;color:var(--gray-1);margin-top:.3rem">Des points d'attention ont été identifiés</div>
           {% endif %}
         </div>
-        <p style="font-size:.82rem;color:var(--gray-1);text-align:center;line-height:1.6">
-          Le rapport IA contient l'analyse complète,<br>les recommandations et le plan d'action détaillé.
+
+        {# DPE si disponible #}
+        {% if document.dpe_classe_energie %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1.2rem">
+          <div class="kpi-box">
+            <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Classe énergie</div>
+            <div style="font-size:2rem;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif">{{ document.dpe_classe_energie }}</div>
+          </div>
+          {% if document.dpe_classe_ges %}
+          <div class="kpi-box">
+            <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Classe GES</div>
+            <div style="font-size:2rem;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif">{{ document.dpe_classe_ges }}</div>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {# Valeurs clés extraites #}
+        {% if document.rt2012_bbio or document.rt2012_cep or document.re2020_energy_efficiency or document.re2020_carbon_emissions %}
+        <div style="margin-bottom:1.2rem">
+          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.7rem">Valeurs clés</div>
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            {% if document.rt2012_bbio %}
+            <div style="display:flex;justify-content:space-between;font-size:.8rem">
+              <span style="color:var(--gray-1)">Bbio</span>
+              <span style="color:var(--white);font-weight:500">{{ document.rt2012_bbio }}</span>
+            </div>
+            {% endif %}
+            {% if document.rt2012_cep %}
+            <div style="display:flex;justify-content:space-between;font-size:.8rem">
+              <span style="color:var(--gray-1)">Cep</span>
+              <span style="color:var(--white);font-weight:500">{{ document.rt2012_cep }} kWh ep/m².an</span>
+            </div>
+            {% endif %}
+            {% if document.re2020_energy_efficiency %}
+            <div style="display:flex;justify-content:space-between;font-size:.8rem">
+              <span style="color:var(--gray-1)">Cep,nr</span>
+              <span style="color:var(--white);font-weight:500">{{ document.re2020_energy_efficiency }} kWh/m².an</span>
+            </div>
+            {% endif %}
+            {% if document.re2020_carbon_emissions %}
+            <div style="display:flex;justify-content:space-between;font-size:.8rem">
+              <span style="color:var(--gray-1)">Ic énergie</span>
+              <span style="color:var(--white);font-weight:500">{{ document.re2020_carbon_emissions }} kgCO₂/m².an</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <p style="font-size:.79rem;color:var(--gray-1);line-height:1.65;margin:0">
+          Le rapport complet contient l'avis indépendant de ConformExpert, les anomalies détectées et les recommandations détaillées.
         </p>
       </div>
+
+      {# En attente #}
       {% else %}
-      <div class="card" style="padding:2rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
-        <p style="font-size:.85rem;color:var(--gray-2);line-height:1.75;font-weight:300">
-          ⏳ L'analyse est en cours. Revenez sur cette page pour suivre l'avancement.
-          Le rapport sera disponible en téléchargement directement ici dès sa livraison.
-        </p>
+      <div class="card" style="padding:1.8rem;background:rgba(200,168,75,.03);border-color:rgba(200,168,75,.12)">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Ce que contiendra le rapport</h3>
+        <div style="display:flex;flex-direction:column;gap:.7rem">
+          {% for item in "Vérification indépendante des valeurs déclarées,Détection des anomalies et incohérences,Croisement avec les consommations réelles,Avis indépendant sur la fiabilité du rapport,Recommandations et plan d'action détaillé"|split:"," %}
+          <div style="display:flex;align-items:center;gap:.7rem;font-size:.82rem;color:var(--gray-2)">
+            <span style="color:var(--gold);flex-shrink:0">→</span>{{ item }}
+          </div>
+          {% endfor %}
+        </div>
       </div>
       {% endif %}
-    </div>
 
+      {# Carte contact #}
+      <div class="card" style="padding:1.5rem;background:rgba(255,255,255,.01)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem">
+          <div>
+            <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:.25rem">Une question sur votre dossier ?</div>
+            <div style="font-size:.76rem;color:var(--gray-1)">Notre équipe répond sous 24h ouvrées</div>
+          </div>
+          <a href="{% url 'contact' %}"
+            style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2);border-radius:7px;color:var(--gold);font-size:.82rem;font-weight:500;text-decoration:none">
+            ✉ Nous contacter
+          </a>
+        </div>
+      </div>
+
+    </div>{# /col droite #}
+  </div>{# /grid #}
+
+  {# Bandeau confiance bas de page #}
+  <div style="margin-top:3rem;padding:1.5rem 2rem;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.1);border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem">
+    <div style="display:flex;align-items:center;gap:2.5rem;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--gold)">100%</div>
+        <div style="font-size:.7rem;color:var(--gray-1);margin-top:.15rem">Indépendant</div>
+      </div>
+      <div style="width:1px;height:30px;background:rgba(255,255,255,.06)"></div>
+      <div style="text-align:center">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--gold)">15j</div>
+        <div style="font-size:.7rem;color:var(--gray-1);margin-top:.15rem">Délai garanti</div>
+      </div>
+      <div style="width:1px;height:30px;background:rgba(255,255,255,.06)"></div>
+      <div style="text-align:center">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--gold)">RT/RE</div>
+        <div style="font-size:.7rem;color:var(--gray-1);margin-top:.15rem">2012 · 2020 · DPE</div>
+      </div>
+    </div>
+    <div style="font-size:.78rem;color:var(--gray-1);max-width:320px;line-height:1.6">
+      ConformExpert est un tiers indépendant — notre analyse n'est pas liée au bureau d'études ayant produit le rapport thermique.
+    </div>
   </div>
+
 </div>
 {% endblock %}
