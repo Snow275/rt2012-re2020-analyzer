@@ -2110,12 +2110,32 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
         try:
             with open(f.fichier.path, "r", encoding="utf-8", errors="ignore") as file:
 
-                contenu = file.read()
+              contenu = file.read()              
+            # garder seulement les sections utiles
+              sections_importantes = []
 
-            openstudio_data.append({
-                "nom": f.nom,
-                "contenu": contenu[:12000]
-            })
+              mots_cles = [
+                  "Site and Source Energy",
+                  "Annual Energy Consumption",
+                  "Electricity",
+                  "Natural Gas",
+                  "End Uses",
+                  "Total Energy",
+                  "Heating",
+                  "Cooling"
+              ]
+
+              for ligne in contenu.splitlines():
+                  for mot in mots_cles:
+                      if mot in ligne:
+              sections_importantes.append(ligne)
+
+              contenu_filtre = "\n".join(sections_importantes)
+
+              openstudio_data.append({
+                  "nom": f.nom,
+                  "contenu": contenu_filtre
+              })  
 
         except Exception as e:
             print("Erreur OpenStudio:", e)
