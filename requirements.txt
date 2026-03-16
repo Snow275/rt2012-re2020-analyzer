@@ -3,7 +3,7 @@ djangorestframework==3.16.0
 reportlab==4.2.5
 PyPDF2==3.0.1
 whitenoise==6.8.2
-gunicorn==21.2.0
+gunicorn==22.0.0
 asgiref==3.8.1
 sqlparse==0.5.3
 pillow==11.1.0
@@ -16,3 +16,8 @@ python-dotenv==1.0.1
 sendgrid
 python-docx
 anthropic>=0.34.0
+h11>=0.16.0 # not directly required, pinned by Snyk to avoid a vulnerability
+anyio>=4.4.0 # not directly required, pinned by Snyk to avoid a vulnerability
+cryptography>=46.0.5 # not directly required, pinned by Snyk to avoid a vulnerability
+werkzeug>=2.3.8 # not directly required, pinned by Snyk to avoid a vulnerability
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
