@@ -262,149 +262,283 @@ def extract_text_from_pdf(upload_path):
     return text
 
 
-def parse_pdf_text(text, norme=None):
+# ──────────────────────────────────────────────────────────────
+# PARSER INTELLIGENT — détection + extraction + validation
+# ──────────────────────────────────────────────────────────────
+
+_PROMPT_DETECTION = """Tu es un expert en réglementation thermique française.
+Analyse ce texte extrait d'un document thermique et réponds UNIQUEMENT en JSON valide, sans markdown.
+
+Détermine :
+1. Le type de document
+2. Le logiciel utilisé pour le produire
+3. La norme applicable
+4. Toutes les valeurs thermiques présentes
+5. Les métadonnées du bâtiment
+6. Les alertes de cohérence éventuelles
+
+JSON attendu (inclus uniquement les clés dont tu as trouvé la valeur) :
+{
+  "type_rapport": "climawin_rt2012" | "climawin_re2020" | "pleiades_rt2012" | "pleiades_re2020" | "dpe" | "attestation_rt2012" | "attestation_re2020" | "etude_thermique" | "autre",
+  "logiciel_detecte": "ex: Climawin v4.2 / Pléiades+Comfie 7.1 / non détecté",
+  "version_norme_detectee": "ex: RT2012 - Arrêté 26/10/2010",
+  "norme_suggeree": "RT2012" | "RE2020" | "PEB" | "MINERGIE" | "SIA380" | "CNEB2015" | "CNEB2020" | "LENOZ",
+
+  "valeurs": {
+    "rt2012_bbio": null,
+    "rt2012_bbio_max": null,
+    "rt2012_cep": null,
+    "rt2012_cep_max": null,
+    "rt2012_tic": null,
+    "rt2012_tic_max": null,
+    "rt2012_airtightness": null,
+    "rt2012_enr": null,
+    "re2020_energy_efficiency": null,
+    "re2020_energy_efficiency_max": null,
+    "re2020_thermal_comfort": null,
+    "re2020_thermal_comfort_max": null,
+    "re2020_carbon_emissions": null,
+    "re2020_carbon_emissions_max": null,
+    "dpe_classe_energie": null,
+    "dpe_classe_ges": null,
+    "dpe_conso_ep": null,
+    "dpe_emission_ges": null,
+    "dpe_surface_ref": null,
+    "dpe_date_visite": null,
+    "dpe_diagnostiqueur": null
+  },
+
+  "batiment": {
+    "nom_projet": null,
+    "adresse": null,
+    "surface_totale": null,
+    "annee_construction": null,
+    "type_batiment": null,
+    "zone_climatique": null,
+    "maitre_ouvrage": null,
+    "bureau_etudes": null,
+    "date_etude": null
+  },
+
+  "conformite_declaree": "conforme" | "non_conforme" | "non_precise",
+
+  "alertes": [
+    "Description d'une anomalie ou incohérence détectée dans les valeurs"
+  ],
+
+  "resume_extraction": "Phrase courte décrivant ce qui a été trouvé dans le document"
+}
+
+N'inclus dans "valeurs" que les clés dont la valeur est non nulle.
+Dans "alertes", signale : valeurs manquantes importantes, incohérences entre valeurs déclarées et seuils, valeurs hors plage réaliste.
+
+Texte du document :
+"""
+
+_PROMPT_DETECTION_SUFFIX = "\n\nRéponds UNIQUEMENT avec le JSON, sans texte avant ni après, sans balises markdown."
+
+
+def analyser_rapport_thermique(texte, pdf_b64=None):
     """
-    Extrait les valeurs thermiques du texte PDF via l'API Claude.
-    Fallback sur regex si l'API est indisponible.
+    Analyse intelligente d'un rapport thermique via Claude.
+    Détecte le type (Climawin RT2012, Pleiades RE2020, DPE…),
+    extrait toutes les valeurs et génère des alertes de cohérence.
+    Retourne un dict avec type_rapport, valeurs, alertes, métadonnées.
     """
     import json
     import os
     import urllib.request
+    import urllib.error
 
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+    if not ANTHROPIC_API_KEY:
+        return _fallback_regex(texte)
 
-    if ANTHROPIC_API_KEY:
-        try:
-            prompt = f"""Tu es un expert en réglementation thermique. Voici le texte extrait d'un document thermique (rapport STD, DPE, notice, attestation RT/RE).
+    try:
+        # Construire le message — avec PDF natif si disponible
+        user_content = []
+        headers_extra = {}
 
-Extrais UNIQUEMENT les valeurs numériques suivantes si elles sont présentes dans le texte.
-Réponds UNIQUEMENT en JSON valide, sans explication, sans markdown.
+        if pdf_b64:
+            user_content.append({
+                "type": "document",
+                "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_b64},
+            })
+            headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
+            user_content.append({
+                "type": "text",
+                "text": _PROMPT_DETECTION + "(document PDF joint)" + _PROMPT_DETECTION_SUFFIX,
+            })
+        else:
+            user_content.append({
+                "type": "text",
+                "text": _PROMPT_DETECTION + texte[:12000] + _PROMPT_DETECTION_SUFFIX,
+            })
 
-Valeurs à extraire :
-- rt2012_bbio (Bbio)
-- rt2012_cep (Cep)
-- rt2012_tic (Tic)
-- rt2012_airtightness (étanchéité à l'air / perméabilité)
-- rt2012_enr (ENR)
-- re2020_energy_efficiency (Cep,nr)
-- re2020_thermal_comfort (DH degrés-heures)
-- re2020_carbon_emissions (Ic énergie / émissions CO2)
-- peb_espec (Espec)
-- peb_ew (Ew)
-- peb_u_mur (U mur)
-- peb_u_toit (U toit)
-- peb_u_plancher (U plancher)
-- minergie_qh (Qh chaleur)
-- minergie_qtot (Qtot)
-- minergie_n50 (n50)
-- sia380_qh (Qh SIA)
-- cneb_ei (intensité énergétique)
-- cneb_u_mur
-- cneb_u_toit
-- cneb_u_fenetre
-- cneb_infiltration
-- lenoz_ep (énergie primaire)
-- lenoz_ew
-- lenoz_u_mur
-- lenoz_u_toit
+        payload = json.dumps({
+            "model": "claude-sonnet-4-5",
+            "max_tokens": 2000,
+            "messages": [{"role": "user", "content": user_content}],
+        }).encode('utf-8')
 
-Si une valeur n'est pas trouvée, ne l'inclus pas dans le JSON.
-Exemple de réponse : {{"rt2012_bbio": 45.2, "rt2012_cep": 72.0}}
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+        }
+        headers.update(headers_extra)
 
-Texte du document :
-{text[:8000]}"""
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=payload, headers=headers, method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+            raw = result['content'][0]['text'].strip()
+            raw = raw.replace('```json', '').replace('```', '').strip()
+            data = json.loads(raw)
+            print(f"PARSER OK — type={data.get('type_rapport')} norme={data.get('norme_suggeree')}")
+            return data
 
-            payload = json.dumps({
-                "model": "claude-sonnet-4-5",
-                "max_tokens": 8192,
-                "messages": [{"role": "user", "content": prompt}],
-            }).encode('utf-8')
+    except Exception as e:
+        print(f"Erreur parser thermique, fallback regex: {e}")
+        return _fallback_regex(texte)
 
-            req = urllib.request.Request(
-                "https://api.anthropic.com/v1/messages",
-                data=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "x-api-key": ANTHROPIC_API_KEY,
-                    "anthropic-version": "2023-06-01",
-                },
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                result = json.loads(resp.read().decode('utf-8'))
-                raw = result['content'][0]['text'].strip()
-                raw = raw.replace('```json', '').replace('```', '').strip()
-                data = json.loads(raw)
-                return {k: float(v) for k, v in data.items() if v is not None}
 
-        except Exception as e:
-            print(f"Erreur API Claude, fallback regex: {e}")
+def _fallback_regex(texte):
+    """Fallback regex minimal si l'API Claude est indisponible."""
+    data = {'type_rapport': 'inconnu', 'valeurs': {}, 'alertes': [], 'logiciel_detecte': ''}
 
-    # ── FALLBACK REGEX ──────────────────────────────────────────
-    data = {}
+    # Détection logiciel
+    t_low = texte.lower()
+    if 'climawin' in t_low:
+        data['logiciel_detecte'] = 'Climawin'
+    elif 'pleiades' in t_low or 'pléiades' in t_low:
+        data['logiciel_detecte'] = 'Pléiades'
+    elif 'dpe' in t_low or 'diagnostic de performance' in t_low:
+        data['logiciel_detecte'] = 'DPE'
+
+    # Détection norme
+    if 're2020' in t_low or 're 2020' in t_low:
+        data['norme_suggeree'] = 'RE2020'
+        data['type_rapport'] = 'climawin_re2020' if 'climawin' in t_low else 'pleiades_re2020' if 'pleiades' in t_low else 'etude_thermique'
+    elif 'rt2012' in t_low or 'rt 2012' in t_low:
+        data['norme_suggeree'] = 'RT2012'
+        data['type_rapport'] = 'climawin_rt2012' if 'climawin' in t_low else 'pleiades_rt2012' if 'pleiades' in t_low else 'etude_thermique'
+    elif 'dpe' in t_low:
+        data['norme_suggeree'] = 'RE2020'
+        data['type_rapport'] = 'dpe'
+
+    # Extraction regex basique
+    valeurs = {}
     for pattern, key in [
-        (r'Bbio\s*[=:]\s*([\d.,]+)',                       'rt2012_bbio'),
-        (r'Cep\s*[=:]\s*([\d.,]+)',                        'rt2012_cep'),
-        (r'Tic\s*[=:]\s*([\d.,]+)',                        'rt2012_tic'),
-        (r'[Ee]tanch[eé]it[eé]\s*[=:]\s*([\d.,]+)',       'rt2012_airtightness'),
-        (r'ENR\s*[=:]\s*([\d.,]+)',                        'rt2012_enr'),
-        (r'Cep,?nr\s*[=:]\s*([\d.,]+)',                   're2020_energy_efficiency'),
-        (r'DH\s*[=:]\s*([\d.,]+)',                         're2020_thermal_comfort'),
-        (r'Ic.{0,10}[ée]nergie\s*[=:]\s*([\d.,]+)',       're2020_carbon_emissions'),
-        (r'Espec\s*[=:]\s*([\d.,]+)',                      'peb_espec'),
-        (r'\bEw\b\s*[=:]\s*([\d.,]+)',                    'peb_ew'),
-        (r'U\s*mur\s*[=:]\s*([\d.,]+)',                   'peb_u_mur'),
-        (r'U\s*toit\s*[=:]\s*([\d.,]+)',                  'peb_u_toit'),
-        (r'U\s*plancher\s*[=:]\s*([\d.,]+)',              'peb_u_plancher'),
-        (r'Qh\s*[=:]\s*([\d.,]+)',                         'minergie_qh'),
-        (r'Qtot\s*[=:]\s*([\d.,]+)',                       'minergie_qtot'),
-        (r'n50\s*[=:]\s*([\d.,]+)',                        'minergie_n50'),
-        (r'[Ii]ntensit[eé].{0,20}[=:]\s*([\d.,]+)',       'cneb_ei'),
-        (r'U\s*fen[eê]tre\s*[=:]\s*([\d.,]+)',            'cneb_u_fenetre'),
-        (r'[Ii]nfiltration\s*[=:]\s*([\d.,]+)',           'cneb_infiltration'),
-        (r'[Ee]nergie\s+primaire\s*[=:]\s*([\d.,]+)',     'lenoz_ep'),
+        (r'Bbio\s*[=:]\s*([\d.,]+)',                 'rt2012_bbio'),
+        (r'Cep\s*[=:]\s*([\d.,]+)',                  'rt2012_cep'),
+        (r'Tic\s*[=:]\s*([\d.,]+)',                  'rt2012_tic'),
+        (r'[Ee]tanch[eé]it[eé]\s*[=:]\s*([\d.,]+)', 'rt2012_airtightness'),
+        (r'ENR\s*[=:]\s*([\d.,]+)',                  'rt2012_enr'),
+        (r'Cep,?nr\s*[=:]\s*([\d.,]+)',              're2020_energy_efficiency'),
+        (r'DH\s*[=:]\s*([\d.,]+)',                   're2020_thermal_comfort'),
+        (r'Ic.{0,10}[ée]nergie\s*[=:]\s*([\d.,]+)', 're2020_carbon_emissions'),
+        (r'classe\s*[=:]\s*([A-G])',                 'dpe_classe_energie'),
     ]:
-        m = re.search(pattern, text, re.IGNORECASE)
+        m = re.search(pattern, texte, re.IGNORECASE)
         if m:
-            data[key] = float(m.group(1).replace(',', '.'))
-
+            val = m.group(1).replace(',', '.')
+            try:
+                valeurs[key] = float(val) if key != 'dpe_classe_energie' else val
+            except ValueError:
+                pass
+    data['valeurs'] = valeurs
     return data
 
 
-def analyze_document(document, data):
-    """Hydrate les champs thermiques d'un document depuis le dict extrait."""
-    # FR — RT2012
+def parse_pdf_text(text, norme=None):
+    """
+    Compatibilité ascendante — appelle le nouveau parser et retourne
+    le format dict attendu par analyze_document.
+    """
+    result = analyser_rapport_thermique(text)
+    return result.get('valeurs', {})
+
+
+def analyze_document(document, data, resultat_complet=None):
+    """
+    Hydrate les champs thermiques + métadonnées d'un document.
+    data = dict valeurs thermiques
+    resultat_complet = dict complet retourné par analyser_rapport_thermique
+    """
+    # ── Valeurs thermiques ─────────────────────────────────────
     document.rt2012_bbio         = data.get('rt2012_bbio')
     document.rt2012_cep          = data.get('rt2012_cep')
     document.rt2012_tic          = data.get('rt2012_tic')
     document.rt2012_airtightness = data.get('rt2012_airtightness')
     document.rt2012_enr          = data.get('rt2012_enr')
-    # FR — RE2020
     document.re2020_energy_efficiency = data.get('re2020_energy_efficiency')
     document.re2020_thermal_comfort   = data.get('re2020_thermal_comfort')
     document.re2020_carbon_emissions  = data.get('re2020_carbon_emissions')
-    # BE — PEB
     document.peb_espec      = data.get('peb_espec')
     document.peb_ew         = data.get('peb_ew')
     document.peb_u_mur      = data.get('peb_u_mur')
     document.peb_u_toit     = data.get('peb_u_toit')
     document.peb_u_plancher = data.get('peb_u_plancher')
-    # CH — MINERGIE / SIA380
-    document.minergie_qh   = data.get('minergie_qh')
-    document.minergie_qtot = data.get('minergie_qtot')
-    document.minergie_n50  = data.get('minergie_n50')
-    document.sia380_qh     = data.get('sia380_qh') or data.get('minergie_qh')
-    # CA — CNEB
+    document.minergie_qh    = data.get('minergie_qh')
+    document.minergie_qtot  = data.get('minergie_qtot')
+    document.minergie_n50   = data.get('minergie_n50')
+    document.sia380_qh      = data.get('sia380_qh') or data.get('minergie_qh')
     document.cneb_ei           = data.get('cneb_ei')
     document.cneb_u_mur        = data.get('cneb_u_mur')
     document.cneb_u_toit       = data.get('cneb_u_toit')
     document.cneb_u_fenetre    = data.get('cneb_u_fenetre')
     document.cneb_infiltration = data.get('cneb_infiltration')
-    # LU — LENOZ
     document.lenoz_ep     = data.get('lenoz_ep')
     document.lenoz_ew     = data.get('lenoz_ew')
     document.lenoz_u_mur  = data.get('lenoz_u_mur')
     document.lenoz_u_toit = data.get('lenoz_u_toit')
+
+    # ── Champs DPE ─────────────────────────────────────────────
+    if data.get('dpe_classe_energie'):
+        document.dpe_classe_energie = str(data['dpe_classe_energie']).upper()
+    if data.get('dpe_classe_ges'):
+        document.dpe_classe_ges = str(data['dpe_classe_ges']).upper()
+    if data.get('dpe_conso_ep'):
+        document.dpe_conso_ep = data['dpe_conso_ep']
+    if data.get('dpe_emission_ges'):
+        document.dpe_emission_ges = data['dpe_emission_ges']
+    if data.get('dpe_surface_ref'):
+        document.dpe_surface_ref = data['dpe_surface_ref']
+    if data.get('dpe_date_visite'):
+        document.dpe_date_visite = str(data['dpe_date_visite'])
+    if data.get('dpe_diagnostiqueur'):
+        document.dpe_diagnostiqueur = str(data['dpe_diagnostiqueur'])
+
+    # ── Métadonnées issues du parser complet ───────────────────
+    if resultat_complet:
+        document.type_rapport       = resultat_complet.get('type_rapport', 'inconnu')
+        document.logiciel_detecte   = resultat_complet.get('logiciel_detecte', '')
+        document.version_norme_detectee = resultat_complet.get('version_norme_detectee', '')
+        document.extraction_ok      = bool(resultat_complet.get('valeurs'))
+        document.extraction_json    = resultat_complet
+        document.extraction_alertes = resultat_complet.get('alertes', [])
+
+        # Auto-mise à jour de la norme si détectée
+        norme_suggeree = resultat_complet.get('norme_suggeree')
+        if norme_suggeree and document.norme == 'RE2020':
+            document.norme = norme_suggeree
+
+        # Auto-remplissage métadonnées bâtiment si vides
+        bat = resultat_complet.get('batiment', {}) or {}
+        if bat.get('surface_totale') and not document.surface_totale:
+            try:
+                document.surface_totale = float(bat['surface_totale'])
+            except (ValueError, TypeError):
+                pass
+        if bat.get('annee_construction') and not document.annee_construction:
+            try:
+                document.annee_construction = int(bat['annee_construction'])
+            except (ValueError, TypeError):
+                pass
+
     document.save()
 
 
@@ -561,8 +695,9 @@ def import_document(request):
                 except Exception:
                     texte_complet = ""
 
-            parsed = parse_pdf_text(texte_complet)
-            analyze_document(document, parsed)
+            resultat_complet = analyser_rapport_thermique(texte_complet)
+            valeurs = resultat_complet.get('valeurs', {})
+            analyze_document(document, valeurs, resultat_complet)
             send_mail_reception(document)
 
             messages.success(request, "Dossier reçu. Votre lien de suivi a été créé.")
@@ -836,26 +971,6 @@ def edit_document(request, doc_id):
     norme_fields = ALL_NORME_FIELDS.get(document.norme, [])
 
     if request.method == 'POST':
-
-        # ── Import OpenStudio ──────────────────────────────────
-        if "upload_openstudio" in request.POST:
-            fichier = request.FILES.get("openstudio_file")
-            if fichier:
-                type_fichier = "openstudio_html"
-                if fichier.name.endswith(".csv"):
-                    type_fichier = "openstudio_csv"
-                elif fichier.name.endswith(".sql"):
-                    type_fichier = "openstudio_sql"
-
-                DocumentFile.objects.create(
-                    document=document,
-                    fichier=fichier,
-                    nom=fichier.name,
-                    taille=fichier.size,
-                    type_fichier=type_fichier,
-                )
-                messages.success(request, "Rapport OpenStudio importé avec succès.")
-            return redirect('edit_document', doc_id=doc_id)
 
         # ── Mise à jour du statut ──────────────────────────────
         new_status = request.POST.get('status')
@@ -1984,29 +2099,7 @@ def generer_rapport_ia(request, doc_id):
 
     factures_str = json.dumps(factures_data, ensure_ascii=False)
 
-    # ── 4. Données OpenStudio ─────────────────────────────────
-    openstudio_data = []
-    mots_cles = ["Site and Source Energy", "Annual Energy Consumption", "Electricity",
-                 "Natural Gas", "End Uses", "Total Energy", "Heating", "Cooling"]
-
-    for f in document.fichiers.filter(type_fichier__startswith="openstudio"):
-        try:
-            with open(f.fichier.path, "r", encoding="utf-8", errors="ignore") as fh:
-                contenu = fh.read()
-            sections_importantes = [
-                ligne for ligne in contenu.splitlines()
-                if any(mot in ligne for mot in mots_cles)
-            ]
-            openstudio_data.append({
-                "nom":     f.nom,
-                "contenu": "\n".join(sections_importantes),
-            })
-        except Exception as e:
-            print("Erreur OpenStudio:", e)
-
-    openstudio_str = json.dumps(openstudio_data, ensure_ascii=False)
-
-    # ── 5. System prompt ──────────────────────────────────────
+    # ── 4. System prompt ──────────────────────────────────────
     system_prompt = _build_system_prompt(
         type_analyse, ref, document, infos_batiment,
         source_donnees, valeurs_str, norme, pca_seuils_str,
@@ -2024,13 +2117,12 @@ def generer_rapport_ia(request, doc_id):
             })
         headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
         user_content.append({"type": "text", "text": f"""
-Tu es un ingénieur expert en performance énergétique des bâtiments.
+Tu es un ingénieur expert en performance énergétique des bâtiments et en validation de rapports thermiques réglementaires.
 
-Tu réalises une pré-analyse énergétique professionnelle basée sur :
-- les données réglementaires
-- les observations techniques
-- les factures énergétiques réelles
-- les résultats de simulation énergétique OpenStudio
+Tu réalises une pré-analyse énergétique indépendante basée sur :
+- les rapports thermiques fournis (Climawin, Pléiades, DPE, attestations RT2012/RE2020)
+- les observations techniques de l'expert
+- les factures énergétiques réelles du bâtiment
 
 INFORMATIONS BÂTIMENT
 {infos_batiment}
@@ -2041,13 +2133,10 @@ OBSERVATIONS EXPERT
 FACTURES ÉNERGÉTIQUES
 {factures_str}
 
-SIMULATION ÉNERGÉTIQUE OPENSTUDIO
-{openstudio_str}
-
 MISSION D'ANALYSE
-1. Vérifier la conformité réglementaire selon la norme du projet.
-2. Comparer les consommations réelles (factures) avec les consommations simulées (OpenStudio).
-3. Identifier les écarts énergétiques éventuels et proposer des explications techniques plausibles.
+1. Vérifier la conformité réglementaire selon la norme du projet à partir des documents fournis.
+2. Croiser les données des rapports thermiques avec les consommations réelles issues des factures.
+3. Identifier les éventuelles incohérences entre les valeurs déclarées et les consommations réelles.
 4. Identifier les points forts énergétiques du bâtiment.
 5. Formuler des recommandations d'amélioration réalistes.
 
@@ -2347,6 +2436,79 @@ def get_donnees_factures(request, doc_id):
         'nb_factures':    len(mois),
     })
 
+
+
+# ──────────────────────────────────────────────────────────────
+# ANALYSE MANUELLE D'UN DOCUMENT — endpoint AJAX
+# ──────────────────────────────────────────────────────────────
+
+@csrf_exempt
+def analyser_document(request, doc_id):
+    """
+    Endpoint AJAX — (ré)analyse un dossier avec le parser intelligent.
+    POST /dossier/<doc_id>/analyser/
+    Retourne le résultat de détection + valeurs extraites + alertes.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Non authentifié'}, status=401)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode invalide'}, status=405)
+
+    document = get_object_or_404(Document, id=doc_id)
+
+    # Lire tous les fichiers PDF du dossier
+    texte_complet = ""
+    pdf_b64_principal = None
+
+    for doc_file in document.fichiers.all():
+        try:
+            texte_complet += extract_text_from_pdf(doc_file.fichier.path) + "\n\n"
+            # Premier PDF valide comme document principal
+            if pdf_b64_principal is None and doc_file.fichier.path.lower().endswith('.pdf'):
+                with open(doc_file.fichier.path, 'rb') as f:
+                    pdf_bytes = f.read()
+                if pdf_bytes.startswith(b'%PDF'):
+                    pdf_b64_principal = base64.b64encode(pdf_bytes).decode('utf-8')
+        except Exception as e:
+            print(f"Erreur lecture fichier {doc_file.nom}: {e}")
+
+    # Fallback ancien champ upload
+    if not texte_complet and document.upload and document.upload.name:
+        try:
+            texte_complet = extract_text_from_pdf(document.upload.path)
+            with open(document.upload.path, 'rb') as f:
+                pdf_bytes = f.read()
+            if pdf_bytes.startswith(b'%PDF'):
+                pdf_b64_principal = base64.b64encode(pdf_bytes).decode('utf-8')
+        except Exception as e:
+            print(f"Erreur upload principal: {e}")
+
+    if not texte_complet and not pdf_b64_principal:
+        return JsonResponse({'error': 'Aucun document PDF trouvé dans ce dossier'}, status=400)
+
+    try:
+        resultat = analyser_rapport_thermique(texte_complet, pdf_b64=pdf_b64_principal)
+        valeurs  = resultat.get('valeurs', {})
+        analyze_document(document, valeurs, resultat)
+
+        return JsonResponse({
+            'success':              True,
+            'type_rapport':         document.type_rapport,
+            'type_rapport_label':   document.type_rapport_label,
+            'logiciel_detecte':     document.logiciel_detecte,
+            'version_norme':        document.version_norme_detectee,
+            'norme_appliquee':      document.norme,
+            'nb_valeurs_extraites': len(valeurs),
+            'alertes':              document.extraction_alertes or [],
+            'conformite_declaree':  resultat.get('conformite_declaree', 'non_precise'),
+            'resume':               resultat.get('resume_extraction', ''),
+            'batiment':             resultat.get('batiment', {}),
+            'valeurs':              valeurs,
+        })
+
+    except Exception as e:
+        print(f"ANALYSER_DOCUMENT ERROR: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 # ──────────────────────────────────────────────────────────────
 # API REST
