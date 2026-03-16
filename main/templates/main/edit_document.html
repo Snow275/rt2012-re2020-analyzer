@@ -1,48 +1,582 @@
 {% extends 'main/base.html' %}
 {% load conformity_tags %}
+
 {% block title %}Éditer — {{ document.name }}{% endblock %}
 
 {% block content %}
 <style>
+/* ═══════════════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════════════ */
+:root {
+  --gold:    #C8A84B;
+  --gold-lt: #e0c070;
+  --success: #27c93f;
+  --danger:  #ef5350;
+  --warn:    #E5A93A;
+  --info:    #60a5fa;
+  --purple:  #c084fc;
+  --navy-2:  var(--navy-2, #0f1e30);
+  --navy-3:  var(--navy-3, #0c1929);
+  --white:   var(--white, #f0f4f8);
+  --gray-1:  var(--gray-1, #7a8a9a);
+  --gray-2:  var(--gray-2, #a0aab4);
+  --muted:   var(--muted, #5a6a7a);
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════ */
+.container { padding: 0 1.5rem; }
+
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* ═══════════════════════════════════════════════
+   TYPOGRAPHY HELPERS
+═══════════════════════════════════════════════ */
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  color: var(--gold);
+  margin-bottom: 1.2rem;
+}
+.section-title--purple { color: var(--purple); }
+.section-title--sm     { font-size: .95rem; margin-bottom: 1rem; }
+
+.label-caps {
+  display: block;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--gray-1);
+  margin-bottom: .4rem;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .4rem 0;
+  font-size: .82rem;
+}
+.meta-row span:first-child { color: var(--gray-1); }
+.meta-row span:last-child  { color: var(--gray-2); }
+
+/* ═══════════════════════════════════════════════
+   BADGES
+═══════════════════════════════════════════════ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .72rem;
+  font-weight: 600;
+  padding: .25rem .7rem;
+  border-radius: 99px;
+  letter-spacing: .04em;
+}
+.badge--energie { background: rgba(59,130,246,.12);  color: #60a5fa; border: 1px solid rgba(59,130,246,.2); }
+.badge--pca     { background: rgba(168,85,247,.12);  color: #c084fc; border: 1px solid rgba(168,85,247,.2); }
+.badge--complet { background: rgba(200,168,75,.12);  color: #C8A84B; border: 1px solid rgba(200,168,75,.2); }
+
+/* ═══════════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════════ */
+.f-input {
+  width: 100%;
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 6px;
+  padding: .55rem .8rem;
+  color: var(--white);
+  font-size: .85rem;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color .15s;
+}
+.f-input:focus { border-color: var(--gold); }
+
+select.f-input option { background: #0c1929; }
+
+/* ═══════════════════════════════════════════════
+   RADIO STATUS
+═══════════════════════════════════════════════ */
+.radio-card {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  padding: .7rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.05);
+  cursor: pointer;
+  background: transparent;
+  transition: background .15s, border-color .15s;
+}
+.radio-card--active {
+  border-color: rgba(200,168,75,.3);
+  background: rgba(200,168,75,.06);
+}
+.radio-card input { accent-color: var(--gold); }
+.radio-card span  { font-size: .88rem; color: var(--gray-2); }
+.radio-card--active span { color: var(--gold); }
+
+/* ═══════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════ */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  padding: .7rem 1.4rem;
+  font-size: .88rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--gray-1);
+  margin-bottom: -1px;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: color .15s, border-color .15s;
+}
+.tab-btn--active {
+  border-bottom-color: var(--gold);
+  color: var(--gold);
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════
+   CARDS
+═══════════════════════════════════════════════ */
+.card { border-radius: 10px; background: var(--navy-2); border: 1px solid rgba(255,255,255,.06); }
+.card--pad  { padding: 1.5rem; }
+.card--pad-sm { padding: 1.3rem; }
+
+/* ═══════════════════════════════════════════════
+   FLASH MESSAGES
+═══════════════════════════════════════════════ */
+.flash-success {
+  background: rgba(39,201,63,.08);
+  border: 1px solid rgba(39,201,63,.2);
+  border-radius: 8px;
+  padding: .9rem 1.2rem;
+  margin-bottom: 1.5rem;
+  font-size: .88rem;
+  color: var(--success);
+}
+
+/* ═══════════════════════════════════════════════
+   ACTIONS ROW
+═══════════════════════════════════════════════ */
+.actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.btn-delete {
+  background: rgba(229,57,53,.1);
+  border: 1px solid rgba(229,57,53,.3);
+  color: #e53935;
+  padding: .6rem 1.2rem;
+  border-radius: 6px;
+  font-size: .85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ═══════════════════════════════════════════════
+   DOCUMENTS TAB
+═══════════════════════════════════════════════ */
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1rem 1.3rem;
+  background: rgba(200,168,75,.04);
+  border: 1px solid rgba(200,168,75,.15);
+  border-radius: 10px;
+}
+.doc-item__icon { font-size: 2rem; flex-shrink: 0; }
+.doc-item__name { font-size: .88rem; color: var(--white); font-weight: 500; margin-bottom: .2rem; word-break: break-all; }
+.doc-item__meta { font-size: .75rem; color: var(--gray-1); }
+.doc-item__dl {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem 1rem;
+  background: var(--gold);
+  color: #0C1929;
+  font-weight: 700;
+  font-size: .78rem;
+  border-radius: 7px;
+  text-decoration: none;
+}
+.doc-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+}
+.doc-empty__icon { font-size: 2.5rem; margin-bottom: .8rem; opacity: .4; }
+.doc-empty__text { font-size: .85rem; color: var(--gray-1); }
+
+/* ═══════════════════════════════════════════════
+   EMAILS TAB
+═══════════════════════════════════════════════ */
+.email-alert {
+  border-radius: 8px;
+  padding: .9rem 1.2rem;
+  margin-bottom: 1.2rem;
+  font-size: .83rem;
+}
+.email-alert--warn    { background: rgba(255,193,7,.06);  border: 1px solid rgba(255,193,7,.2);  color: #ffc107; }
+.email-alert--success { background: rgba(39,201,63,.06);  border: 1px solid rgba(39,201,63,.15); color: var(--success); }
+
+.email-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.02);
+}
+.email-step__num {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: .9rem;
+  flex-shrink: 0;
+}
+.email-step__title { font-size: .9rem; color: var(--white); font-weight: 500; }
+.email-step__desc  { font-size: .78rem; color: var(--gray-1); margin-top: .2rem; }
+
+/* ═══════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-box {
+  background: var(--navy-2);
+  border: 1px solid rgba(200,168,75,.2);
+  border-radius: 14px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* ═══════════════════════════════════════════════
+   RAPPORT IA TAB
+═══════════════════════════════════════════════ */
+.rapport-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.4rem;
+  background: rgba(200,168,75,.06);
+  border: 1px solid rgba(200,168,75,.18);
+  border-radius: 10px;
+}
+.rapport-header__label {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--gold);
+  margin: 0 0 .25rem;
+}
+.rapport-header__desc { font-size: .83rem; color: var(--gray-1); margin: 0; }
+
+.progress-wrap { display: none; margin-bottom: 1.5rem; }
+.progress-bar {
+  background: rgba(255,255,255,.06);
+  border-radius: 20px;
+  height: 6px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #C8A84B, #e0c070);
+  border-radius: 20px;
+  transition: width .4s ease;
+}
+
+.verdict-banner {
+  margin-bottom: 1.4rem;
+  padding: 1.2rem 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.verdict-label {
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  opacity: .65;
+  margin-bottom: .4rem;
+}
+.verdict-text  { font-size: 1.4rem; font-weight: 700; font-family: 'Playfair Display', serif; color: var(--gold); }
+.verdict-icon  { font-size: 2.5rem; }
+
+.kpi-box {
+  flex: 1;
+  text-align: center;
+  padding: .7rem;
+  border-radius: 8px;
+  border: 1px solid;
+}
+.kpi-box__val  { font-size: 1.8rem; font-weight: 700; }
+.kpi-box__lbl  { font-size: .7rem; color: var(--gray-1); margin-top: .2rem; }
+.kpi-box--ok   { background: rgba(39,201,63,.06);  border-color: rgba(39,201,63,.2);  }
+.kpi-box--ko   { background: rgba(229,57,53,.06);  border-color: rgba(229,57,53,.2);  }
+.kpi-box--ok .kpi-box__val  { color: #27c93f; }
+.kpi-box--ko .kpi-box__val  { color: #ef5350; }
+
+.section-cap {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: .8rem;
+}
+.section-cap--gold   { color: var(--gold); }
+.section-cap--green  { color: #27c93f; }
+.section-cap--red    { color: #ef5350; }
+.section-cap--blue   { color: var(--info); }
+.section-cap--purple { color: var(--purple); }
+
+/* ═══════════════════════════════════════════════
+   RT FIELD ROW (conformity inputs)
+═══════════════════════════════════════════════ */
+.rt-row {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+}
+.rt-row label    { width: 140px; font-size: .82rem; color: var(--gray-1); flex-shrink: 0; }
+.rt-row label.wide { width: 180px; }
+.rt-row input    { flex: 1; background: var(--navy-3); border: 1px solid rgba(255,255,255,.08); border-radius: 6px; padding: .5rem .8rem; color: var(--white); font-size: .88rem; outline: none; transition: border-color .15s; }
+.rt-row input:focus { border-color: var(--gold); }
+.rt-row .seuil   { font-size: .7rem; color: var(--muted); width: 60px; text-align: right; }
+
+/* ═══════════════════════════════════════════════
+   PCA STATS
+═══════════════════════════════════════════════ */
+.stat-box {
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+.stat-box__val { font-size: 1.8rem; font-weight: 700; }
+.stat-box__lbl { font-size: .7rem; color: var(--gray-1); margin-top: .2rem; }
+
+/* ═══════════════════════════════════════════════
+   OBSERVATIONS TAB
+═══════════════════════════════════════════════ */
+.obs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+  padding: 1.1rem 1.4rem;
+  background: rgba(168,85,247,.06);
+  border: 1px solid rgba(168,85,247,.18);
+  border-radius: 10px;
+}
+
+/* ═══════════════════════════════════════════════
+   AMIANTE WARNING
+═══════════════════════════════════════════════ */
+.amiante-warn {
+  padding: .6rem .9rem;
+  background: rgba(239,83,80,.08);
+  border: 1px solid rgba(239,83,80,.25);
+  border-radius: 7px;
+  font-size: .78rem;
+  color: #ef5350;
+}
+
+/* ═══════════════════════════════════════════════
+   ESTIMATION TOTALE
+═══════════════════════════════════════════════ */
+.total-row {
+  padding: .7rem 1rem;
+  background: rgba(200,168,75,.06);
+  border: 1px solid rgba(200,168,75,.2);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.total-row span:first-child { font-size: .8rem; color: var(--gray-1); }
+.total-row span:last-child  { font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+
+/* ═══════════════════════════════════════════════
+   FACTURES TAB
+═══════════════════════════════════════════════ */
+.fac-drop {
+  border: 2px dashed rgba(200,168,75,.25);
+  border-radius: 12px;
+  padding: 2.2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  margin-bottom: 1.4rem;
+}
+.fac-drop:hover,
+.fac-drop.dragover {
+  border-color: rgba(200,168,75,.55);
+  background: rgba(200,168,75,.04);
+}
+.fac-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto auto auto;
+  gap: .8rem;
+  align-items: center;
+  padding: .85rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.02);
+  margin-bottom: .6rem;
+  transition: border-color .2s;
+}
+.fac-row:hover { border-color: rgba(255,255,255,.1); }
+
+.fac-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fac-dot.pending { background: rgba(136,136,153,.5); }
+.fac-dot.ok      { background: #27c93f; box-shadow: 0 0 6px #27c93f44; }
+.fac-dot.error   { background: #ef5350; }
+.fac-dot.loading { background: #E5A93A; animation: pulse-dot 1s infinite; }
+
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .35; }
+}
+
+.fac-btn {
+  padding: .32rem .75rem;
+  border-radius: 6px;
+  font-size: .75rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  border: 1px solid;
+  transition: opacity .2s;
+}
+.fac-btn:hover { opacity: .8; }
+.fac-btn--analyse { background: rgba(200,168,75,.1);  border-color: rgba(200,168,75,.3); color: var(--gold); }
+.fac-btn--delete  { background: rgba(229,57,53,.08);  border-color: rgba(229,57,53,.2);  color: #ef5350; }
+
+.fac-chart-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 110px;
+  padding: .3rem 0 0;
+}
+.fac-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.fac-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  cursor: default;
+  transition: opacity .2s;
+}
+.fac-bar:hover { opacity: .8; }
+.fac-bar-lbl   { font-size: .58rem; color: var(--gray-1); white-space: nowrap; }
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .tab-bar { overflow-x:auto !important;-webkit-overflow-scrolling:touch;flex-wrap:nowrap !important;scrollbar-width:none }
-  .tab-bar::-webkit-scrollbar { display:none }
-  .tab-bar button { white-space:nowrap;padding:.6rem 1rem !important;font-size:.8rem !important }
-  .main-2col { grid-template-columns:1fr !important }
-  .rt-field-row { flex-direction:column !important;align-items:flex-start !important }
-  .rt-field-row label { width:auto !important;margin-bottom:.3rem }
-  .rt-field-row input { width:100% !important;box-sizing:border-box !important }
+  .grid-2col         { grid-template-columns: 1fr !important; }
+  .rt-row            { flex-direction: column; align-items: flex-start; }
+  .rt-row label,
+  .rt-row label.wide { width: auto; margin-bottom: .3rem; }
+  .rt-row input      { width: 100%; box-sizing: border-box; }
 }
 @media (max-width: 480px) {
-  .page-header .ph-inner h1 { font-size:1.3rem !important }
-  .container { padding:0 .8rem !important }
+  .page-header .ph-inner h1 { font-size: 1.3rem !important; }
+  .container { padding: 0 .8rem !important; }
+  .tab-btn   { padding: .6rem 1rem !important; font-size: .8rem !important; }
 }
-
-/* Badge type analyse dans le header */
-.type-badge { display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;padding:.25rem .7rem;border-radius:99px;letter-spacing:.04em }
-.type-badge.energie { background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2) }
-.type-badge.pca     { background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.2) }
-.type-badge.complet { background:rgba(200,168,75,.12);color:#C8A84B;border:1px solid rgba(200,168,75,.2) }
-
-/* Champ style commun */
-.f-input { width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.55rem .8rem;color:var(--white);font-size:.85rem;outline:none;box-sizing:border-box }
-.f-input:focus { border-color:var(--gold) }
-.f-label { display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem }
 </style>
 
+<!-- ══════════════════════════════════════════════════════
+     PAGE HEADER
+══════════════════════════════════════════════════════ -->
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label">Administration</span>
     <h1>{{ document.name }}</h1>
     <p style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
       <span>DOC-{{ document.id|stringformat:"04d" }} ·
-        {% if document.status == 'recu' %}<span style="color:#60a5fa">Dossier reçu</span>
-        {% elif document.status == 'en_cours' %}<span style="color:var(--gold)">Analyse en cours</span>
-        {% else %}<span style="color:var(--success)">Analyse terminée</span>{% endif %}
+        {% if document.status == 'recu' %}
+          <span style="color:#60a5fa">Dossier reçu</span>
+        {% elif document.status == 'en_cours' %}
+          <span style="color:var(--gold)">Analyse en cours</span>
+        {% else %}
+          <span style="color:var(--success)">Analyse terminée</span>
+        {% endif %}
       </span>
-      {% if document.type_analyse == 'energie' %}<span class="type-badge energie">⚡ Pré-analyse énergétique</span>
-      {% elif document.type_analyse == 'pca' %}<span class="type-badge pca">🏗️ Pré-analyse technique</span>
-      {% elif document.type_analyse == 'complet' %}<span class="type-badge complet">📊 Analyse complète</span>
+      {% if document.type_analyse == 'energie' %}
+        <span class="badge badge--energie">⚡ Pré-analyse énergétique</span>
+      {% elif document.type_analyse == 'pca' %}
+        <span class="badge badge--pca">🏗️ Pré-analyse technique</span>
+      {% elif document.type_analyse == 'complet' %}
+        <span class="badge badge--complet">📊 Analyse complète</span>
       {% endif %}
     </p>
   </div>
@@ -51,37 +585,21 @@
 <div class="container">
 
   {% if messages %}
-  {% for msg in messages %}
-  <div style="background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.5rem;font-size:.88rem;color:var(--success)">✓ {{ msg }}</div>
-  {% endfor %}
+    {% for msg in messages %}
+      <div class="flash-success">✓ {{ msg }}</div>
+    {% endfor %}
   {% endif %}
 
-  <!-- ONGLETS -->
-  <div class="tab-bar" style="display:flex;gap:0;margin-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.08)">
-    <button onclick="showTab('infos')" id="tab-infos"
-      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--gold);color:var(--gold);font-weight:500;margin-bottom:-1px">
-      📋 Informations
-    </button>
-    <button onclick="showTab('documents')" id="tab-documents"
-      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
-      📁 Documents
-    </button>
-    <button onclick="showTab('emails')" id="tab-emails"
-      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
-      ✉️ Emails
-    </button>
-    <button onclick="showTab('rapport-ia')" id="tab-rapport-ia"
-      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
-      🤖 Rapport IA
-    </button>
-    <button onclick="showTab('observations')" id="tab-observations"
-      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
-      🔍 Observations
-    </button>
-    <button onclick="showTab('factures')" id="tab-factures"
-      style="padding:.7rem 1.4rem;font-size:.88rem;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gray-1);margin-bottom:-1px">
-      ⚡ Factures
-    </button>
+  <!-- ══════════════════════════════════════════════════════
+       ONGLETS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tab-bar">
+    <button onclick="showTab('infos')"        id="tab-infos"        class="tab-btn tab-btn--active">📋 Informations</button>
+    <button onclick="showTab('documents')"    id="tab-documents"    class="tab-btn">📁 Documents</button>
+    <button onclick="showTab('emails')"       id="tab-emails"       class="tab-btn">✉️ Emails</button>
+    <button onclick="showTab('rapport-ia')"   id="tab-rapport-ia"   class="tab-btn">🤖 Rapport IA</button>
+    <button onclick="showTab('observations')" id="tab-observations" class="tab-btn">🔍 Observations</button>
+    <button onclick="showTab('factures')"     id="tab-factures"     class="tab-btn">⚡ Factures</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════
@@ -90,66 +608,66 @@
   <div id="panel-infos">
     <form method="post">
       {% csrf_token %}
-      <div class="main-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+      <div class="grid-2col">
 
         <!-- COLONNE GAUCHE -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
 
-          <!-- Statut -->
-          <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">Statut du dossier</h3>
+          <!-- Statut du dossier -->
+          <div class="card card--pad">
+            <h3 class="section-title">Statut du dossier</h3>
             <div style="display:flex;flex-direction:column;gap:.6rem">
               {% for val, label in status_choices %}
-              <label style="display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border-radius:6px;border:1px solid {% if document.status == val %}rgba(200,168,75,.3){% else %}rgba(255,255,255,.05){% endif %};cursor:pointer;background:{% if document.status == val %}rgba(200,168,75,.06){% else %}transparent{% endif %}">
-                <input type="radio" name="status" value="{{ val }}" {% if document.status == val %}checked{% endif %} style="accent-color:var(--gold)">
-                <span style="font-size:.88rem;color:{% if document.status == val %}var(--gold){% else %}var(--gray-2){% endif %}">{{ label }}</span>
+              <label class="radio-card {% if document.status == val %}radio-card--active{% endif %}">
+                <input type="radio" name="status" value="{{ val }}" {% if document.status == val %}checked{% endif %}>
+                <span>{{ label }}</span>
               </label>
               {% endfor %}
             </div>
           </div>
 
-          <!-- Infos client -->
-          <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Informations client</h3>
+          <!-- Informations client -->
+          <div class="card card--pad">
+            <h3 class="section-title" style="margin-bottom:1rem">Informations client</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
               <div>
-                <label class="f-label">Nom du client</label>
-                <input type="text" name="client_name" value="{{ document.client_name|default:'' }}" placeholder="Jean Dupont" class="f-input"
-                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+                <label class="label-caps">Nom du client</label>
+                <input type="text" name="client_name" value="{{ document.client_name|default:'' }}"
+                  placeholder="Jean Dupont" class="f-input">
               </div>
               <div>
-                <label class="f-label">Email</label>
-                <input type="email" name="client_email" value="{{ document.client_email|default:'' }}" placeholder="client@email.fr" class="f-input"
-                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+                <label class="label-caps">Email</label>
+                <input type="email" name="client_email" value="{{ document.client_email|default:'' }}"
+                  placeholder="client@email.fr" class="f-input">
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;font-size:.82rem">
-                <span style="color:var(--gray-1)">Déposé le</span>
-                <span style="color:var(--gray-2)">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
+              <div class="meta-row">
+                <span>Déposé le</span>
+                <span>{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Infos bâtiment -->
-          <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">Informations du bâtiment</h3>
+          <!-- Informations bâtiment -->
+          <div class="card card--pad">
+            <h3 class="section-title" style="margin-bottom:1rem">Informations du bâtiment</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem">
                 <div>
-                  <label class="f-label">Type</label>
+                  <label class="label-caps">Type</label>
                   <div style="font-size:.85rem;color:var(--gray-2)">{{ document.get_building_type_display|default:"—" }}</div>
                 </div>
                 <div>
-                  <label class="f-label">Pays</label>
+                  <label class="label-caps">Pays</label>
                   <div style="font-size:.85rem;color:var(--gray-2)">{{ document.get_pays_display|default:"—" }}</div>
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem">
                 <div>
-                  <label class="f-label">Zone climatique</label>
+                  <label class="label-caps">Zone climatique</label>
                   <div style="font-size:.85rem;color:var(--gray-2)">{{ document.climate_zone|default:"—" }}</div>
                 </div>
                 <div>
-                  <label class="f-label">Norme</label>
+                  <label class="label-caps">Norme</label>
                   <div style="font-size:.85rem;color:var(--gold);font-weight:600">{{ document.norme|default:"—" }}</div>
                 </div>
               </div>
@@ -157,19 +675,19 @@
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem;padding-top:.4rem;border-top:1px solid rgba(255,255,255,.05)">
                 {% if document.surface_totale %}
                 <div>
-                  <label class="f-label">Surface</label>
+                  <label class="label-caps">Surface</label>
                   <div style="font-size:.85rem;color:var(--gray-2)">{{ document.surface_totale }} m²</div>
                 </div>
                 {% endif %}
                 {% if document.annee_construction %}
                 <div>
-                  <label class="f-label">Année</label>
+                  <label class="label-caps">Année</label>
                   <div style="font-size:.85rem;color:var(--gray-2)">{{ document.annee_construction }}</div>
                 </div>
                 {% endif %}
                 {% if document.nombre_logements %}
                 <div>
-                  <label class="f-label">Logements</label>
+                  <label class="label-caps">Logements</label>
                   <div style="font-size:.85rem;color:var(--gray-2)">{{ document.nombre_logements }}</div>
                 </div>
                 {% endif %}
@@ -179,49 +697,45 @@
           </div>
 
           <!-- Notes internes -->
-          <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:.8rem;color:var(--gold)">Notes internes</h3>
-            <textarea name="admin_notes" rows="4" placeholder="Observations, remarques sur le dossier..." class="f-input" style="resize:vertical"
-              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">{{ document.admin_notes|default:'' }}</textarea>
+          <div class="card card--pad">
+            <h3 class="section-title" style="margin-bottom:.8rem">Notes internes</h3>
+            <textarea name="admin_notes" rows="4" class="f-input"
+              placeholder="Observations, remarques sur le dossier..."
+              style="resize:vertical">{{ document.admin_notes|default:'' }}</textarea>
           </div>
 
-        </div>
+        </div><!-- /col gauche -->
 
         <!-- COLONNE DROITE — conditionnelle selon type_analyse -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
 
           {% if document.type_analyse == 'pca' %}
-          <!-- PCA uniquement : pas de valeurs RT/RE2020 -->
-          <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:.8rem;color:#c084fc">🏗️ Pré-analyse technique (PCA)</h3>
+          <!-- PCA : pas de valeurs RT/RE2020 -->
+          <div class="card card--pad">
+            <h3 class="section-title section-title--purple" style="margin-bottom:.8rem">🏗️ Pré-analyse technique (PCA)</h3>
             <div style="padding:.9rem 1rem;background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.15);border-radius:8px">
               <p style="font-size:.83rem;color:var(--gray-2);line-height:1.6;margin:0">
                 Ce dossier est soumis pour une <strong style="color:#c084fc">pré-analyse technique</strong> uniquement.<br>
-                L'analyse IA évaluera l'état de l'enveloppe, des systèmes, les risques identifiés et les travaux à prévoir — sans analyse de conformité thermique réglementaire.
+                L'analyse IA évaluera l'état de l'enveloppe, des systèmes, les risques identifiés et les travaux à prévoir —
+                sans analyse de conformité thermique réglementaire.
               </p>
             </div>
           </div>
 
           {% else %}
-          <!-- Énergie ou Complet : afficher les champs RT2012 / RE2020 -->
+          <!-- Énergie ou Complet : champs RT2012 / RE2020 -->
 
           {% if document.norme == 'RT2012' or document.type_analyse == 'complet' %}
-          <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">RT2012 — Valeurs mesurées</h3>
+          <div class="card card--pad">
+            <h3 class="section-title">RT2012 — Valeurs mesurées</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
               {% for field, label, unit in rt2012_fields %}
-              <div class="rt-field-row" style="display:flex;align-items:center;gap:.8rem">
-                <label style="width:140px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
-                  {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
-                </label>
+              <div class="rt-row">
+                <label>{{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}</label>
                 <input type="number" step="0.01" name="{{ field }}"
                   value="{% if document|attr:field is not None %}{{ document|attr:field }}{% endif %}"
-                  placeholder="—"
-                  style="flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.5rem .8rem;color:var(--white);font-size:.88rem;outline:none"
-                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-                <span style="font-size:.7rem;color:var(--muted);width:60px;text-align:right">
-                  ≤ {% get_seuil field document.building_type document.climate_zone %}
-                </span>
+                  placeholder="—">
+                <span class="seuil">≤ {% get_seuil field document.building_type document.climate_zone %}</span>
               </div>
               {% endfor %}
             </div>
@@ -229,22 +743,16 @@
           {% endif %}
 
           {% if document.norme == 'RE2020' or document.type_analyse == 'complet' %}
-          <div class="card" style="padding:1.5rem">
-            <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">RE2020 — Valeurs mesurées</h3>
+          <div class="card card--pad">
+            <h3 class="section-title">RE2020 — Valeurs mesurées</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
               {% for field, label, unit in re2020_fields %}
-              <div class="rt-field-row" style="display:flex;align-items:center;gap:.8rem">
-                <label style="width:180px;font-size:.82rem;color:var(--gray-1);flex-shrink:0">
-                  {{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}
-                </label>
+              <div class="rt-row">
+                <label class="wide">{{ label }}{% if unit %} <span style="font-size:.72rem;color:var(--muted)">({{ unit }})</span>{% endif %}</label>
                 <input type="number" step="0.01" name="{{ field }}"
                   value="{% if document|attr:field is not None %}{{ document|attr:field }}{% endif %}"
-                  placeholder="—"
-                  style="flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.5rem .8rem;color:var(--white);font-size:.88rem;outline:none"
-                  onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-                <span style="font-size:.7rem;color:var(--muted);width:60px;text-align:right">
-                  ≤ {% get_seuil field document.building_type document.climate_zone %}
-                </span>
+                  placeholder="—">
+                <span class="seuil">≤ {% get_seuil field document.building_type document.climate_zone %}</span>
               </div>
               {% endfor %}
             </div>
@@ -253,16 +761,15 @@
 
           {% endif %}{# fin if pca #}
 
-        </div>
-      </div>
+        </div><!-- /col droite -->
+      </div><!-- /grid -->
 
       <!-- ACTIONS -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.06)">
-        <form method="post" action="{% url 'delete_document' document.id %}" onsubmit="return confirm('Supprimer définitivement ce dossier ?')">
+      <div class="actions-row">
+        <form method="post" action="{% url 'delete_document' document.id %}"
+          onsubmit="return confirm('Supprimer définitivement ce dossier ?')">
           {% csrf_token %}
-          <button type="submit" style="background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);color:#e53935;padding:.6rem 1.2rem;border-radius:6px;font-size:.85rem;cursor:pointer">
-            🗑 Supprimer
-          </button>
+          <button type="submit" class="btn-delete">🗑 Supprimer</button>
         </form>
         <div style="display:flex;gap:.8rem">
           <a href="{% url 'home' %}" class="btn btn-outline">Retour</a>
@@ -271,116 +778,105 @@
       </div>
 
     </form>
-  </div>
+  </div><!-- /panel-infos -->
 
   <!-- ══════════════════════════════════════════════════════
        ONGLET DOCUMENTS
   ══════════════════════════════════════════════════════ -->
   <div id="panel-documents" style="display:none">
-    <div class="card" style="padding:1.8rem">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.4rem;color:var(--gold)">📁 Documents déposés par le client</h3>
+
+    <div class="card card--pad" style="padding:1.8rem">
+      <h3 class="section-title" style="margin-bottom:1.4rem">📁 Documents déposés par le client</h3>
 
       {% if document.fichiers.all %}
       <div style="display:flex;flex-direction:column;gap:.7rem">
         {% for f in document.fichiers.all %}
-        <div style="display:flex;align-items:center;gap:1.2rem;padding:1rem 1.3rem;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.15);border-radius:10px">
-          <div style="font-size:2rem;flex-shrink:0">📄</div>
+        <div class="doc-item">
+          <div class="doc-item__icon">📄</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:.88rem;color:var(--white);font-weight:500;margin-bottom:.2rem;word-break:break-all">{{ f.nom }}</div>
-            <div style="font-size:.75rem;color:var(--gray-1)">
+            <div class="doc-item__name">{{ f.nom }}</div>
+            <div class="doc-item__meta">
               Déposé le {{ f.uploaded_at|date:"d/m/Y à H:i" }}
               {% if f.taille %} · {{ f.taille|filesizeformat }}{% endif %}
             </div>
           </div>
-          <a href="{{ f.fichier.url }}" target="_blank" download
-             style="flex-shrink:0;display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;background:var(--gold);color:#0C1929;font-weight:700;font-size:.78rem;border-radius:7px;text-decoration:none">
-            ⬇ Télécharger
-          </a>
+          <a href="{{ f.fichier.url }}" target="_blank" download class="doc-item__dl">⬇ Télécharger</a>
         </div>
         {% endfor %}
       </div>
+
       {% elif document.upload %}
       <!-- Fallback ancien champ upload -->
-      <div style="display:flex;align-items:center;gap:1.2rem;padding:1rem 1.3rem;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.15);border-radius:10px">
-        <div style="font-size:2rem;flex-shrink:0">📄</div>
+      <div class="doc-item">
+        <div class="doc-item__icon">📄</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:.88rem;color:var(--white);font-weight:500;margin-bottom:.2rem;word-break:break-all">{{ document.upload.name|cut:"documents/" }}</div>
-          <div style="font-size:.75rem;color:var(--gray-1)">Déposé le {{ document.upload_date|date:"d/m/Y à H:i" }}</div>
+          <div class="doc-item__name">{{ document.upload.name|cut:"documents/" }}</div>
+          <div class="doc-item__meta">Déposé le {{ document.upload_date|date:"d/m/Y à H:i" }}</div>
         </div>
-        <a href="{{ document.upload.url }}" target="_blank" download
-           style="flex-shrink:0;display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;background:var(--gold);color:#0C1929;font-weight:700;font-size:.78rem;border-radius:7px;text-decoration:none">
-          ⬇ Télécharger
-        </a>
+        <a href="{{ document.upload.url }}" target="_blank" download class="doc-item__dl">⬇ Télécharger</a>
       </div>
+
       {% else %}
-      <div style="text-align:center;padding:2.5rem 1rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px">
-        <div style="font-size:2.5rem;margin-bottom:.8rem;opacity:.4">📂</div>
-        <p style="font-size:.85rem;color:var(--gray-1)">Aucun document déposé.</p>
+      <div class="doc-empty">
+        <div class="doc-empty__icon">📂</div>
+        <p class="doc-empty__text">Aucun document déposé.</p>
       </div>
       {% endif %}
     </div>
-    <div class="card" style="padding:1.8rem;margin-top:2rem">
 
-<h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1rem;color:var(--gold)">
-⚡ Import rapport OpenStudio
-</h3>
+    <!-- Import OpenStudio -->
+    <div class="card card--pad" style="padding:1.8rem;margin-top:2rem">
+      <h3 class="section-title" style="margin-bottom:1rem">⚡ Import rapport OpenStudio</h3>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="upload_openstudio" value="1">
+        <input type="file" name="openstudio_file" accept=".html,.csv,.sql" style="margin-bottom:1rem">
+        <button type="submit" class="btn btn-gold">Importer rapport OpenStudio</button>
+      </form>
+      <p style="font-size:.8rem;color:var(--gray-1);margin-top:.7rem">
+        Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
+      </p>
+    </div>
 
-<form method="post" enctype="multipart/form-data">
-{% csrf_token %}
-
-<input type="hidden" name="upload_openstudio" value="1">
-
-<input type="file" name="openstudio_file" accept=".html,.csv,.sql"
-style="margin-bottom:1rem">
-
-<button type="submit" class="btn btn-gold">
-Importer rapport OpenStudio
-</button>
-
-</form>
-
-<p style="font-size:.8rem;color:var(--gray-1);margin-top:.7rem">
-Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
-</p>
-
-</div>
-  </div>
+  </div><!-- /panel-documents -->
 
   <!-- ══════════════════════════════════════════════════════
        ONGLET EMAILS
   ══════════════════════════════════════════════════════ -->
   <div id="panel-emails" style="display:none">
-    <div class="card" style="padding:1.5rem">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)">✉️ Workflow emails client</h3>
+    <div class="card card--pad">
+      <h3 class="section-title" style="margin-bottom:1.2rem">✉️ Workflow emails client</h3>
 
       {% if not document.client_email %}
-      <div style="background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.2);border-radius:8px;padding:.9rem 1.2rem;margin-bottom:1.2rem;font-size:.83rem;color:#ffc107">
+      <div class="email-alert email-alert--warn">
         ⚠️ Aucun email client — renseignez l'email dans l'onglet <strong>Informations</strong> d'abord.
       </div>
       {% else %}
-      <div style="background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.15);border-radius:8px;padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.82rem;color:var(--success)">
+      <div class="email-alert email-alert--success">
         ✓ Email client : <strong>{{ document.client_email }}</strong>
       </div>
       {% endif %}
 
       <div style="display:flex;flex-direction:column;gap:.7rem">
         {% for num, color, bg, title, desc, type in email_steps %}
-        <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">
-          <div style="width:36px;height:36px;border-radius:10px;background:{{ bg }};color:{{ color }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0">{{ num }}</div>
+        <div class="email-step">
+          <div class="email-step__num" style="background:{{ bg }};color:{{ color }}">{{ num }}</div>
           <div style="flex:1">
-            <div style="font-size:.9rem;color:var(--white);font-weight:500">{{ title }}</div>
-            <div style="font-size:.78rem;color:var(--gray-1);margin-top:.2rem">{{ desc }}</div>
+            <div class="email-step__title">{{ title }}</div>
+            <div class="email-step__desc">{{ desc }}</div>
           </div>
           {% if type == 'devis' %}
-          <button type="button" onclick="ouvrirModalDevis()" {% if not document.client_email %}disabled{% endif %}
-            style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.5rem 1.2rem;border-radius:7px;font-size:.82rem;cursor:{% if document.client_email %}pointer{% else %}not-allowed{% endif %};opacity:{% if document.client_email %}1{% else %}.4{% endif %};font-weight:500">
+          <button type="button" onclick="ouvrirModalDevis()"
+            {% if not document.client_email %}disabled{% endif %}
+            style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.5rem 1.2rem;border-radius:7px;font-size:.82rem;cursor:{% if document.client_email %}pointer{% else %}not-allowed{% endif %};opacity:{% if document.client_email %}1{% else %}.4{% endif %};font-weight:500;font-family:inherit">
             ✉ Envoyer
           </button>
           {% else %}
           <form method="post" action="{% url 'send_email_manual' document.id type %}">
             {% csrf_token %}
-            <button type="submit" {% if not document.client_email %}disabled{% endif %}
-              style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.5rem 1.2rem;border-radius:7px;font-size:.82rem;cursor:{% if document.client_email %}pointer{% else %}not-allowed{% endif %};opacity:{% if document.client_email %}1{% else %}.4{% endif %};font-weight:500">
+            <button type="submit"
+              {% if not document.client_email %}disabled{% endif %}
+              style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.5rem 1.2rem;border-radius:7px;font-size:.82rem;cursor:{% if document.client_email %}pointer{% else %}not-allowed{% endif %};opacity:{% if document.client_email %}1{% else %}.4{% endif %};font-weight:500;font-family:inherit">
               ✉ Envoyer
             </button>
           </form>
@@ -389,44 +885,44 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
         {% endfor %}
       </div>
     </div>
-  </div>
+  </div><!-- /panel-emails -->
 
-  <!-- Modale devis -->
-  <div id="modal-devis" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:1rem">
-    <div style="background:var(--navy-2);border:1px solid rgba(200,168,75,.2);border-radius:14px;padding:2rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+  <!-- Modal devis -->
+  <div id="modal-devis" class="modal-overlay">
+    <div class="modal-box">
       <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:1.4rem;color:var(--gold)">💰 Envoyer un devis</h3>
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="create_devis" value="1">
         <div style="display:flex;flex-direction:column;gap:1rem">
           <div>
-            <label class="f-label">Nom du projet</label>
-            <input type="text" name="projet_nom" value="{{ document.name }}" class="f-input"
-              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+            <label class="label-caps">Nom du projet</label>
+            <input type="text" name="projet_nom" value="{{ document.name }}" class="f-input">
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
             <div>
-              <label class="f-label">Type d'analyse</label>
+              <label class="label-caps">Type d'analyse</label>
               <select name="type_analyse" class="f-input">
                 <option value="energie" {% if document.type_analyse == 'energie' %}selected{% endif %}>Énergétique</option>
-                <option value="pca" {% if document.type_analyse == 'pca' %}selected{% endif %}>Technique (PCA)</option>
+                <option value="pca"     {% if document.type_analyse == 'pca'     %}selected{% endif %}>Technique (PCA)</option>
                 <option value="complet" {% if document.type_analyse == 'complet' %}selected{% endif %}>Analyse complète</option>
               </select>
             </div>
             <div>
-              <label class="f-label">Montant HT (€)</label>
-              <input type="number" name="montant" step="0.01" placeholder="650.00" class="f-input"
-                onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+              <label class="label-caps">Montant HT (€)</label>
+              <input type="number" name="montant" step="0.01" placeholder="650.00" class="f-input">
             </div>
           </div>
           <div>
-            <label class="f-label">Notes (optionnel)</label>
-            <textarea name="notes" rows="2" class="f-input" style="resize:vertical"
-              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'"></textarea>
+            <label class="label-caps">Notes (optionnel)</label>
+            <textarea name="notes" rows="2" class="f-input" style="resize:vertical"></textarea>
           </div>
         </div>
         <div style="display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end">
-          <button type="button" onclick="fermerModalDevis()" style="background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--gray-2);padding:.6rem 1.2rem;border-radius:7px;font-size:.83rem;cursor:pointer">Annuler</button>
+          <button type="button" onclick="fermerModalDevis()"
+            style="background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--gray-2);padding:.6rem 1.2rem;border-radius:7px;font-size:.83rem;cursor:pointer;font-family:inherit">
+            Annuler
+          </button>
           <button type="submit" class="btn btn-gold">✉ Envoyer le devis</button>
         </div>
       </form>
@@ -439,16 +935,16 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
   <div id="panel-rapport-ia" style="display:none">
 
     <!-- Bandeau statut + boutons -->
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;padding:1.1rem 1.4rem;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px">
+    <div class="rapport-header">
       <div>
-        <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 .25rem 0">🤖 Rapport d'analyse IA</p>
-        <p style="font-size:.83rem;color:var(--gray-1);margin:0">
-          {% if document.type_analyse == 'energie' %}Pré-analyse énergétique —
-            <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
-          {% elif document.type_analyse == 'pca' %}Pré-analyse technique (PCA) —
-            {{ document.get_building_type_display }} · {{ document.get_pays_display }}
-          {% else %}Analyse complète —
-            <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
+        <p class="rapport-header__label">🤖 Rapport d'analyse IA</p>
+        <p class="rapport-header__desc">
+          {% if document.type_analyse == 'energie' %}
+            Pré-analyse énergétique — <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
+          {% elif document.type_analyse == 'pca' %}
+            Pré-analyse technique (PCA) — {{ document.get_building_type_display }} · {{ document.get_pays_display }}
+          {% else %}
+            Analyse complète — <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
           {% endif %}
         </p>
       </div>
@@ -457,12 +953,12 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
         <span style="font-size:.75rem;color:var(--success);display:flex;align-items:center;gap:.3rem">✓ <span>Rapport sauvegardé</span></span>
         <button id="btn-regen"
           onclick="if(confirm('Régénérer le rapport ? Le rapport actuel sera remplacé.')) genererRapportIA(true)"
-          style="display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:7px;color:var(--gold);font-size:.82rem;cursor:pointer;font-weight:500">
+          style="display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:7px;color:var(--gold);font-size:.82rem;cursor:pointer;font-weight:500;font-family:inherit">
           🔄 Régénérer
         </button>
         {% else %}
         <button id="btn-generer" onclick="genererRapportIA(false)"
-          style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.3rem;background:linear-gradient(135deg,#C8A84B,#e0c070);border:none;border-radius:8px;color:#0C1929;font-size:.88rem;cursor:pointer;font-weight:700">
+          style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.3rem;background:linear-gradient(135deg,#C8A84B,#e0c070);border:none;border-radius:8px;color:#0C1929;font-size:.88rem;cursor:pointer;font-weight:700;font-family:inherit">
           <span id="btn-icon">✨</span>
           <span id="btn-text">Générer le rapport</span>
         </button>
@@ -471,13 +967,13 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
     </div>
 
     <!-- Barre de progression -->
-    <div id="progress-bar-wrap" style="display:none;margin-bottom:1.5rem">
+    <div id="progress-bar-wrap" class="progress-wrap">
       <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.4rem">
         <span id="progress-label">Envoi du document à Claude…</span>
         <span id="progress-pct">0%</span>
       </div>
-      <div style="background:rgba(255,255,255,.06);border-radius:20px;height:6px;overflow:hidden">
-        <div id="progress-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#C8A84B,#e0c070);border-radius:20px;transition:width .4s ease"></div>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
       </div>
     </div>
 
@@ -488,42 +984,42 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
     <div id="rapport-content" style="{% if not document.rapport_ia_json %}display:none{% endif %}">
 
       <!-- Verdict -->
-      <div id="verdict-banner" style="margin-bottom:1.4rem;padding:1.2rem 1.5rem;border-radius:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,.08)">
+      <div id="verdict-banner" class="verdict-banner">
         <div>
-          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;opacity:.65;margin-bottom:.4rem">
+          <div class="verdict-label">
             {% if document.type_analyse == 'pca' %}État technique global{% else %}Verdict — {{ document.norme }}{% endif %}
           </div>
-          <div id="verdict-text" style="font-size:1.4rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--gold)"></div>
+          <div id="verdict-text" class="verdict-text"></div>
         </div>
-        <div id="verdict-icon" style="font-size:2.5rem"></div>
+        <div id="verdict-icon" class="verdict-icon"></div>
       </div>
 
       <!-- Résumé + KPIs -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
-        <div class="card" style="padding:1.4rem">
-          <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📋 Résumé exécutif</h4>
+        <div class="card card--pad" style="padding:1.4rem">
+          <h4 class="section-cap section-cap--gold">📋 Résumé exécutif</h4>
           <p id="resume-executif" style="font-size:.86rem;color:var(--gray-2);line-height:1.65;margin:0"></p>
         </div>
-        <div class="card" style="padding:1.4rem">
-          <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📊 Critères</h4>
+        <div class="card card--pad" style="padding:1.4rem">
+          <h4 class="section-cap section-cap--gold">📊 Critères</h4>
           <div style="display:flex;gap:.8rem;margin-bottom:.9rem">
-            <div id="kpi-conforme" style="flex:1;text-align:center;padding:.7rem;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2);border-radius:8px">
-              <div style="font-size:1.8rem;font-weight:700;color:#27c93f">—</div>
-              <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">{% if document.type_analyse == 'pca' %}Conformes{% else %}Conformes{% endif %}</div>
+            <div id="kpi-conforme" class="kpi-box kpi-box--ok">
+              <div class="kpi-box__val">—</div>
+              <div class="kpi-box__lbl">{% if document.type_analyse == 'pca' %}Conformes{% else %}Conformes{% endif %}</div>
             </div>
-            <div id="kpi-nonconforme" style="flex:1;text-align:center;padding:.7rem;background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.2);border-radius:8px">
-              <div style="font-size:1.8rem;font-weight:700;color:#ef5350">—</div>
-              <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">{% if document.type_analyse == 'pca' %}Risques{% else %}Non conformes{% endif %}</div>
+            <div id="kpi-nonconforme" class="kpi-box kpi-box--ko">
+              <div class="kpi-box__val">—</div>
+              <div class="kpi-box__lbl">{% if document.type_analyse == 'pca' %}Risques{% else %}Non conformes{% endif %}</div>
             </div>
           </div>
           <div id="mini-bars" style="display:flex;flex-direction:column;gap:.45rem"></div>
         </div>
       </div>
 
-      <!-- Tableau critères — affiché pour énergie et complet -->
+      <!-- Tableau critères — énergie et complet -->
       {% if document.type_analyse != 'pca' %}
-      <div class="card" style="padding:1.4rem;margin-bottom:1.4rem;overflow-x:auto">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.9rem">🔍 Analyse des critères</h4>
+      <div class="card card--pad" style="padding:1.4rem;margin-bottom:1.4rem;overflow-x:auto">
+        <h4 class="section-cap section-cap--gold">🔍 Analyse des critères</h4>
         <table style="width:100%;border-collapse:collapse;font-size:.83rem">
           <thead>
             <tr style="background:#0C1929">
@@ -542,33 +1038,31 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
       <!-- PCA : état technique + risques + travaux + budget -->
       {% if document.type_analyse == 'pca' or document.type_analyse == 'complet' %}
 
-      <!-- Score + stat row -->
+      <!-- Stats PCA -->
       <div id="pca-stats-wrap" style="display:none;margin-bottom:1.2rem">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem">
-          <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
-            <div id="pca-nb-composants" style="font-size:1.8rem;font-weight:700;color:var(--white)">—</div>
-            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">Composants</div>
+          <div class="stat-box">
+            <div id="pca-nb-composants" class="stat-box__val" style="color:var(--white)">—</div>
+            <div class="stat-box__lbl">Composants</div>
           </div>
-          <div style="background:var(--navy-3);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1rem;text-align:center">
-            <div id="pca-nb-bons" style="font-size:1.8rem;font-weight:700;color:#27c93f">—</div>
-            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">En bon état</div>
+          <div class="stat-box" style="border-color:rgba(39,201,63,.2)">
+            <div id="pca-nb-bons" class="stat-box__val" style="color:#27c93f">—</div>
+            <div class="stat-box__lbl">En bon état</div>
           </div>
-          <div style="background:var(--navy-3);border:1px solid rgba(239,83,80,.2);border-radius:10px;padding:1rem;text-align:center">
-            <div id="pca-nb-risques" style="font-size:1.8rem;font-weight:700;color:#ef5350">—</div>
-            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">Risques</div>
+          <div class="stat-box" style="border-color:rgba(239,83,80,.2)">
+            <div id="pca-nb-risques" class="stat-box__val" style="color:#ef5350">—</div>
+            <div class="stat-box__lbl">Risques</div>
           </div>
-          <div style="background:var(--navy-3);border:1px solid rgba(200,168,75,.2);border-radius:10px;padding:1rem;text-align:center">
-            <div id="pca-nb-travaux" style="font-size:1.8rem;font-weight:700;color:var(--gold)">—</div>
-            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.2rem">Travaux</div>
+          <div class="stat-box" style="border-color:rgba(200,168,75,.2)">
+            <div id="pca-nb-travaux" class="stat-box__val" style="color:var(--gold)">—</div>
+            <div class="stat-box__lbl">Travaux</div>
           </div>
         </div>
       </div>
 
       <!-- État technique -->
-      <div id="pca-etat-wrap" class="card" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem">
-          🏗️ État technique — Composants
-        </h4>
+      <div id="pca-etat-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+        <h4 class="section-cap section-cap--purple">🏗️ État technique — Composants</h4>
         <div style="border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
           <div style="display:grid;grid-template-columns:1.8fr 1fr 2.5fr 80px;gap:.8rem;padding:.5rem 1rem;background:rgba(0,0,0,.2);font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-1)">
             <span>Composant</span><span>État</span><span>Observation</span><span>Vétusté</span>
@@ -577,21 +1071,21 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
         </div>
       </div>
 
-      <!-- Risques identifiés -->
+      <!-- Risques PCA -->
       <div id="pca-risques-wrap" style="margin-bottom:1.2rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#ef5350;margin-bottom:.8rem">⚠️ Risques identifiés</h4>
+        <h4 class="section-cap section-cap--red">⚠️ Risques identifiés</h4>
         <div id="pca-risques-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
       </div>
 
-      <!-- Travaux -->
-      <div id="pca-travaux-wrap" class="card" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#60a5fa;margin-bottom:.9rem">🔧 Plan de travaux</h4>
+      <!-- Travaux PCA -->
+      <div id="pca-travaux-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+        <h4 class="section-cap section-cap--blue">🔧 Plan de travaux</h4>
         <div id="pca-travaux-list" style="display:flex;flex-direction:column;gap:.55rem"></div>
       </div>
 
-      <!-- Budget -->
-      <div id="pca-budget-wrap" class="card" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.9rem">💰 Enveloppe budgétaire</h4>
+      <!-- Budget PCA -->
+      <div id="pca-budget-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+        <h4 class="section-cap section-cap--gold">💰 Enveloppe budgétaire</h4>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:.9rem">
           <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.9rem 1rem">
             <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Court terme</div>
@@ -615,14 +1109,14 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
       {% endif %}
 
       <!-- Points forts -->
-      <div id="points-forts-wrap" class="card" style="padding:1.4rem;margin-bottom:1.4rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#27c93f;margin-bottom:.8rem">✅ Points forts</h4>
+      <div id="points-forts-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.4rem;display:none">
+        <h4 class="section-cap section-cap--green">✅ Points forts</h4>
         <ul id="points-forts-list" style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.4rem"></ul>
       </div>
 
       <!-- Non-conformités / Risques -->
       <div id="nonconf-wrap" style="margin-bottom:1.4rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#ef5350;margin-bottom:.8rem">
+        <h4 class="section-cap section-cap--red">
           {% if document.type_analyse == 'pca' %}⚠️ Risques identifiés{% else %}⚠️ Non-conformités{% endif %}
         </h4>
         <div id="nonconf-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
@@ -630,35 +1124,36 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
 
       <!-- Recommandations -->
       <div id="recos-wrap" style="margin-bottom:1.4rem;display:none">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📌 Recommandations</h4>
+        <h4 class="section-cap section-cap--gold">📌 Recommandations</h4>
         <div id="recos-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
       </div>
 
       <!-- Enveloppe + Systèmes -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
-        <div class="card" style="padding:1.4rem">
-          <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">🏗️ Enveloppe thermique</h4>
+        <div class="card card--pad" style="padding:1.4rem">
+          <h4 class="section-cap section-cap--gold">🏗️ Enveloppe thermique</h4>
           <p id="enveloppe-synthese" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin-bottom:.7rem"></p>
           <ul id="enveloppe-points" style="margin:0;padding-left:1.1rem;font-size:.8rem;color:var(--gray-1);display:flex;flex-direction:column;gap:.3rem"></ul>
         </div>
-        <div class="card" style="padding:1.4rem">
-          <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">⚡ Systèmes énergétiques</h4>
+        <div class="card card--pad" style="padding:1.4rem">
+          <h4 class="section-cap section-cap--gold">⚡ Systèmes énergétiques</h4>
           <p id="systemes-synthese" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin-bottom:.7rem"></p>
           <div id="equipements-table" style="font-size:.8rem"></div>
         </div>
       </div>
 
-      <!-- Contexte réglementaire — seulement si énergie ou complet -->
+      <!-- Contexte réglementaire -->
       {% if document.type_analyse != 'pca' %}
-      <div class="card" style="padding:1.4rem;margin-bottom:1.4rem">
-        <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">📜 Contexte réglementaire</h4>
+      <div class="card card--pad" style="padding:1.4rem;margin-bottom:1.4rem">
+        <h4 class="section-cap section-cap--gold">📜 Contexte réglementaire</h4>
         <p id="contexte-reglementaire" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin:0"></p>
       </div>
       {% endif %}
 
       <!-- Mentions légales -->
       <div style="padding:.9rem 1.1rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:8px;font-size:.73rem;color:var(--muted);line-height:1.5">
-        <strong style="color:var(--gray-1)">Mentions légales — </strong><span id="mentions-legales"></span>
+        <strong style="color:var(--gray-1)">Mentions légales — </strong>
+        <span id="mentions-legales"></span>
       </div>
 
     </div><!-- /rapport-content -->
@@ -677,521 +1172,489 @@ Formats acceptés : HTML, CSV, SQL (OpenStudio / EnergyPlus)
        ONGLET OBSERVATIONS EXPERT
   ══════════════════════════════════════════════════════ -->
   <div id="panel-observations" style="display:none">
-  <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="_obs_save" value="1">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="_obs_save" value="1">
 
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.6rem;padding:1.1rem 1.4rem;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.18);border-radius:10px">
-      <div>
-        <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin:0 0 .2rem">🔍 Observations expert</p>
-        <p style="font-size:.83rem;color:var(--gray-1);margin:0">Ces données sont injectées dans le prompt IA pour enrichir le rapport généré.</p>
+      <!-- Header -->
+      <div class="obs-header">
+        <div>
+          <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin:0 0 .2rem">🔍 Observations expert</p>
+          <p style="font-size:.83rem;color:var(--gray-1);margin:0">Ces données sont injectées dans le prompt IA pour enrichir le rapport généré.</p>
+        </div>
+        <button type="submit" class="btn btn-gold">Enregistrer</button>
       </div>
-      <button type="submit" class="btn btn-gold">Enregistrer</button>
-    </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+      <div class="grid-2col">
 
-      <!-- COLONNE GAUCHE : Enveloppe du bâtiment -->
-      <div style="display:flex;flex-direction:column;gap:1.2rem">
+        <!-- COLONNE GAUCHE : Enveloppe du bâtiment -->
+        <div style="display:flex;flex-direction:column;gap:1.2rem">
 
-        <!-- Toiture -->
-        <div class="card" style="padding:1.3rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">🏠 Toiture</h3>
-          <div style="display:flex;flex-direction:column;gap:.7rem">
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">État général</label>
-              <select name="obs_toiture_etat" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="bon" {% if document.obs_toiture_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
-                <option value="moyen" {% if document.obs_toiture_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
-                <option value="mauvais" {% if document.obs_toiture_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Âge estimé (ans)</label>
-              <input type="number" name="obs_toiture_age" min="0" max="100"
-                value="{{ document.obs_toiture_age|default:'' }}"
-                placeholder="ex: 15" class="f-input">
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Observations</label>
-              <textarea name="obs_toiture_notes" rows="2" placeholder="Fissures, étanchéité, végétation..." class="f-input" style="resize:vertical">{{ document.obs_toiture_notes|default:'' }}</textarea>
+          <!-- Toiture -->
+          <div class="card card--pad-sm">
+            <h3 class="section-title section-title--purple section-title--sm">🏠 Toiture</h3>
+            <div style="display:flex;flex-direction:column;gap:.7rem">
+              <div>
+                <label class="label-caps">État général</label>
+                <select name="obs_toiture_etat" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="bon"     {% if document.obs_toiture_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
+                  <option value="moyen"   {% if document.obs_toiture_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
+                  <option value="mauvais" {% if document.obs_toiture_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps">Âge estimé (ans)</label>
+                <input type="number" name="obs_toiture_age" min="0" max="100"
+                  value="{{ document.obs_toiture_age|default:'' }}" placeholder="ex: 15" class="f-input">
+              </div>
+              <div>
+                <label class="label-caps">Observations</label>
+                <textarea name="obs_toiture_notes" rows="2" class="f-input" style="resize:vertical"
+                  placeholder="Fissures, étanchéité, végétation...">{{ document.obs_toiture_notes|default:'' }}</textarea>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Façades -->
-        <div class="card" style="padding:1.3rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">🧱 Façades & murs</h3>
-          <div style="display:flex;flex-direction:column;gap:.7rem">
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">État général</label>
-              <select name="obs_facade_etat" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="bon" {% if document.obs_facade_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
-                <option value="moyen" {% if document.obs_facade_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
-                <option value="mauvais" {% if document.obs_facade_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Isolation existante</label>
-              <select name="obs_facade_isolation" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="ite" {% if document.obs_facade_isolation == 'ite' %}selected{% endif %}>ITE (extérieur)</option>
-                <option value="iti" {% if document.obs_facade_isolation == 'iti' %}selected{% endif %}>ITI (intérieur)</option>
-                <option value="aucune" {% if document.obs_facade_isolation == 'aucune' %}selected{% endif %}>Aucune</option>
-                <option value="inconnue" {% if document.obs_facade_isolation == 'inconnue' %}selected{% endif %}>Inconnue</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Observations</label>
-              <textarea name="obs_facade_notes" rows="2" placeholder="Fissures, humidité, décollements..." class="f-input" style="resize:vertical">{{ document.obs_facade_notes|default:'' }}</textarea>
+          <!-- Façades -->
+          <div class="card card--pad-sm">
+            <h3 class="section-title section-title--purple section-title--sm">🧱 Façades & murs</h3>
+            <div style="display:flex;flex-direction:column;gap:.7rem">
+              <div>
+                <label class="label-caps">État général</label>
+                <select name="obs_facade_etat" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="bon"     {% if document.obs_facade_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
+                  <option value="moyen"   {% if document.obs_facade_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
+                  <option value="mauvais" {% if document.obs_facade_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps">Isolation existante</label>
+                <select name="obs_facade_isolation" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="ite"      {% if document.obs_facade_isolation == 'ite'      %}selected{% endif %}>ITE (extérieur)</option>
+                  <option value="iti"      {% if document.obs_facade_isolation == 'iti'      %}selected{% endif %}>ITI (intérieur)</option>
+                  <option value="aucune"   {% if document.obs_facade_isolation == 'aucune'   %}selected{% endif %}>Aucune</option>
+                  <option value="inconnue" {% if document.obs_facade_isolation == 'inconnue' %}selected{% endif %}>Inconnue</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps">Observations</label>
+                <textarea name="obs_facade_notes" rows="2" class="f-input" style="resize:vertical"
+                  placeholder="Fissures, humidité, décollements...">{{ document.obs_facade_notes|default:'' }}</textarea>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Menuiseries -->
-        <div class="card" style="padding:1.3rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">🪟 Menuiseries</h3>
-          <div style="display:flex;flex-direction:column;gap:.7rem">
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Type de vitrage</label>
-              <select name="obs_menuiseries_type" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="simple" {% if document.obs_menuiseries_type == 'simple' %}selected{% endif %}>Simple vitrage</option>
-                <option value="double" {% if document.obs_menuiseries_type == 'double' %}selected{% endif %}>Double vitrage</option>
-                <option value="triple" {% if document.obs_menuiseries_type == 'triple' %}selected{% endif %}>Triple vitrage</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">État général</label>
-              <select name="obs_menuiseries_etat" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="bon" {% if document.obs_menuiseries_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
-                <option value="moyen" {% if document.obs_menuiseries_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
-                <option value="mauvais" {% if document.obs_menuiseries_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Observations</label>
-              <textarea name="obs_menuiseries_notes" rows="2" placeholder="Condensation, joints défaillants, cadres..." class="f-input" style="resize:vertical">{{ document.obs_menuiseries_notes|default:'' }}</textarea>
+          <!-- Menuiseries -->
+          <div class="card card--pad-sm">
+            <h3 class="section-title section-title--purple section-title--sm">🪟 Menuiseries</h3>
+            <div style="display:flex;flex-direction:column;gap:.7rem">
+              <div>
+                <label class="label-caps">Type de vitrage</label>
+                <select name="obs_menuiseries_type" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="simple" {% if document.obs_menuiseries_type == 'simple' %}selected{% endif %}>Simple vitrage</option>
+                  <option value="double" {% if document.obs_menuiseries_type == 'double' %}selected{% endif %}>Double vitrage</option>
+                  <option value="triple" {% if document.obs_menuiseries_type == 'triple' %}selected{% endif %}>Triple vitrage</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps">État général</label>
+                <select name="obs_menuiseries_etat" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="bon"     {% if document.obs_menuiseries_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
+                  <option value="moyen"   {% if document.obs_menuiseries_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
+                  <option value="mauvais" {% if document.obs_menuiseries_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps">Observations</label>
+                <textarea name="obs_menuiseries_notes" rows="2" class="f-input" style="resize:vertical"
+                  placeholder="Condensation, joints défaillants, cadres...">{{ document.obs_menuiseries_notes|default:'' }}</textarea>
+              </div>
             </div>
           </div>
-        </div>
 
-      </div><!-- /col gauche -->
+        </div><!-- /col gauche -->
 
-      <!-- COLONNE DROITE : Systèmes + Risques -->
-      <div style="display:flex;flex-direction:column;gap:1.2rem">
+        <!-- COLONNE DROITE : Systèmes + Risques -->
+        <div style="display:flex;flex-direction:column;gap:1.2rem">
 
-        <!-- Chauffage -->
-        <div class="card" style="padding:1.3rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">🔥 Chauffage</h3>
-          <div style="display:flex;flex-direction:column;gap:.7rem">
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Type de système</label>
-              <select name="obs_chauffage_type" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="gaz" {% if document.obs_chauffage_type == 'gaz' %}selected{% endif %}>Chaudière gaz</option>
-                <option value="fioul" {% if document.obs_chauffage_type == 'fioul' %}selected{% endif %}>Chaudière fioul</option>
-                <option value="pac_air_eau" {% if document.obs_chauffage_type == 'pac_air_eau' %}selected{% endif %}>PAC air/eau</option>
-                <option value="pac_air_air" {% if document.obs_chauffage_type == 'pac_air_air' %}selected{% endif %}>PAC air/air</option>
-                <option value="electrique" {% if document.obs_chauffage_type == 'electrique' %}selected{% endif %}>Électrique direct</option>
-                <option value="bois" {% if document.obs_chauffage_type == 'bois' %}selected{% endif %}>Bois / pellets</option>
-                <option value="reseau" {% if document.obs_chauffage_type == 'reseau' %}selected{% endif %}>Réseau de chaleur</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Âge estimé (ans)</label>
-              <input type="number" name="obs_chauffage_age" min="0" max="60"
-                value="{{ document.obs_chauffage_age|default:'' }}"
-                placeholder="ex: 12" class="f-input">
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">État général</label>
-              <select name="obs_chauffage_etat" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="bon" {% if document.obs_chauffage_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
-                <option value="moyen" {% if document.obs_chauffage_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
-                <option value="mauvais" {% if document.obs_chauffage_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-              </select>
+          <!-- Chauffage -->
+          <div class="card card--pad-sm">
+            <h3 class="section-title section-title--purple section-title--sm">🔥 Chauffage</h3>
+            <div style="display:flex;flex-direction:column;gap:.7rem">
+              <div>
+                <label class="label-caps">Type de système</label>
+                <select name="obs_chauffage_type" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="gaz"         {% if document.obs_chauffage_type == 'gaz'         %}selected{% endif %}>Chaudière gaz</option>
+                  <option value="fioul"        {% if document.obs_chauffage_type == 'fioul'       %}selected{% endif %}>Chaudière fioul</option>
+                  <option value="pac_air_eau"  {% if document.obs_chauffage_type == 'pac_air_eau' %}selected{% endif %}>PAC air/eau</option>
+                  <option value="pac_air_air"  {% if document.obs_chauffage_type == 'pac_air_air' %}selected{% endif %}>PAC air/air</option>
+                  <option value="electrique"   {% if document.obs_chauffage_type == 'electrique'  %}selected{% endif %}>Électrique direct</option>
+                  <option value="bois"         {% if document.obs_chauffage_type == 'bois'        %}selected{% endif %}>Bois / pellets</option>
+                  <option value="reseau"       {% if document.obs_chauffage_type == 'reseau'      %}selected{% endif %}>Réseau de chaleur</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps">Âge estimé (ans)</label>
+                <input type="number" name="obs_chauffage_age" min="0" max="60"
+                  value="{{ document.obs_chauffage_age|default:'' }}" placeholder="ex: 12" class="f-input">
+              </div>
+              <div>
+                <label class="label-caps">État général</label>
+                <select name="obs_chauffage_etat" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="bon"     {% if document.obs_chauffage_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
+                  <option value="moyen"   {% if document.obs_chauffage_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
+                  <option value="mauvais" {% if document.obs_chauffage_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Plomberie + Électricité + VMC -->
-        <div class="card" style="padding:1.3rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#c084fc">⚙️ Autres systèmes</h3>
-          <div style="display:flex;flex-direction:column;gap:.9rem">
-            <!-- Plomberie -->
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem">
-                💧 Plomberie / ECS
-              </label>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-                <select name="obs_plomberie_etat" class="f-input">
+          <!-- Autres systèmes -->
+          <div class="card card--pad-sm">
+            <h3 class="section-title section-title--purple section-title--sm">⚙️ Autres systèmes</h3>
+            <div style="display:flex;flex-direction:column;gap:.9rem">
+
+              <!-- Plomberie -->
+              <div>
+                <label class="label-caps">💧 Plomberie / ECS</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                  <select name="obs_plomberie_etat" class="f-input">
+                    <option value="">État —</option>
+                    <option value="bon"     {% if document.obs_plomberie_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
+                    <option value="moyen"   {% if document.obs_plomberie_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
+                    <option value="mauvais" {% if document.obs_plomberie_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                  </select>
+                  <input type="number" name="obs_ecs_age" min="0" max="60"
+                    value="{{ document.obs_ecs_age|default:'' }}" placeholder="Âge ECS (ans)" class="f-input">
+                </div>
+              </div>
+
+              <!-- Électricité -->
+              <div>
+                <label class="label-caps">⚡ Installation électrique</label>
+                <select name="obs_elec_etat" class="f-input">
                   <option value="">État —</option>
-                  <option value="bon" {% if document.obs_plomberie_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
-                  <option value="moyen" {% if document.obs_plomberie_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
-                  <option value="mauvais" {% if document.obs_plomberie_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-                </select>
-                <input type="number" name="obs_ecs_age" min="0" max="60"
-                  value="{{ document.obs_ecs_age|default:'' }}"
-                  placeholder="Âge ECS (ans)" class="f-input">
-              </div>
-            </div>
-            <!-- Électricité -->
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem">
-                ⚡ Installation électrique
-              </label>
-              <select name="obs_elec_etat" class="f-input">
-                <option value="">État —</option>
-                <option value="bon" {% if document.obs_elec_etat == 'bon' %}selected{% endif %}>✅ Bon — tableau récent</option>
-                <option value="moyen" {% if document.obs_elec_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen — à vérifier</option>
-                <option value="mauvais" {% if document.obs_elec_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais — mise aux normes requise</option>
-              </select>
-            </div>
-            <!-- VMC -->
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem">
-                💨 Ventilation (VMC)
-              </label>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-                <select name="obs_vmc_type" class="f-input">
-                  <option value="">Type —</option>
-                  <option value="simple_flux" {% if document.obs_vmc_type == 'simple_flux' %}selected{% endif %}>Simple flux</option>
-                  <option value="double_flux" {% if document.obs_vmc_type == 'double_flux' %}selected{% endif %}>Double flux</option>
-                  <option value="aucune" {% if document.obs_vmc_type == 'aucune' %}selected{% endif %}>Aucune</option>
-                </select>
-                <select name="obs_vmc_etat" class="f-input">
-                  <option value="">État —</option>
-                  <option value="bon" {% if document.obs_vmc_etat == 'bon' %}selected{% endif %}>✅ Bon</option>
-                  <option value="moyen" {% if document.obs_vmc_etat == 'moyen' %}selected{% endif %}>⚠️ Moyen</option>
-                  <option value="mauvais" {% if document.obs_vmc_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                  <option value="bon"     {% if document.obs_elec_etat == 'bon'     %}selected{% endif %}>✅ Bon — tableau récent</option>
+                  <option value="moyen"   {% if document.obs_elec_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen — à vérifier</option>
+                  <option value="mauvais" {% if document.obs_elec_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais — mise aux normes requise</option>
                 </select>
               </div>
+
+              <!-- VMC -->
+              <div>
+                <label class="label-caps">💨 Ventilation (VMC)</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+                  <select name="obs_vmc_type" class="f-input">
+                    <option value="">Type —</option>
+                    <option value="simple_flux" {% if document.obs_vmc_type == 'simple_flux' %}selected{% endif %}>Simple flux</option>
+                    <option value="double_flux" {% if document.obs_vmc_type == 'double_flux' %}selected{% endif %}>Double flux</option>
+                    <option value="aucune"      {% if document.obs_vmc_type == 'aucune'      %}selected{% endif %}>Aucune</option>
+                  </select>
+                  <select name="obs_vmc_etat" class="f-input">
+                    <option value="">État —</option>
+                    <option value="bon"     {% if document.obs_vmc_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
+                    <option value="moyen"   {% if document.obs_vmc_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
+                    <option value="mauvais" {% if document.obs_vmc_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
+                  </select>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
 
-        <!-- Risques identifiés -->
-        <div class="card" style="padding:1.3rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:#ef5350">⚠️ Risques identifiés</h3>
-          <div style="display:flex;flex-direction:column;gap:.7rem">
-            <!-- Amiante auto-calculé -->
-            {% if document.annee_construction and document.annee_construction < 1997 %}
-            <div style="padding:.6rem .9rem;background:rgba(239,83,80,.08);border:1px solid rgba(239,83,80,.25);border-radius:7px;font-size:.78rem;color:#ef5350">
-              ⚠️ Bâtiment construit avant 1997 — risque amiante détecté automatiquement
-            </div>
-            {% endif %}
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Humidité / infiltrations</label>
-              <select name="obs_humidite" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="aucune" {% if document.obs_humidite == 'aucune' %}selected{% endif %}>Aucune constatée</option>
-                <option value="ponctuelle" {% if document.obs_humidite == 'ponctuelle' %}selected{% endif %}>Ponctuelle / localisée</option>
-                <option value="importante" {% if document.obs_humidite == 'importante' %}selected{% endif %}>Importante — traitement requis</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Fissures structurelles</label>
-              <select name="obs_fissures" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="aucune" {% if document.obs_fissures == 'aucune' %}selected{% endif %}>Aucune</option>
-                <option value="superficielles" {% if document.obs_fissures == 'superficielles' %}selected{% endif %}>Superficielles (esthétique)</option>
-                <option value="actives" {% if document.obs_fissures == 'actives' %}selected{% endif %}>Actives — expertise requise</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Autres risques (libre)</label>
-              <textarea name="obs_risques_notes" rows="3" placeholder="Plomb, amiante confirmé, termites, affaissement..." class="f-input" style="resize:vertical">{{ document.obs_risques_notes|default:'' }}</textarea>
+          <!-- Risques identifiés -->
+          <div class="card card--pad-sm">
+            <h3 class="section-title section-title--sm" style="color:#ef5350">⚠️ Risques identifiés</h3>
+            <div style="display:flex;flex-direction:column;gap:.7rem">
+              {% if document.annee_construction and document.annee_construction < 1997 %}
+              <div class="amiante-warn">
+                ⚠️ Bâtiment construit avant 1997 — risque amiante détecté automatiquement
+              </div>
+              {% endif %}
+              <div>
+                <label class="label-caps">Humidité / infiltrations</label>
+                <select name="obs_humidite" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="aucune"     {% if document.obs_humidite == 'aucune'     %}selected{% endif %}>Aucune constatée</option>
+                  <option value="ponctuelle" {% if document.obs_humidite == 'ponctuelle' %}selected{% endif %}>Ponctuelle / localisée</option>
+                  <option value="importante" {% if document.obs_humidite == 'importante' %}selected{% endif %}>Importante — traitement requis</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps">Fissures structurelles</label>
+                <select name="obs_fissures" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="aucune"        {% if document.obs_fissures == 'aucune'        %}selected{% endif %}>Aucune</option>
+                  <option value="superficielles" {% if document.obs_fissures == 'superficielles' %}selected{% endif %}>Superficielles (esthétique)</option>
+                  <option value="actives"        {% if document.obs_fissures == 'actives'        %}selected{% endif %}>Actives — expertise requise</option>
+                </select>
+              </div>
+              <div>
+                <label class="label-caps">Autres risques (libre)</label>
+                <textarea name="obs_risques_notes" rows="3" class="f-input" style="resize:vertical"
+                  placeholder="Plomb, amiante confirmé, termites, affaissement...">{{ document.obs_risques_notes|default:'' }}</textarea>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Estimation travaux -->
-        <div class="card" style="padding:1.3rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:var(--gold)">💶 Estimation travaux expert</h3>
-          <div style="display:flex;flex-direction:column;gap:.7rem">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
-              <div>
-                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Toiture (€)</label>
-                <input type="number" name="obs_cout_toiture" min="0"
-                  value="{{ document.obs_cout_toiture|default:'' }}"
-                  placeholder="ex: 25000" class="f-input">
+          <!-- Estimation travaux -->
+          <div class="card card--pad-sm">
+            <h3 class="section-title section-title--sm">💶 Estimation travaux expert</h3>
+            <div style="display:flex;flex-direction:column;gap:.7rem">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                <div>
+                  <label class="label-caps">Toiture (€)</label>
+                  <input type="number" name="obs_cout_toiture" min="0"
+                    value="{{ document.obs_cout_toiture|default:'' }}" placeholder="ex: 25000" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Isolation (€)</label>
+                  <input type="number" name="obs_cout_isolation" min="0"
+                    value="{{ document.obs_cout_isolation|default:'' }}" placeholder="ex: 40000" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Chauffage (€)</label>
+                  <input type="number" name="obs_cout_chauffage" min="0"
+                    value="{{ document.obs_cout_chauffage|default:'' }}" placeholder="ex: 18000" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Menuiseries (€)</label>
+                  <input type="number" name="obs_cout_menuiseries" min="0"
+                    value="{{ document.obs_cout_menuiseries|default:'' }}" placeholder="ex: 12000" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Plomberie / ECS (€)</label>
+                  <input type="number" name="obs_cout_plomberie" min="0"
+                    value="{{ document.obs_cout_plomberie|default:'' }}" placeholder="ex: 8000" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Autres travaux (€)</label>
+                  <input type="number" name="obs_cout_autres" min="0"
+                    value="{{ document.obs_cout_autres|default:'' }}" placeholder="ex: 5000" class="f-input">
+                </div>
               </div>
-              <div>
-                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Isolation (€)</label>
-                <input type="number" name="obs_cout_isolation" min="0"
-                  value="{{ document.obs_cout_isolation|default:'' }}"
-                  placeholder="ex: 40000" class="f-input">
+              <div class="total-row">
+                <span>Total estimé</span>
+                <span id="obs-total-travaux">—</span>
               </div>
-              <div>
-                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Chauffage (€)</label>
-                <input type="number" name="obs_cout_chauffage" min="0"
-                  value="{{ document.obs_cout_chauffage|default:'' }}"
-                  placeholder="ex: 18000" class="f-input">
-              </div>
-              <div>
-                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Menuiseries (€)</label>
-                <input type="number" name="obs_cout_menuiseries" min="0"
-                  value="{{ document.obs_cout_menuiseries|default:'' }}"
-                  placeholder="ex: 12000" class="f-input">
-              </div>
-              <div>
-                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Plomberie / ECS (€)</label>
-                <input type="number" name="obs_cout_plomberie" min="0"
-                  value="{{ document.obs_cout_plomberie|default:'' }}"
-                  placeholder="ex: 8000" class="f-input">
-              </div>
-              <div>
-                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Autres travaux (€)</label>
-                <input type="number" name="obs_cout_autres" min="0"
-                  value="{{ document.obs_cout_autres|default:'' }}"
-                  placeholder="ex: 5000" class="f-input">
-              </div>
-            </div>
-            <!-- Total calculé JS -->
-            <div style="padding:.7rem 1rem;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
-              <span style="font-size:.8rem;color:var(--gray-1)">Total estimé</span>
-              <span id="obs-total-travaux" style="font-size:1.1rem;font-weight:700;color:var(--gold)">—</span>
             </div>
           </div>
-        </div>
 
-        <!-- Simulation énergétique simplifiée -->
-        <div class="card" style="padding:1.3rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:1rem;color:var(--gold)">⚡ Données énergétiques</h3>
-          <div style="display:flex;flex-direction:column;gap:.7rem">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
-              <div>
-                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Consommation actuelle (kWh/an)</label>
-                <input type="number" name="obs_conso_kwh" min="0"
-                  value="{{ document.obs_conso_kwh|default:'' }}"
-                  placeholder="ex: 85000" class="f-input">
+          <!-- Données énergétiques -->
+          <div class="card card--pad-sm">
+            <h3 class="section-title section-title--sm">⚡ Données énergétiques</h3>
+            <div style="display:flex;flex-direction:column;gap:.7rem">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                <div>
+                  <label class="label-caps">Consommation actuelle (kWh/an)</label>
+                  <input type="number" name="obs_conso_kwh" min="0"
+                    value="{{ document.obs_conso_kwh|default:'' }}" placeholder="ex: 85000" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Coût énergie annuel (€)</label>
+                  <input type="number" name="obs_cout_energie" min="0"
+                    value="{{ document.obs_cout_energie|default:'' }}" placeholder="ex: 7200" class="f-input">
+                </div>
               </div>
               <div>
-                <label style="font-size:.75rem;color:var(--gray-1);display:block;margin-bottom:.25rem">Coût énergie annuel (€)</label>
-                <input type="number" name="obs_cout_energie" min="0"
-                  value="{{ document.obs_cout_energie|default:'' }}"
-                  placeholder="ex: 7200" class="f-input">
+                <label class="label-caps">Classe DPE actuelle</label>
+                <select name="obs_classe_dpe" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  {% for cls in 'ABCDEFG' %}
+                  <option value="{{ cls }}" {% if document.obs_classe_dpe == cls %}selected{% endif %}>{{ cls }}</option>
+                  {% endfor %}
+                </select>
               </div>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Classe DPE actuelle</label>
-              <select name="obs_classe_dpe" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="A" {% if document.obs_classe_dpe == 'A' %}selected{% endif %}>A</option>
-                <option value="B" {% if document.obs_classe_dpe == 'B' %}selected{% endif %}>B</option>
-                <option value="C" {% if document.obs_classe_dpe == 'C' %}selected{% endif %}>C</option>
-                <option value="D" {% if document.obs_classe_dpe == 'D' %}selected{% endif %}>D</option>
-                <option value="E" {% if document.obs_classe_dpe == 'E' %}selected{% endif %}>E</option>
-                <option value="F" {% if document.obs_classe_dpe == 'F' %}selected{% endif %}>F</option>
-                <option value="G" {% if document.obs_classe_dpe == 'G' %}selected{% endif %}>G</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--gray-1);display:block;margin-bottom:.3rem">Potentiel d'économies estimé</label>
-              <select name="obs_potentiel_economies" class="f-input">
-                <option value="">— Non renseigné —</option>
-                <option value="faible" {% if document.obs_potentiel_economies == 'faible' %}selected{% endif %}>Faible (moins de 15%)</option>
-                <option value="moyen" {% if document.obs_potentiel_economies == 'moyen' %}selected{% endif %}>Moyen (15–35%)</option>
-                <option value="eleve" {% if document.obs_potentiel_economies == 'eleve' %}selected{% endif %}>Élevé (35–60%)</option>
-                <option value="tres_eleve" {% if document.obs_potentiel_economies == 'tres_eleve' %}selected{% endif %}>Très élevé (plus de 60%)</option>
-              </select>
+              <div>
+                <label class="label-caps">Potentiel d'économies estimé</label>
+                <select name="obs_potentiel_economies" class="f-input">
+                  <option value="">— Non renseigné —</option>
+                  <option value="faible"     {% if document.obs_potentiel_economies == 'faible'     %}selected{% endif %}>Faible (moins de 15%)</option>
+                  <option value="moyen"      {% if document.obs_potentiel_economies == 'moyen'      %}selected{% endif %}>Moyen (15–35%)</option>
+                  <option value="eleve"      {% if document.obs_potentiel_economies == 'eleve'      %}selected{% endif %}>Élevé (35–60%)</option>
+                  <option value="tres_eleve" {% if document.obs_potentiel_economies == 'tres_eleve' %}selected{% endif %}>Très élevé (plus de 60%)</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
 
-      </div><!-- /col droite -->
-    </div><!-- /grid -->
+        </div><!-- /col droite -->
+      </div><!-- /grid -->
 
-    <!-- Bouton bas -->
-    <div style="display:flex;justify-content:flex-end;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,.06)">
-      <button type="submit" class="btn btn-gold">Enregistrer les observations</button>
-    </div>
+      <!-- Bouton bas -->
+      <div style="display:flex;justify-content:flex-end;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,.06)">
+        <button type="submit" class="btn btn-gold">Enregistrer les observations</button>
+      </div>
 
-  </form>
+    </form>
   </div><!-- /panel-observations -->
 
   <!-- ══════════════════════════════════════════════════════
        ONGLET FACTURES
   ══════════════════════════════════════════════════════ -->
   <div id="panel-factures" style="display:none">
-  <style>
-  .fac-drop {
-    border:2px dashed rgba(200,168,75,.25); border-radius:12px;
-    padding:2.2rem; text-align:center; cursor:pointer;
-    transition:border-color .2s,background .2s; margin-bottom:1.4rem;
-  }
-  .fac-drop:hover,.fac-drop.dragover { border-color:rgba(200,168,75,.55); background:rgba(200,168,75,.04); }
-  .fac-row {
-    display:grid; grid-template-columns:10px 1fr auto auto auto;
-    gap:.8rem; align-items:center;
-    padding:.85rem 1.1rem; border-radius:10px;
-    border:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.02);
-    margin-bottom:.6rem; transition:border-color .2s;
-  }
-  .fac-row:hover { border-color:rgba(255,255,255,.1); }
-  .fac-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  .fac-dot.pending { background:rgba(136,136,153,.5); }
-  .fac-dot.ok      { background:#27c93f; box-shadow:0 0 6px #27c93f44; }
-  .fac-dot.error   { background:#ef5350; }
-  .fac-dot.loading { background:#E5A93A; animation:pulse-dot 1s infinite; }
-  .fac-btn { padding:.32rem .75rem; border-radius:6px; font-size:.75rem; cursor:pointer; font-family:inherit; font-weight:500; border:1px solid; transition:opacity .2s; }
-  .fac-btn:hover { opacity:.8; }
-  .fac-btn-analyse { background:rgba(200,168,75,.1); border-color:rgba(200,168,75,.3); color:var(--gold); }
-  .fac-btn-delete  { background:rgba(229,57,53,.08); border-color:rgba(229,57,53,.2); color:#ef5350; }
-  .fac-chart-wrap  { display:flex; align-items:flex-end; gap:5px; height:110px; padding:.3rem 0 0; }
-  .fac-bar-col     { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
-  .fac-bar         { width:100%; border-radius:3px 3px 0 0; min-height:4px; position:relative; cursor:default; transition:opacity .2s; }
-  .fac-bar:hover   { opacity:.8; }
-  .fac-bar-lbl     { font-size:.58rem; color:var(--gray-1); white-space:nowrap; }
-  </style>
 
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.4rem;padding:1.1rem 1.4rem;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px">
-    <div>
-      <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 .2rem">⚡ Analyse des factures d'énergie</p>
-      <p style="font-size:.83rem;color:var(--gray-1);margin:0">Déposez les PDF — l'IA extrait automatiquement les données de consommation.</p>
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.4rem;padding:1.1rem 1.4rem;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.18);border-radius:10px">
+      <div>
+        <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 .2rem">⚡ Analyse des factures d'énergie</p>
+        <p style="font-size:.83rem;color:var(--gray-1);margin:0">Déposez les PDF — l'IA extrait automatiquement les données de consommation.</p>
+      </div>
+      <button id="btn-analyser-tout" onclick="analyserToutesFactures()"
+        style="display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;background:linear-gradient(135deg,#C8A84B,#e0c070);border:none;border-radius:7px;color:#0C1929;font-size:.82rem;cursor:pointer;font-weight:700;font-family:inherit">
+        ✨ Analyser tout
+      </button>
     </div>
-    <button id="btn-analyser-tout" onclick="analyserToutesFactures()"
-      style="display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;background:linear-gradient(135deg,#C8A84B,#e0c070);border:none;border-radius:7px;color:#0C1929;font-size:.82rem;cursor:pointer;font-weight:700;font-family:inherit">
-      ✨ Analyser tout
-    </button>
-  </div>
 
-  <!-- Zone drop -->
-  <div class="fac-drop" id="fac-drop"
-    onclick="document.getElementById('fac-input').click()"
-    ondragover="event.preventDefault();this.classList.add('dragover')"
-    ondragleave="this.classList.remove('dragover')"
-    ondrop="handleFacDrop(event)">
-    <div style="font-size:1.6rem;margin-bottom:.5rem">📄</div>
-    <div style="font-size:.88rem;color:var(--white);font-weight:500;margin-bottom:.25rem">Déposer des factures PDF ici</div>
-    <div style="font-size:.75rem;color:var(--gray-1);margin-bottom:.9rem">ou cliquer pour sélectionner</div>
-    <select id="fac-type" onclick="event.stopPropagation()"
-      style="background:var(--navy-3);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.32rem .65rem;color:var(--white);font-size:.78rem;outline:none">
-      <option value="electricite">⚡ Électricité</option>
-      <option value="gaz">🔥 Gaz naturel</option>
-    </select>
-  </div>
-  <input type="file" id="fac-input" accept=".pdf" multiple style="display:none" onchange="uploadFactures(this.files)">
+    <!-- Zone de dépôt -->
+    <div class="fac-drop" id="fac-drop"
+      onclick="document.getElementById('fac-input').click()"
+      ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')"
+      ondrop="handleFacDrop(event)">
+      <div style="font-size:1.6rem;margin-bottom:.5rem">📄</div>
+      <div style="font-size:.88rem;color:var(--white);font-weight:500;margin-bottom:.25rem">Déposer des factures PDF ici</div>
+      <div style="font-size:.75rem;color:var(--gray-1);margin-bottom:.9rem">ou cliquer pour sélectionner</div>
+      <select id="fac-type" onclick="event.stopPropagation()"
+        style="background:var(--navy-3);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:.32rem .65rem;color:var(--white);font-size:.78rem;outline:none">
+        <option value="electricite">⚡ Électricité</option>
+        <option value="gaz">🔥 Gaz naturel</option>
+      </select>
+    </div>
+    <input type="file" id="fac-input" accept=".pdf" multiple style="display:none" onchange="uploadFactures(this.files)">
 
-  <!-- Liste -->
-  <div id="fac-liste" style="margin-bottom:1.4rem"></div>
+    <!-- Liste des factures -->
+    <div id="fac-liste" style="margin-bottom:1.4rem"></div>
 
-  <!-- Résultats -->
-  <div id="fac-resultats" style="display:none">
+    <!-- Résultats agrégés -->
+    <div id="fac-resultats" style="display:none">
 
-    <!-- KPIs -->
-    <div id="fac-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.3rem"></div>
+      <!-- KPIs -->
+      <div id="fac-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.3rem"></div>
 
-    <!-- Chart + répartition -->
-    <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:1.1rem;margin-bottom:1.3rem">
-      <div class="card" style="padding:1.3rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
-          <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0">Consommation mensuelle</h4>
-          <div style="display:flex;gap:.4rem">
-            <button onclick="facSwitch('conso')" id="fac-btn-conso"
-              style="padding:.22rem .6rem;border-radius:5px;font-size:.68rem;cursor:pointer;font-family:inherit;background:rgba(200,168,75,.15);border:1px solid rgba(200,168,75,.3);color:var(--gold)">kWh</button>
-            <button onclick="facSwitch('cout')" id="fac-btn-cout"
-              style="padding:.22rem .6rem;border-radius:5px;font-size:.68rem;cursor:pointer;font-family:inherit;background:transparent;border:1px solid rgba(255,255,255,.08);color:var(--gray-1)">Coût</button>
+      <!-- Chart + répartition -->
+      <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:1.1rem;margin-bottom:1.3rem">
+        <div class="card card--pad-sm">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+            <h4 class="section-cap section-cap--gold" style="margin:0">Consommation mensuelle</h4>
+            <div style="display:flex;gap:.4rem">
+              <button onclick="facSwitch('conso')" id="fac-btn-conso"
+                style="padding:.22rem .6rem;border-radius:5px;font-size:.68rem;cursor:pointer;font-family:inherit;background:rgba(200,168,75,.15);border:1px solid rgba(200,168,75,.3);color:var(--gold)">kWh</button>
+              <button onclick="facSwitch('cout')" id="fac-btn-cout"
+                style="padding:.22rem .6rem;border-radius:5px;font-size:.68rem;cursor:pointer;font-family:inherit;background:transparent;border:1px solid rgba(255,255,255,.08);color:var(--gray-1)">Coût</button>
+            </div>
+          </div>
+          <div class="fac-chart-wrap" id="fac-chart"></div>
+          <div style="display:flex;gap:1rem;margin-top:.5rem;font-size:.62rem;color:var(--gray-1)">
+            <span style="display:flex;align-items:center;gap:.3rem"><span style="width:8px;height:8px;border-radius:2px;background:#C8A84B;display:inline-block"></span>Électricité</span>
+            <span style="display:flex;align-items:center;gap:.3rem"><span style="width:8px;height:8px;border-radius:2px;background:#60a5fa;display:inline-block"></span>Gaz</span>
           </div>
         </div>
-        <div class="fac-chart-wrap" id="fac-chart"></div>
-        <div style="display:flex;gap:1rem;margin-top:.5rem;font-size:.62rem;color:var(--gray-1)">
-          <span style="display:flex;align-items:center;gap:.3rem"><span style="width:8px;height:8px;border-radius:2px;background:#C8A84B;display:inline-block"></span>Électricité</span>
-          <span style="display:flex;align-items:center;gap:.3rem"><span style="width:8px;height:8px;border-radius:2px;background:#60a5fa;display:inline-block"></span>Gaz</span>
+        <div class="card card--pad-sm">
+          <h4 class="section-cap section-cap--gold">Répartition</h4>
+          <div id="fac-rep" style="display:flex;flex-direction:column;gap:.55rem"></div>
         </div>
       </div>
-      <div class="card" style="padding:1.3rem">
-        <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">Répartition</h4>
-        <div id="fac-rep" style="display:flex;flex-direction:column;gap:.55rem"></div>
+
+      <!-- Tableau détail -->
+      <div class="card card--pad-sm" style="overflow-x:auto;margin-bottom:1.3rem">
+        <h4 class="section-cap section-cap--gold">Détail par période</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:.79rem">
+          <thead>
+            <tr style="background:#0C1929">
+              <th style="padding:.55rem .9rem;text-align:left;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Période</th>
+              <th style="padding:.55rem .9rem;text-align:left;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Type</th>
+              <th style="padding:.55rem .9rem;text-align:right;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Conso.</th>
+              <th style="padding:.55rem .9rem;text-align:right;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Montant</th>
+              <th style="padding:.55rem .9rem;text-align:right;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">¢/kWh</th>
+              <th style="padding:.55rem .9rem;text-align:center;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Alerte</th>
+            </tr>
+          </thead>
+          <tbody id="fac-tbody"></tbody>
+        </table>
       </div>
-    </div>
 
-    <!-- Tableau -->
-    <div class="card" style="padding:1.3rem;overflow-x:auto;margin-bottom:1.3rem">
-      <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:.8rem">Détail par période</h4>
-      <table style="width:100%;border-collapse:collapse;font-size:.79rem">
-        <thead>
-          <tr style="background:#0C1929">
-            <th style="padding:.55rem .9rem;text-align:left;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06)">Période</th>
-            <th style="padding:.55rem .9rem;text-align:left;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Type</th>
-            <th style="padding:.55rem .9rem;text-align:right;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Conso.</th>
-            <th style="padding:.55rem .9rem;text-align:right;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Montant</th>
-            <th style="padding:.55rem .9rem;text-align:right;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">¢/kWh</th>
-            <th style="padding:.55rem .9rem;text-align:center;color:var(--gray-1);font-size:.65rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)">Alerte</th>
-          </tr>
-        </thead>
-        <tbody id="fac-tbody"></tbody>
-      </table>
-    </div>
-
-    <!-- Comparaison avant/après -->
-    <div class="card" style="padding:1.3rem">
-      <h4 style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:1rem">🔄 Comparaison avant / après rénovation</h4>
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center">
-        <div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:10px;padding:1rem 1.2rem">
-          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#ef5350;margin-bottom:.4rem">Avant rénovation</div>
-          <div id="cmp-avant-conso" style="font-size:1.3rem;font-weight:700;color:var(--white)">—</div>
-          <div style="font-size:.7rem;color:var(--gray-1);margin-top:.15rem">kWh / an</div>
-          <div id="cmp-avant-cout" style="font-size:.85rem;color:#ef5350;margin-top:.35rem;font-weight:600">—</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:1.3rem;color:var(--gray-1)">→</div>
-          <div id="cmp-gain-pct" style="font-size:1rem;font-weight:700;color:#27c93f;margin-top:.2rem">—</div>
-          <div style="font-size:.6rem;color:var(--gray-1)">économies</div>
-        </div>
-        <div style="background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1rem 1.2rem">
-          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#27c93f;margin-bottom:.6rem">Après rénovation (objectif)</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
-            <span style="font-size:.72rem;color:var(--gray-1)">Économies ciblées</span>
-            <span id="cmp-pct-label" style="font-size:1.1rem;font-weight:700;color:#27c93f">30%</span>
+      <!-- Comparaison avant/après -->
+      <div class="card card--pad-sm">
+        <h4 class="section-cap section-cap--gold">🔄 Comparaison avant / après rénovation</h4>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center">
+          <div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:10px;padding:1rem 1.2rem">
+            <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#ef5350;margin-bottom:.4rem">Avant rénovation</div>
+            <div id="cmp-avant-conso" style="font-size:1.3rem;font-weight:700;color:var(--white)">—</div>
+            <div style="font-size:.7rem;color:var(--gray-1);margin-top:.15rem">kWh / an</div>
+            <div id="cmp-avant-cout" style="font-size:.85rem;color:#ef5350;margin-top:.35rem;font-weight:600">—</div>
           </div>
-          <input type="range" id="cmp-apres-input" min="5" max="80" step="5" value="30" oninput="recalcCmp()"
-            style="width:100%;margin-bottom:.5rem;accent-color:#27c93f">
-          <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--gray-1);margin-bottom:.4rem">
-            <span>5%</span><span>40%</span><span>80%</span>
+          <div style="text-align:center">
+            <div style="font-size:1.3rem;color:var(--gray-1)">→</div>
+            <div id="cmp-gain-pct" style="font-size:1rem;font-weight:700;color:#27c93f;margin-top:.2rem">—</div>
+            <div style="font-size:.6rem;color:var(--gray-1)">économies</div>
           </div>
-          <div id="cmp-apres-conso" style="font-size:.82rem;color:var(--gray-2);margin-top:.2rem">— kWh / an</div>
-          <div id="cmp-apres-cout" style="font-size:.85rem;color:#27c93f;margin-top:.2rem;font-weight:600">—</div>
+          <div style="background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1rem 1.2rem">
+            <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#27c93f;margin-bottom:.6rem">Après rénovation (objectif)</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+              <span style="font-size:.72rem;color:var(--gray-1)">Économies ciblées</span>
+              <span id="cmp-pct-label" style="font-size:1.1rem;font-weight:700;color:#27c93f">30%</span>
+            </div>
+            <input type="range" id="cmp-apres-input" min="5" max="80" step="5" value="30" oninput="recalcCmp()"
+              style="width:100%;margin-bottom:.5rem;accent-color:#27c93f">
+            <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--gray-1);margin-bottom:.4rem">
+              <span>5%</span><span>40%</span><span>80%</span>
+            </div>
+            <div id="cmp-apres-conso" style="font-size:.82rem;color:var(--gray-2);margin-top:.2rem">— kWh / an</div>
+            <div id="cmp-apres-cout" style="font-size:.85rem;color:#27c93f;margin-top:.2rem;font-weight:600">—</div>
+          </div>
+        </div>
+
+        <div id="cmp-gains" style="display:none;margin-top:1rem;padding:.8rem 1rem;background:rgba(39,201,63,.05);border:1px solid rgba(39,201,63,.15);border-radius:8px;display:flex;gap:2rem;flex-wrap:wrap">
+          <div>
+            <div style="font-size:.63rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem">Économie / an</div>
+            <div id="cmp-eco-an" style="font-size:1rem;font-weight:700;color:#27c93f">—</div>
+          </div>
+          <div>
+            <div style="font-size:.63rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem">Économie 10 ans</div>
+            <div id="cmp-eco-10" style="font-size:1rem;font-weight:700;color:#27c93f">—</div>
+          </div>
+          <div>
+            <div style="font-size:.63rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem">Réduction CO₂/an</div>
+            <div id="cmp-co2" style="font-size:1rem;font-weight:700;color:#27c93f">—</div>
+          </div>
         </div>
       </div>
-      <div id="cmp-gains" style="display:none;margin-top:1rem;padding:.8rem 1rem;background:rgba(39,201,63,.05);border:1px solid rgba(39,201,63,.15);border-radius:8px;display:flex;gap:2rem;flex-wrap:wrap">
-        <div><div style="font-size:.63rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem">Économie / an</div><div id="cmp-eco-an" style="font-size:1rem;font-weight:700;color:#27c93f">—</div></div>
-        <div><div style="font-size:.63rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem">Économie 10 ans</div><div id="cmp-eco-10" style="font-size:1rem;font-weight:700;color:#27c93f">—</div></div>
-        <div><div style="font-size:.63rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem">Réduction CO₂/an</div><div id="cmp-co2" style="font-size:1rem;font-weight:700;color:#27c93f">—</div></div>
-      </div>
-    </div>
 
-  </div><!-- /fac-resultats -->
+    </div><!-- /fac-resultats -->
   </div><!-- /panel-factures -->
 
-</div>
+</div><!-- /container -->
 
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════ -->
 <script>
-const DOC_ID = {{ document.id }};
-const TYPE_ANALYSE = "{{ document.type_analyse }}";
+const DOC_ID          = {{ document.id }};
+const TYPE_ANALYSE    = "{{ document.type_analyse }}";
 const RAPPORT_SAUVEGARDE = {{ document.rapport_ia_json|default:"null"|safe }};
-let rapportDejaRendu = false;
+let rapportDejaRendu  = false;
+let facInitDone       = false;
+let facMode           = 'conso';
+let facCache          = null;
 
-// ── Onglets ───────────────────────────────────────────────
+// ── Onglets ──────────────────────────────────────────────
 function showTab(name) {
-  ['infos','documents','emails','rapport-ia','observations','factures'].forEach(t => {
-    document.getElementById('panel-' + t).style.display = t === name ? 'block' : 'none';
+  const tabs = ['infos','documents','emails','rapport-ia','observations','factures'];
+  tabs.forEach(t => {
+    document.getElementById('panel-' + t).style.display = (t === name) ? 'block' : 'none';
     const btn = document.getElementById('tab-' + t);
     if (t === name) {
-      btn.style.borderBottom = '2px solid var(--gold)';
-      btn.style.color        = 'var(--gold)';
-      btn.style.fontWeight   = '500';
+      btn.classList.add('tab-btn--active');
     } else {
-      btn.style.borderBottom = '2px solid transparent';
-      btn.style.color        = 'var(--gray-1)';
-      btn.style.fontWeight   = 'normal';
+      btn.classList.remove('tab-btn--active');
     }
   });
   if (name === 'rapport-ia' && RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
@@ -1204,19 +1667,25 @@ function showTab(name) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   if (RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
     afficherRapport(RAPPORT_SAUVEGARDE);
     rapportDejaRendu = true;
   }
 });
 
-// ── Modale devis ──────────────────────────────────────────
+// ── Modal devis ──────────────────────────────────────────
 function ouvrirModalDevis() { document.getElementById('modal-devis').style.display = 'flex'; }
 function fermerModalDevis()  { document.getElementById('modal-devis').style.display = 'none'; }
-document.getElementById('modal-devis').addEventListener('click', function(e) {
+document.getElementById('modal-devis').addEventListener('click', function (e) {
   if (e.target === this) fermerModalDevis();
 });
+
+// ── CSRF ─────────────────────────────────────────────────
+function getCsrf() {
+  const c = document.cookie.split(';').find(s => s.trim().startsWith('csrftoken='));
+  return c ? c.split('=')[1].trim() : '';
+}
 
 // ── Barre de progression ──────────────────────────────────
 function setProgress(pct, label) {
@@ -1225,18 +1694,13 @@ function setProgress(pct, label) {
   if (label) document.getElementById('progress-label').textContent = label;
 }
 
-function getCsrf() {
-  const c = document.cookie.split(';').find(s => s.trim().startsWith('csrftoken='));
-  return c ? c.split('=')[1].trim() : '';
-}
-
-// ── Génération ────────────────────────────────────────────
+// ── Génération rapport IA ─────────────────────────────────
 async function genererRapportIA(force) {
-  const errorDiv       = document.getElementById('rapport-error');
-  const progressWrap   = document.getElementById('progress-bar-wrap');
-  const rapportVide    = document.getElementById('rapport-vide');
+  const errorDiv     = document.getElementById('rapport-error');
+  const progressWrap = document.getElementById('progress-bar-wrap');
+  const rapportVide  = document.getElementById('rapport-vide');
 
-  ['btn-generer','btn-regen'].forEach(id => {
+  ['btn-generer', 'btn-regen'].forEach(id => {
     const b = document.getElementById(id);
     if (b) { b.disabled = true; b.style.opacity = '.5'; b.style.cursor = 'not-allowed'; }
   });
@@ -1246,7 +1710,7 @@ async function genererRapportIA(force) {
   setProgress(5, 'Envoi du document à Claude…');
 
   const labels = TYPE_ANALYSE === 'pca'
-    ? ['Lecture des documents techniques…', 'Analyse de l\'enveloppe et des systèmes…', 'Identification des risques…']
+    ? ['Lecture des documents techniques…', "Analyse de l'enveloppe et des systèmes…", 'Identification des risques…']
     : ['Lecture du document thermique…', `Analyse des critères {{ document.norme }}…`, 'Génération des recommandations…'];
 
   const prog = setInterval(() => {
@@ -1258,7 +1722,7 @@ async function genererRapportIA(force) {
   }, 1200);
 
   try {
-    const url = `/dossier/${DOC_ID}/rapport-ia/` + (force ? '?force=1' : '');
+    const url  = `/dossier/${DOC_ID}/rapport-ia/` + (force ? '?force=1' : '');
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'X-CSRFToken': getCsrf(), 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1273,22 +1737,23 @@ async function genererRapportIA(force) {
     if (rapportVide) rapportVide.style.display = 'none';
     afficherRapport(data.rapport);
 
+    // Mise à jour bouton → Régénérer
     const wrap = document.querySelector('#panel-rapport-ia > div:first-child > div:last-child');
     if (wrap && !document.querySelector('#btn-regen')) {
       wrap.innerHTML = `
         <span style="font-size:.75rem;color:var(--success);display:flex;align-items:center;gap:.3rem">✓ <span>Rapport sauvegardé</span></span>
         <button id="btn-regen" onclick="if(confirm('Régénérer ?')) genererRapportIA(true)"
-          style="display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:7px;color:var(--gold);font-size:.82rem;cursor:pointer;font-weight:500">
+          style="display:inline-flex;align-items:center;gap:.45rem;padding:.5rem 1rem;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:7px;color:var(--gold);font-size:.82rem;cursor:pointer;font-weight:500;font-family:inherit">
           🔄 Régénérer
         </button>`;
     }
   } catch (err) {
     clearInterval(prog);
     progressWrap.style.display = 'none';
-    errorDiv.textContent = '❌ ' + err.message;
-    errorDiv.style.display = 'block';
+    errorDiv.textContent       = '❌ ' + err.message;
+    errorDiv.style.display     = 'block';
   } finally {
-    ['btn-generer','btn-regen'].forEach(id => {
+    ['btn-generer', 'btn-regen'].forEach(id => {
       const b = document.getElementById(id);
       if (b) { b.disabled = false; b.style.opacity = '1'; b.style.cursor = 'pointer'; }
     });
@@ -1302,10 +1767,10 @@ function afficherRapport(r) {
   const conf = r.verdict === 'Conforme' || r.verdict === 'Bon état';
   const ins  = r.verdict === 'Données insuffisantes';
   const vc   = conf
-    ? { bg:'rgba(39,201,63,.06)',   border:'rgba(39,201,63,.25)',   color:'#27c93f', icon:'✅' }
+    ? { bg: 'rgba(39,201,63,.06)',   border: 'rgba(39,201,63,.25)',  color: '#27c93f', icon: '✅' }
     : ins
-    ? { bg:'rgba(136,136,153,.06)', border:'rgba(136,136,153,.2)',  color:'#888899', icon:'⏳' }
-    : { bg:'rgba(229,57,53,.06)',   border:'rgba(229,57,53,.25)',   color:'#ef5350', icon:'❌' };
+    ? { bg: 'rgba(136,136,153,.06)', border: 'rgba(136,136,153,.2)', color: '#888899', icon: '⏳' }
+    : { bg: 'rgba(229,57,53,.06)',   border: 'rgba(229,57,53,.25)',  color: '#ef5350', icon: '❌' };
 
   const vb = el('verdict-banner');
   vb.style.background  = vc.bg;
@@ -1316,10 +1781,10 @@ function afficherRapport(r) {
   el('resume-executif').textContent = r.resume_executif || '—';
 
   const criteres = r.criteres || [];
-  const nbOk  = criteres.filter(c => c.conforme).length;
-  const nbKo  = criteres.filter(c => !c.conforme).length;
-  el('kpi-conforme').querySelector('div').textContent    = nbOk || (r.etat_technique ? r.etat_technique.filter(e => e.etat === 'Bon').length : 0);
-  el('kpi-nonconforme').querySelector('div').textContent = nbKo || (r.risques ? r.risques.length : 0);
+  const nbOk     = criteres.filter(c => c.conforme).length;
+  const nbKo     = criteres.filter(c => !c.conforme).length;
+  el('kpi-conforme').querySelector('.kpi-box__val').textContent    = nbOk || ((r.etat_technique || []).filter(e => e.etat === 'Bon').length);
+  el('kpi-nonconforme').querySelector('.kpi-box__val').textContent = nbKo || ((r.risques || []).length);
 
   el('mini-bars').innerHTML = criteres.map(c => {
     const pct   = c.valeur && c.seuil ? Math.min((c.valeur / c.seuil) * 100, 150) : 50;
@@ -1327,48 +1792,48 @@ function afficherRapport(r) {
     return `<div style="display:flex;align-items:center;gap:.5rem">
       <span style="width:75px;font-size:.7rem;color:var(--gray-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nom}</span>
       <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;height:5px;overflow:hidden">
-        <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:10px"></div>
+        <div style="width:${Math.min(pct, 100)}%;height:100%;background:${color};border-radius:10px"></div>
       </div>
       <span style="font-size:.7rem;color:${color};width:16px">${c.conforme ? '✓' : '✗'}</span>
     </div>`;
   }).join('');
 
-  // Tableau critères (énergie/complet)
+  // Tableau critères
   if (el('criteres-tbody')) {
     el('criteres-tbody').innerHTML = criteres.map((c, i) => {
       const color = c.conforme ? '#27c93f' : '#ef5350';
       const badge = c.conforme
         ? `<span style="background:rgba(39,201,63,.12);color:#27c93f;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✓ Conforme</span>`
         : `<span style="background:rgba(229,57,53,.12);color:#ef5350;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✗ Non conforme</span>`;
-      return `<tr style="background:${i%2===0?'rgba(255,255,255,.01)':'transparent'};border-bottom:1px solid rgba(255,255,255,.04)">
+      return `<tr style="background:${i % 2 === 0 ? 'rgba(255,255,255,.01)' : 'transparent'};border-bottom:1px solid rgba(255,255,255,.04)">
         <td style="padding:.65rem 1rem;color:var(--white);font-weight:500">${c.nom}</td>
-        <td style="padding:.65rem 1rem;text-align:center;color:${color};font-weight:700">${c.valeur??'—'} <span style="font-size:.68rem;color:var(--muted)">${c.unite||''}</span></td>
-        <td style="padding:.65rem 1rem;text-align:center;color:var(--gray-1)">≤ ${c.seuil??'—'}</td>
+        <td style="padding:.65rem 1rem;text-align:center;color:${color};font-weight:700">${c.valeur ?? '—'} <span style="font-size:.68rem;color:var(--muted)">${c.unite || ''}</span></td>
+        <td style="padding:.65rem 1rem;text-align:center;color:var(--gray-1)">≤ ${c.seuil ?? '—'}</td>
         <td style="padding:.65rem 1rem;text-align:center">${badge}</td>
-        <td style="padding:.65rem 1rem;color:var(--gray-2);font-size:.79rem">${c.commentaire||''}</td>
+        <td style="padding:.65rem 1rem;color:var(--gray-2);font-size:.79rem">${c.commentaire || ''}</td>
       </tr>`;
     }).join('');
   }
 
-  // Tableau état technique PCA — version enrichie
-  if (el('pca-stats-wrap') && (r.etat_technique||[]).length) {
+  // Stats + état technique PCA
+  if (el('pca-stats-wrap') && (r.etat_technique || []).length) {
     el('pca-stats-wrap').style.display = 'block';
-    const nbBons = (r.etat_technique||[]).filter(e => e.etat === 'Bon').length;
-    el('pca-nb-composants').textContent = (r.etat_technique||[]).length;
+    const nbBons = (r.etat_technique || []).filter(e => e.etat === 'Bon').length;
+    el('pca-nb-composants').textContent = (r.etat_technique || []).length;
     el('pca-nb-bons').textContent       = nbBons;
-    el('pca-nb-risques').textContent    = (r.risques||[]).length;
-    el('pca-nb-travaux').textContent    = (r.travaux||[]).length;
+    el('pca-nb-risques').textContent    = (r.risques  || []).length;
+    el('pca-nb-travaux').textContent    = (r.travaux  || []).length;
   }
 
-  if (el('pca-etat-wrap') && (r.etat_technique||[]).length) {
+  if (el('pca-etat-wrap') && (r.etat_technique || []).length) {
     el('pca-etat-wrap').style.display = 'block';
     el('pca-etat-list').innerHTML = r.etat_technique.map(e => {
       const ec  = e.etat === 'Bon' ? '#27c93f' : e.etat === 'Moyen' ? '#E5A93A' : '#ef5350';
-      const pct = e.etat === 'Bon' ? '88' : e.etat === 'Moyen' ? '52' : '22';
+      const pct = e.etat === 'Bon' ? '88'      : e.etat === 'Moyen' ? '52'      : '22';
       return `<div style="display:grid;grid-template-columns:1.8fr 1fr 2.5fr 80px;gap:.8rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.04)">
         <span style="color:var(--white);font-size:.84rem;font-weight:500">${e.composant}</span>
         <span style="display:inline-block;font-size:.7rem;font-weight:600;padding:.16rem .6rem;border-radius:99px;background:${ec}22;color:${ec};border:1px solid ${ec}44">${e.etat}</span>
-        <span style="font-size:.78rem;color:var(--gray-1);line-height:1.4">${e.observation||'—'}</span>
+        <span style="font-size:.78rem;color:var(--gray-1);line-height:1.4">${e.observation || '—'}</span>
         <div>
           <div style="height:5px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden">
             <div style="width:${pct}%;height:100%;background:${ec};border-radius:99px"></div>
@@ -1379,27 +1844,31 @@ function afficherRapport(r) {
   }
 
   // Risques PCA
-  if (el('pca-risques-wrap') && (r.risques||[]).length) {
+  if (el('pca-risques-wrap') && (r.risques || []).length) {
     el('pca-risques-wrap').style.display = 'block';
     el('pca-risques-list').innerHTML = r.risques.map(rv => {
-      const gc = rv.gravite==='critique'?'#ef5350':rv.gravite==='important'?'#ff9800':rv.gravite==='modere'?'#C8A84B':'#60a5fa';
-      const gb = rv.gravite==='critique'?'rgba(239,83,80,.06)':rv.gravite==='important'?'rgba(255,152,0,.05)':rv.gravite==='modere'?'rgba(200,168,75,.04)':'rgba(96,165,250,.04)';
+      const gc = rv.gravite === 'critique'  ? '#ef5350'
+               : rv.gravite === 'important' ? '#ff9800'
+               : rv.gravite === 'modere'    ? '#C8A84B' : '#60a5fa';
+      const gb = rv.gravite === 'critique'  ? 'rgba(239,83,80,.06)'
+               : rv.gravite === 'important' ? 'rgba(255,152,0,.05)'
+               : rv.gravite === 'modere'    ? 'rgba(200,168,75,.04)' : 'rgba(96,165,250,.04)';
       return `<div style="padding:1rem 1.2rem;border-radius:9px;border:1px solid ${gc}44;background:${gb};border-left:3px solid ${gc}">
         <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem">
-          <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.12rem .5rem;border-radius:5px;background:${gc}22;color:${gc}">${rv.gravite||''}</span>
+          <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.12rem .5rem;border-radius:5px;background:${gc}22;color:${gc}">${rv.gravite || ''}</span>
           <strong style="font-size:.86rem;color:var(--white)">${rv.titre}</strong>
         </div>
-        <p style="font-size:.8rem;color:var(--gray-2);line-height:1.55;margin:0">${rv.description||''}</p>
+        <p style="font-size:.8rem;color:var(--gray-2);line-height:1.55;margin:0">${rv.description || ''}</p>
       </div>`;
     }).join('');
   }
 
-  // Travaux PCA — version enrichie
-  if (el('pca-travaux-wrap') && (r.travaux||[]).length) {
+  // Travaux PCA
+  if (el('pca-travaux-wrap') && (r.travaux || []).length) {
     el('pca-travaux-wrap').style.display = 'block';
     el('pca-travaux-list').innerHTML = r.travaux.map(t => {
-      const hc = ['Urgent','Immédiat'].includes(t.priorite)||['Urgent','Immédiat'].includes(t.horizon) ? '#ef5350'
-               : ['Court terme','1-2 ans'].includes(t.priorite)||['Court terme','1-2 ans'].includes(t.horizon) ? '#E5A93A'
+      const hc = ['Urgent','Immédiat'].includes(t.priorite) || ['Urgent','Immédiat'].includes(t.horizon) ? '#ef5350'
+               : ['Court terme','1-2 ans'].includes(t.priorite) || ['Court terme','1-2 ans'].includes(t.horizon) ? '#E5A93A'
                : '#60a5fa';
       const horizon = t.horizon || t.priorite || '—';
       return `<div style="display:flex;align-items:center;gap:.9rem;padding:.7rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)">
@@ -1416,72 +1885,78 @@ function afficherRapport(r) {
   // Budget PCA
   if (el('pca-budget-wrap') && r.enveloppe_budgetaire) {
     el('pca-budget-wrap').style.display = 'block';
-    if(el('budget-court')) el('budget-court').textContent = r.enveloppe_budgetaire.court_terme || '—';
-    if(el('budget-moyen')) el('budget-moyen').textContent = r.enveloppe_budgetaire.moyen_terme || '—';
-    if(el('budget-long'))  el('budget-long').textContent  = r.enveloppe_budgetaire.long_terme  || '—';
-    if(el('budget-total')) el('budget-total').textContent = r.enveloppe_budgetaire.total_estime || '—';
+    if (el('budget-court')) el('budget-court').textContent = r.enveloppe_budgetaire.court_terme || '—';
+    if (el('budget-moyen')) el('budget-moyen').textContent = r.enveloppe_budgetaire.moyen_terme || '—';
+    if (el('budget-long'))  el('budget-long').textContent  = r.enveloppe_budgetaire.long_terme  || '—';
+    if (el('budget-total')) el('budget-total').textContent = r.enveloppe_budgetaire.total_estime || '—';
   }
 
-  if ((r.points_forts||[]).length) {
+  // Points forts
+  if ((r.points_forts || []).length) {
     el('points-forts-wrap').style.display = 'block';
-    el('points-forts-list').innerHTML = r.points_forts.map(p => `<li style="font-size:.84rem;color:var(--gray-2)">${p}</li>`).join('');
+    el('points-forts-list').innerHTML = r.points_forts
+      .map(p => `<li style="font-size:.84rem;color:var(--gray-2)">${p}</li>`)
+      .join('');
   }
 
-  if ((r.non_conformites||[]).length) {
+  // Non-conformités
+  if ((r.non_conformites || []).length) {
     el('nonconf-wrap').style.display = 'block';
     el('nonconf-list').innerHTML = r.non_conformites.map(nc => {
-      const gc = nc.gravite==='bloquant' ? '#ef5350' : nc.gravite==='majeur' ? '#ff9800' : '#C8A84B';
-      const gb = nc.gravite==='bloquant' ? 'rgba(229,57,53,.07)' : nc.gravite==='majeur' ? 'rgba(255,152,0,.05)' : 'rgba(200,168,75,.05)';
+      const gc = nc.gravite === 'bloquant' ? '#ef5350' : nc.gravite === 'majeur' ? '#ff9800' : '#C8A84B';
+      const gb = nc.gravite === 'bloquant' ? 'rgba(229,57,53,.07)' : nc.gravite === 'majeur' ? 'rgba(255,152,0,.05)' : 'rgba(200,168,75,.05)';
       return `<div style="padding:1.1rem 1.3rem;border-radius:10px;border:1px solid ${gc}44;background:${gb};border-left:3px solid ${gc}">
         <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.5rem">
-          <span style="background:${gc}22;color:${gc};padding:.12rem .5rem;border-radius:6px;font-size:.68rem;font-weight:700;text-transform:uppercase">${nc.gravite||''}</span>
+          <span style="background:${gc}22;color:${gc};padding:.12rem .5rem;border-radius:6px;font-size:.68rem;font-weight:700;text-transform:uppercase">${nc.gravite || ''}</span>
           <strong style="color:var(--white);font-size:.88rem">${nc.critere}</strong>
         </div>
-        <p style="font-size:.83rem;color:var(--gray-2);margin-bottom:.5rem;line-height:1.5">${nc.description||''}</p>
+        <p style="font-size:.83rem;color:var(--gray-2);margin-bottom:.5rem;line-height:1.5">${nc.description || ''}</p>
         <div style="display:flex;gap:1.2rem;flex-wrap:wrap">
-          ${nc.action      ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Action : </span>${nc.action}</span>` : ''}
-          ${nc.delai       ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Délai : </span>${nc.delai}</span>` : ''}
+          ${nc.action      ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Action : </span>${nc.action}</span>`  : ''}
+          ${nc.delai       ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Délai : </span>${nc.delai}</span>`    : ''}
           ${nc.cout_estime ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Coût : </span><span style="color:var(--gold)">${nc.cout_estime}</span></span>` : ''}
         </div>
       </div>`;
     }).join('');
   }
 
-  if ((r.recommandations||[]).length) {
+  // Recommandations
+  if ((r.recommandations || []).length) {
     el('recos-wrap').style.display = 'block';
     el('recos-list').innerHTML = r.recommandations.map(rec => {
-      const pc = rec.priorite==='URGENT' ? '#ef5350' : rec.priorite==='RECOMMANDÉ' ? '#C8A84B' : '#60a5fa';
-      const pb = rec.priorite==='URGENT' ? 'rgba(229,57,53,.06)' : rec.priorite==='RECOMMANDÉ' ? 'rgba(200,168,75,.06)' : 'rgba(96,165,250,.06)';
+      const pc = rec.priorite === 'URGENT' ? '#ef5350' : rec.priorite === 'RECOMMANDÉ' ? '#C8A84B' : '#60a5fa';
+      const pb = rec.priorite === 'URGENT' ? 'rgba(229,57,53,.06)' : rec.priorite === 'RECOMMANDÉ' ? 'rgba(200,168,75,.06)' : 'rgba(96,165,250,.06)';
       return `<div style="display:flex;gap:1rem;padding:1rem 1.2rem;border-radius:10px;border:1px solid rgba(255,255,255,.05);background:${pb}">
         <div style="flex-shrink:0"><span style="background:${pc}22;color:${pc};padding:.15rem .55rem;border-radius:6px;font-size:.67rem;font-weight:700;letter-spacing:.04em">${rec.priorite}</span></div>
         <div style="flex:1">
           <div style="font-weight:600;color:var(--white);font-size:.88rem;margin-bottom:.3rem">${rec.titre}</div>
-          <p style="font-size:.82rem;color:var(--gray-2);line-height:1.5;margin-bottom:.4rem">${rec.description||''}</p>
+          <p style="font-size:.82rem;color:var(--gray-2);line-height:1.5;margin-bottom:.4rem">${rec.description || ''}</p>
           <div style="display:flex;gap:1.2rem;flex-wrap:wrap">
             ${rec.impact_reglementaire ? `<span style="font-size:.77rem"><span style="color:var(--muted)">Impact : </span>${rec.impact_reglementaire}</span>` : ''}
-            ${rec.delai ? `<span style="font-size:.77rem"><span style="color:var(--muted)">Délai : </span>${rec.delai}</span>` : ''}
+            ${rec.delai                ? `<span style="font-size:.77rem"><span style="color:var(--muted)">Délai : </span>${rec.delai}</span>` : ''}
           </div>
         </div>
       </div>`;
     }).join('');
   }
 
+  // Enveloppe + systèmes
   if (r.analyse_enveloppe) {
     el('enveloppe-synthese').textContent = r.analyse_enveloppe.synthese || '';
-    el('enveloppe-points').innerHTML = (r.analyse_enveloppe.points_attention||[]).map(p=>`<li>${p}</li>`).join('');
+    el('enveloppe-points').innerHTML = (r.analyse_enveloppe.points_attention || [])
+      .map(p => `<li>${p}</li>`).join('');
   }
-
   if (r.systemes_energetiques) {
     el('systemes-synthese').textContent = r.systemes_energetiques.synthese || '';
-    el('equipements-table').innerHTML = (r.systemes_energetiques.equipements||[]).map(e => `
+    el('equipements-table').innerHTML = (r.systemes_energetiques.equipements || []).map(e => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
         <div>
           <span style="color:var(--white);font-size:.8rem;font-weight:500">${e.poste}</span>
-          <span style="color:var(--gray-1);font-size:.76rem;margin-left:.4rem">${e.equipement||''}</span>
+          <span style="color:var(--gray-1);font-size:.76rem;margin-left:.4rem">${e.equipement || ''}</span>
         </div>
         <div style="display:flex;align-items:center;gap:.5rem">
           ${e.performance ? `<span style="font-size:.72rem;color:var(--muted)">${e.performance}</span>` : ''}
-          <span style="font-size:.7rem;padding:.12rem .45rem;border-radius:5px;background:${e.evaluation==='Performant'?'rgba(39,201,63,.1)':'rgba(255,193,7,.08)'};color:${e.evaluation==='Performant'?'#27c93f':'#ffc107'}">${e.evaluation||''}</span>
+          <span style="font-size:.7rem;padding:.12rem .45rem;border-radius:5px;background:${e.evaluation === 'Performant' ? 'rgba(39,201,63,.1)' : 'rgba(255,193,7,.08)'};color:${e.evaluation === 'Performant' ? '#27c93f' : '#ffc107'}">${e.evaluation || ''}</span>
         </div>
       </div>`).join('');
   }
@@ -1491,17 +1966,9 @@ function afficherRapport(r) {
   el('rapport-content').style.display = 'block';
 }
 
-// ══════════════════════════════════════════════
-//  FACTURES — logique JS
-// ══════════════════════════════════════════════
-let facInitDone  = false;
-let facMode      = 'conso';
-let facCache     = null;
-
-function getCsrfFac() {
-  const c = document.cookie.split(';').find(s => s.trim().startsWith('csrftoken='));
-  return c ? c.split('=')[1].trim() : '';
-}
+// ══════════════════════════════════════════════════════
+//  FACTURES
+// ══════════════════════════════════════════════════════
 
 function handleFacDrop(e) {
   e.preventDefault();
@@ -1512,60 +1979,64 @@ function handleFacDrop(e) {
 async function uploadFactures(files) {
   for (const file of files) {
     if (!file.name.toLowerCase().endsWith('.pdf')) continue;
-    const type = document.getElementById('fac-type').value;
-    const fd   = new FormData();
+    const type  = document.getElementById('fac-type').value;
+    const fd    = new FormData();
     fd.append('fichier', file);
     fd.append('type_energie', type);
-    fd.append('csrfmiddlewaretoken', getCsrfFac());
+    fd.append('csrfmiddlewaretoken', getCsrf());
     const tmpId = 'tmp_' + Date.now() + Math.random().toString(36).slice(2);
     ajouterLigne(tmpId, file.name, 'loading', type);
     try {
-      const r = await fetch(`/dossier/${DOC_ID}/factures/upload/`, { method:'POST', body:fd });
+      const r = await fetch(`/dossier/${DOC_ID}/factures/upload/`, { method: 'POST', body: fd });
       const d = await r.json();
       if (d.success) mettreAjourLigne(tmpId, d.facture_id, file.name, 'pending', type);
-      else            mettreAjourLigne(tmpId, null, file.name, 'error', type, d.error);
-    } catch(e) { mettreAjourLigne(tmpId, null, file.name, 'error', type, e.message); }
+      else           mettreAjourLigne(tmpId, null, file.name, 'error', type, d.error);
+    } catch (e) {
+      mettreAjourLigne(tmpId, null, file.name, 'error', type, e.message);
+    }
   }
 }
 
 function ajouterLigne(id, nom, status, type) {
-  const liste = document.getElementById('fac-liste');
-  const div   = document.createElement('div');
+  const liste  = document.getElementById('fac-liste');
+  const div    = document.createElement('div');
   div.id        = 'fac-row-' + id;
   div.className = 'fac-row';
   div.innerHTML = rendreHtmlLigne(id, nom, status, type);
   liste.appendChild(div);
 }
+
 function mettreAjourLigne(oldId, newId, nom, status, type, err) {
   const el = document.getElementById('fac-row-' + oldId);
   if (!el) return;
   el.id        = 'fac-row-' + (newId || oldId);
   el.innerHTML = rendreHtmlLigne(newId || oldId, nom, status, type, err);
 }
+
 function rendreHtmlLigne(id, nom, status, type, err) {
-  const icons  = { electricite:'⚡', gaz:'🔥' };
-  const labels = { electricite:'Électricité', gaz:'Gaz' };
+  const icons  = { electricite: '⚡', gaz: '🔥' };
+  const labels = { electricite: 'Électricité', gaz: 'Gaz' };
   const sub = err
     ? `<span style="color:#ef5350;margin-left:.4rem">— ${err}</span>`
     : status === 'ok'      ? '<span style="color:#27c93f;margin-left:.4rem">— données extraites</span>'
-    : status === 'pending' ? '<span style="color:var(--gold);margin-left:.4rem">— en attente d\'analyse</span>'
+    : status === 'pending' ? "<span style=\"color:var(--gold);margin-left:.4rem\">— en attente d'analyse</span>"
     : '';
   return `
     <div class="fac-dot ${status}"></div>
     <div>
       <div style="font-size:.83rem;color:var(--white);font-weight:500">${nom}</div>
-      <div style="font-size:.72rem;color:var(--gray-1);margin-top:.12rem">${icons[type]||'📄'} ${labels[type]||type}${sub}</div>
+      <div style="font-size:.72rem;color:var(--gray-1);margin-top:.12rem">${icons[type] || '📄'} ${labels[type] || type}${sub}</div>
     </div>
-    ${status === 'pending' ? `<button class="fac-btn fac-btn-analyse" onclick="analyserUne(${id})">✨ Analyser</button>` : '<div></div>'}
-    ${status === 'ok' ? '<span style="font-size:.7rem;color:#27c93f">✓</span>' : '<div></div>'}
-    ${id && status !== 'loading' ? `<button class="fac-btn fac-btn-delete" onclick="supprimerFac(${id}, this)">🗑</button>` : '<div></div>'}
+    ${status === 'pending' ? `<button class="fac-btn fac-btn--analyse" onclick="analyserUne(${id})">✨ Analyser</button>` : '<div></div>'}
+    ${status === 'ok'      ? '<span style="font-size:.7rem;color:#27c93f">✓</span>' : '<div></div>'}
+    ${id && status !== 'loading' ? `<button class="fac-btn fac-btn--delete" onclick="supprimerFac(${id})">🗑</button>` : '<div></div>'}
   `;
 }
 
 async function analyserUne(facId) {
   const row = document.getElementById('fac-row-' + facId);
   if (row) row.querySelector('.fac-dot').className = 'fac-dot loading';
-  const r = await fetch(`/facture/${facId}/analyser/`, { method:'POST', headers:{'X-CSRFToken': getCsrfFac()} });
+  const r = await fetch(`/facture/${facId}/analyser/`, { method: 'POST', headers: { 'X-CSRFToken': getCsrf() } });
   const d = await r.json();
   if (row) row.querySelector('.fac-dot').className = 'fac-dot ' + (d.success ? 'ok' : 'error');
   if (d.success) await chargerDonneesFac();
@@ -1574,9 +2045,10 @@ async function analyserUne(facId) {
 
 async function analyserToutesFactures() {
   const btn = document.getElementById('btn-analyser-tout');
-  btn.disabled = true; btn.textContent = '⏳ Analyse en cours…';
+  btn.disabled    = true;
+  btn.textContent = '⏳ Analyse en cours…';
   document.querySelectorAll('.fac-dot.pending').forEach(el => el.className = 'fac-dot loading');
-  const r = await fetch(`/dossier/${DOC_ID}/factures/analyser-toutes/`, { method:'POST', headers:{'X-CSRFToken': getCsrfFac()} });
+  const r = await fetch(`/dossier/${DOC_ID}/factures/analyser-toutes/`, { method: 'POST', headers: { 'X-CSRFToken': getCsrf() } });
   const d = await r.json();
   if (d.success) {
     d.resultats.forEach(res => {
@@ -1585,12 +2057,13 @@ async function analyserToutesFactures() {
     });
     await chargerDonneesFac();
   }
-  btn.disabled = false; btn.textContent = '✨ Analyser tout';
+  btn.disabled    = false;
+  btn.textContent = '✨ Analyser tout';
 }
 
 async function supprimerFac(facId) {
   if (!confirm('Supprimer cette facture ?')) return;
-  const r = await fetch(`/facture/${facId}/supprimer/`, { method:'POST', headers:{'X-CSRFToken': getCsrfFac()} });
+  const r = await fetch(`/facture/${facId}/supprimer/`, { method: 'POST', headers: { 'X-CSRFToken': getCsrf() } });
   const d = await r.json();
   if (d.success) {
     const row = document.getElementById('fac-row-' + facId);
@@ -1602,7 +2075,10 @@ async function supprimerFac(facId) {
 async function chargerDonneesFac() {
   const r = await fetch(`/dossier/${DOC_ID}/factures/donnees/`);
   const d = await r.json();
-  if (!d.success || !d.mois.length) { document.getElementById('fac-resultats').style.display='none'; return; }
+  if (!d.success || !d.mois.length) {
+    document.getElementById('fac-resultats').style.display = 'none';
+    return;
+  }
   facCache = d;
   afficherFacResultats(d);
 }
@@ -1611,7 +2087,6 @@ function afficherFacResultats(d) {
   document.getElementById('fac-resultats').style.display = 'block';
   const symb = (d.mois[0]?.devise === 'EUR') ? '€' : '$';
 
-  // KPIs
   document.getElementById('fac-kpis').innerHTML = `
     <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
       <div style="font-size:1.4rem;font-weight:700;color:var(--gold)">${d.nb_factures}</div>
@@ -1622,11 +2097,11 @@ function afficherFacResultats(d) {
       <div style="font-size:.68rem;color:var(--gray-1);margin-top:.2rem">Consommation totale</div>
     </div>
     <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
-      <div style="font-size:1.4rem;font-weight:700;color:var(--white)">${symb} ${(d.cout_total||0).toLocaleString('fr',{minimumFractionDigits:2})}</div>
+      <div style="font-size:1.4rem;font-weight:700;color:var(--white)">${symb} ${(d.cout_total || 0).toLocaleString('fr', { minimumFractionDigits: 2 })}</div>
       <div style="font-size:.68rem;color:var(--gray-1);margin-top:.2rem">Coût total</div>
     </div>
     <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
-      <div style="font-size:1.4rem;font-weight:700;color:var(--white)">${d.cout_moyen_kwh ? (d.cout_moyen_kwh*100).toFixed(2)+' ¢' : '—'}</div>
+      <div style="font-size:1.4rem;font-weight:700;color:var(--white)">${d.cout_moyen_kwh ? (d.cout_moyen_kwh * 100).toFixed(2) + ' ¢' : '—'}</div>
       <div style="font-size:.68rem;color:var(--gray-1);margin-top:.2rem">Coût moyen / kWh</div>
     </div>`;
 
@@ -1638,26 +2113,36 @@ function afficherFacResultats(d) {
 
 function facSwitch(mode) {
   facMode = mode;
-  ['conso','cout'].forEach(m => {
-    const b = document.getElementById('fac-btn-'+m);
+  ['conso', 'cout'].forEach(m => {
+    const b = document.getElementById('fac-btn-' + m);
     if (!b) return;
-    if (m === mode) { b.style.background='rgba(200,168,75,.15)'; b.style.borderColor='rgba(200,168,75,.3)'; b.style.color='var(--gold)'; }
-    else            { b.style.background='transparent'; b.style.borderColor='rgba(255,255,255,.08)'; b.style.color='var(--gray-1)'; }
+    if (m === mode) {
+      b.style.background   = 'rgba(200,168,75,.15)';
+      b.style.borderColor  = 'rgba(200,168,75,.3)';
+      b.style.color        = 'var(--gold)';
+    } else {
+      b.style.background   = 'transparent';
+      b.style.borderColor  = 'rgba(255,255,255,.08)';
+      b.style.color        = 'var(--gray-1)';
+    }
   });
   if (facCache) dessinerFacChart(facCache.mois);
 }
 
 function dessinerFacChart(mois) {
-  const vals = mois.map(m => facMode === 'conso' ? (m.consommation||0) : (m.montant_ttc||0));
+  const vals = mois.map(m => facMode === 'conso' ? (m.consommation || 0) : (m.montant_ttc || 0));
   const maxV = Math.max(...vals, 1);
   const H    = 90;
-  document.getElementById('fac-chart').innerHTML = mois.map((m,i) => {
+  document.getElementById('fac-chart').innerHTML = mois.map((m, i) => {
     const v   = vals[i] || 0;
     const pct = (v / maxV) * H;
     const col = m.type_energie === 'gaz' ? '#60a5fa' : '#C8A84B';
-    const lbl = m.periode_debut ? m.periode_debut.substring(5,7)+'/'+m.periode_debut.substring(2,4) : `M${i+1}`;
+    const lbl = m.periode_debut
+      ? m.periode_debut.substring(5, 7) + '/' + m.periode_debut.substring(2, 4)
+      : `M${i + 1}`;
     return `<div class="fac-bar-col">
-      <div class="fac-bar" style="height:${Math.max(pct,4)}px;background:${col};opacity:.85" title="${facMode==='conso'?Math.round(v).toLocaleString('fr')+' kWh':v.toLocaleString('fr',{minimumFractionDigits:2})+'$'}"></div>
+      <div class="fac-bar" style="height:${Math.max(pct, 4)}px;background:${col};opacity:.85"
+        title="${facMode === 'conso' ? Math.round(v).toLocaleString('fr') + ' kWh' : v.toLocaleString('fr', { minimumFractionDigits: 2 }) + '$'}"></div>
       <span class="fac-bar-lbl">${lbl}</span>
     </div>`;
   }).join('');
@@ -1665,11 +2150,22 @@ function dessinerFacChart(mois) {
 
 function afficherFacRep(mois, consoTot, coutTot, symb) {
   const items = [
-    { label:'⚡ Électricité', conso: mois.filter(m=>m.type_energie!=='gaz').reduce((s,m)=>s+(m.consommation||0),0), cout: mois.filter(m=>m.type_energie!=='gaz').reduce((s,m)=>s+(m.montant_ttc||0),0), color:'#C8A84B' },
-    { label:'🔥 Gaz naturel',  conso: mois.filter(m=>m.type_energie==='gaz').reduce((s,m)=>s+(m.consommation||0),0), cout: mois.filter(m=>m.type_energie==='gaz').reduce((s,m)=>s+(m.montant_ttc||0),0), color:'#60a5fa' },
+    {
+      label: '⚡ Électricité',
+      conso: mois.filter(m => m.type_energie !== 'gaz').reduce((s, m) => s + (m.consommation || 0), 0),
+      cout:  mois.filter(m => m.type_energie !== 'gaz').reduce((s, m) => s + (m.montant_ttc  || 0), 0),
+      color: '#C8A84B'
+    },
+    {
+      label: '🔥 Gaz naturel',
+      conso: mois.filter(m => m.type_energie === 'gaz').reduce((s, m) => s + (m.consommation || 0), 0),
+      cout:  mois.filter(m => m.type_energie === 'gaz').reduce((s, m) => s + (m.montant_ttc  || 0), 0),
+      color: '#60a5fa'
+    },
   ].filter(i => i.conso > 0);
+
   document.getElementById('fac-rep').innerHTML = items.map(it => {
-    const pct = consoTot > 0 ? Math.round((it.conso/consoTot)*100) : 0;
+    const pct = consoTot > 0 ? Math.round((it.conso / consoTot) * 100) : 0;
     return `<div>
       <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.22rem">
         <span style="color:var(--gray-2)">${it.label}</span>
@@ -1678,27 +2174,33 @@ function afficherFacRep(mois, consoTot, coutTot, symb) {
       <div style="height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
         <div style="width:${pct}%;height:100%;background:${it.color};border-radius:99px"></div>
       </div>
-      <div style="font-size:.68rem;color:var(--gray-1);margin-top:.18rem">${Math.round(it.conso).toLocaleString('fr')} kWh — ${symb} ${it.cout.toLocaleString('fr',{minimumFractionDigits:2})}</div>
+      <div style="font-size:.68rem;color:var(--gray-1);margin-top:.18rem">
+        ${Math.round(it.conso).toLocaleString('fr')} kWh — ${symb} ${it.cout.toLocaleString('fr', { minimumFractionDigits: 2 })}
+      </div>
     </div>`;
   }).join('');
 }
 
 function afficherFacTableau(mois, symb) {
-  const consoM = mois.map(m => m.consommation||0);
-  const moy    = consoM.reduce((a,b)=>a+b,0) / (consoM.length||1);
-  document.getElementById('fac-tbody').innerHTML = mois.map((m,i) => {
+  const consoM = mois.map(m => m.consommation || 0);
+  const moy    = consoM.reduce((a, b) => a + b, 0) / (consoM.length || 1);
+  document.getElementById('fac-tbody').innerHTML = mois.map((m, i) => {
     const c    = m.consommation || 0;
     const anom = c > moy * 1.5;
-    const cpk  = m.cout_par_kwh ? (m.cout_par_kwh*100).toFixed(2)+' ¢' : '—';
-    const mnt  = m.montant_ttc  ? m.montant_ttc.toLocaleString('fr',{minimumFractionDigits:2}) : '—';
+    const cpk  = m.cout_par_kwh ? (m.cout_par_kwh * 100).toFixed(2) + ' ¢' : '—';
+    const mnt  = m.montant_ttc  ? m.montant_ttc.toLocaleString('fr', { minimumFractionDigits: 2 }) : '—';
     const icon = m.type_energie === 'gaz' ? '🔥' : '⚡';
-    return `<tr style="border-bottom:1px solid rgba(255,255,255,.04);${i%2===0?'background:rgba(255,255,255,.01)':''}">
-      <td style="padding:.55rem .9rem;color:var(--gray-2);font-size:.78rem">${icon} ${m.periode_debut||'—'} → ${m.periode_fin||'—'}</td>
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,.04);${i % 2 === 0 ? 'background:rgba(255,255,255,.01)' : ''}">
+      <td style="padding:.55rem .9rem;color:var(--gray-2);font-size:.78rem">${icon} ${m.periode_debut || '—'} → ${m.periode_fin || '—'}</td>
       <td style="padding:.55rem .9rem;font-size:.73rem;color:var(--gray-1)">${m.type_energie}</td>
-      <td style="padding:.55rem .9rem;text-align:right;font-weight:600;color:${anom?'#E5A93A':'var(--white)'}">${Math.round(c).toLocaleString('fr')} <span style="font-size:.65rem;color:var(--gray-1)">${m.unite||'kWh'}</span></td>
+      <td style="padding:.55rem .9rem;text-align:right;font-weight:600;color:${anom ? '#E5A93A' : 'var(--white)'}">
+        ${Math.round(c).toLocaleString('fr')} <span style="font-size:.65rem;color:var(--gray-1)">${m.unite || 'kWh'}</span>
+      </td>
       <td style="padding:.55rem .9rem;text-align:right;color:var(--gray-2)">${symb} ${mnt}</td>
       <td style="padding:.55rem .9rem;text-align:right;color:var(--gray-1);font-size:.76rem">${cpk}</td>
-      <td style="padding:.55rem .9rem;text-align:center">${anom?'<span style="font-size:.65rem;background:rgba(229,169,58,.12);color:#E5A93A;border:1px solid rgba(229,169,58,.25);padding:.1rem .4rem;border-radius:4px">Pic</span>':''}</td>
+      <td style="padding:.55rem .9rem;text-align:center">
+        ${anom ? '<span style="font-size:.65rem;background:rgba(229,169,58,.12);color:#E5A93A;border:1px solid rgba(229,169,58,.25);padding:.1rem .4rem;border-radius:4px">Pic</span>' : ''}
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1706,49 +2208,47 @@ function afficherFacTableau(mois, symb) {
 function initFacCmp(d, symb) {
   const cpk = d.cout_moyen_kwh || 0.10;
   document.getElementById('cmp-avant-conso').textContent = Math.round(d.conso_totale).toLocaleString('fr') + ' kWh';
-  document.getElementById('cmp-avant-cout').textContent  = symb + ' ' + (d.cout_total||0).toLocaleString('fr',{minimumFractionDigits:2}) + ' / an';
-  window._facCpk    = cpk;
-  window._facAvant  = d.conso_totale;
-  window._facCoutT  = d.cout_total;
-  window._facSymb   = symb;
+  document.getElementById('cmp-avant-cout').textContent  = symb + ' ' + (d.cout_total || 0).toLocaleString('fr', { minimumFractionDigits: 2 }) + ' / an';
+  window._facCpk   = cpk;
+  window._facAvant = d.conso_totale;
+  window._facCoutT = d.cout_total;
+  window._facSymb  = symb;
 }
 
 function recalcCmp() {
-  const pct     = parseFloat(document.getElementById('cmp-apres-input').value) || 30;
-  const avant   = window._facAvant  || 0;
-  const cpk     = window._facCpk    || 0.10;
-  const symb    = window._facSymb   || '$';
-  const apres   = avant * (1 - pct / 100);
+  const pct   = parseFloat(document.getElementById('cmp-apres-input').value) || 30;
+  const avant = window._facAvant || 0;
+  const cpk   = window._facCpk   || 0.10;
+  const symb  = window._facSymb  || '$';
+  const apres = avant * (1 - pct / 100);
   document.getElementById('cmp-pct-label').textContent   = pct + '%';
   document.getElementById('cmp-gain-pct').textContent    = pct + '%';
   document.getElementById('cmp-apres-conso').textContent = Math.round(apres).toLocaleString('fr') + ' kWh / an';
-  document.getElementById('cmp-apres-cout').textContent  = symb + ' ' + (apres * cpk).toLocaleString('fr', {minimumFractionDigits:2}) + ' / an';
+  document.getElementById('cmp-apres-cout').textContent  = symb + ' ' + (apres * cpk).toLocaleString('fr', { minimumFractionDigits: 2 }) + ' / an';
   const ecoAn = (avant - apres) * cpk;
   const co2   = (avant - apres) * 0.026;
-  document.getElementById('cmp-eco-an').textContent  = symb + ' ' + ecoAn.toLocaleString('fr', {minimumFractionDigits:2}) + ' / an';
-  document.getElementById('cmp-eco-10').textContent  = symb + ' ' + (ecoAn * 10).toLocaleString('fr', {minimumFractionDigits:0});
+  document.getElementById('cmp-eco-an').textContent  = symb + ' ' + ecoAn.toLocaleString('fr', { minimumFractionDigits: 2 }) + ' / an';
+  document.getElementById('cmp-eco-10').textContent  = symb + ' ' + (ecoAn * 10).toLocaleString('fr', { minimumFractionDigits: 0 });
   document.getElementById('cmp-co2').textContent     = Math.round(co2) + ' kg CO₂';
   document.getElementById('cmp-gains').style.display = 'flex';
 }
 
-// ── Total travaux estimés (onglet observations) ───────────
-(function() {
+// ── Total travaux estimés (observations) ─────────────────
+(function () {
   const CHAMPS = ['obs_cout_toiture','obs_cout_isolation','obs_cout_chauffage',
                   'obs_cout_menuiseries','obs_cout_plomberie','obs_cout_autres'];
   function calcTotal() {
     const el = document.getElementById('obs-total-travaux');
     if (!el) return;
     let total = 0;
-    CHAMPS.forEach(function(name) {
+    CHAMPS.forEach(name => {
       const input = document.querySelector('[name="' + name + '"]');
       if (input && input.value) total += parseFloat(input.value) || 0;
     });
-    el.textContent = total > 0
-      ? total.toLocaleString('fr', {minimumFractionDigits:0}) + ' €'
-      : '—';
+    el.textContent = total > 0 ? total.toLocaleString('fr', { minimumFractionDigits: 0 }) + ' €' : '—';
   }
-  document.addEventListener('DOMContentLoaded', function() {
-    CHAMPS.forEach(function(name) {
+  document.addEventListener('DOMContentLoaded', function () {
+    CHAMPS.forEach(name => {
       const input = document.querySelector('[name="' + name + '"]');
       if (input) input.addEventListener('input', calcTotal);
     });
@@ -1756,5 +2256,4 @@ function recalcCmp() {
   });
 })();
 </script>
-
 {% endblock %}
