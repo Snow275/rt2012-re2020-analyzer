@@ -2197,6 +2197,13 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
         - les performances de l’enveloppe
         - les systèmes énergétiques simulés.
 
+        Analyse également les écarts entre :
+
+        - la consommation simulée OpenStudio
+        - la consommation réelle issue des factures
+
+        Si un écart est observé, estime son pourcentage et propose des explications techniques plausibles.
+
         ---
 
         MISSION D’ANALYSE
