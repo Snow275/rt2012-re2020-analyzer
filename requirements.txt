@@ -3,7 +3,7 @@ djangorestframework==3.16.0
 reportlab==4.2.5
 PyPDF2==3.0.1
 whitenoise==6.8.2
-gunicorn==22.0.0
+gunicorn==23.0.0
 asgiref==3.8.1
 sqlparse==0.5.3
 pillow==11.1.0
