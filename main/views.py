@@ -2088,10 +2088,14 @@ Sois précis, factuel, professionnel. Adapte le niveau de détail à la norme {n
 
             factures_data.append({
                 "energie": f.type_energie,
-                "periode_debut": d.get("periode_debut"),
-                "periode_fin": d.get("periode_fin"),
-                "consommation": d.get("consommation"),
-                "montant_ttc": d.get("montant_ttc"),
+                "periode_debut": 
+    d.get("periode_debut"),
+                "periode_fin": 
+    d.get("periode_fin"),
+                "consommation": 
+    d.get("consommation"),
+                "montant_ttc": 
+    d.get("montant_ttc"),
                 "analyse_ok": f.analyse_ok
             })
 
