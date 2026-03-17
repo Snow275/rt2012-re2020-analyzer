@@ -1170,6 +1170,20 @@ select.f-input option { background: #0c1929; }
         <div id="recos-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
       </div>
 
+      <!-- Anomalies rapport BET -->
+      <div id="anomalies-wrap" style="margin-bottom:1.4rem;display:none">
+        <h4 class="section-cap" style="color:#E5A93A">🔎 Anomalies / Incohérences détectées dans le rapport</h4>
+        <div id="anomalies-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
+      </div>
+
+      <!-- Cohérence factures -->
+      <div id="coherence-fac-wrap" style="margin-bottom:1.4rem;display:none">
+        <div class="card card--pad" style="padding:1.2rem 1.4rem">
+          <h4 class="section-cap section-cap--gold" style="margin-bottom:.9rem">⚡ Cohérence avec les factures énergétiques</h4>
+          <div id="coherence-fac-content"></div>
+        </div>
+      </div>
+
       <!-- Enveloppe + Systèmes -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
         <div class="card card--pad" style="padding:1.4rem">
@@ -1191,6 +1205,14 @@ select.f-input option { background: #0c1929; }
         <p id="contexte-reglementaire" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin:0"></p>
       </div>
       {% endif %}
+
+      <!-- Avis indépendant ConformExpert -->
+      <div id="avis-independant-wrap" style="margin-bottom:1.4rem;display:none">
+        <div class="card card--pad" style="padding:1.4rem;border-color:rgba(200,168,75,.25);background:rgba(200,168,75,.04)">
+          <h4 class="section-cap section-cap--gold" style="margin-bottom:.9rem">💬 Avis indépendant ConformExpert</h4>
+          <p id="avis-independant-text" style="font-size:.88rem;color:var(--gray-2);line-height:1.7;margin:0;font-style:italic"></p>
+        </div>
+      </div>
 
       <!-- Mentions légales -->
       <div style="padding:.9rem 1.1rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:8px;font-size:.73rem;color:var(--muted);line-height:1.5">
@@ -1806,8 +1828,10 @@ async function genererRapportIA(force) {
 function afficherRapport(r) {
   const el = id => document.getElementById(id);
 
-  const conf = r.verdict === 'Conforme' || r.verdict === 'Bon état';
-  const ins  = r.verdict === 'Données insuffisantes';
+  // Verdict — supporte RT/RE (verdict) et PCA (verdict_technique / verdict_energie)
+  const verdictRaw  = r.verdict || r.verdict_technique || r.verdict_energie || '—';
+  const conf = ['Conforme','Bon état général','Bon état'].some(v => verdictRaw.startsWith(v));
+  const ins  = verdictRaw.includes('insuffisantes') || verdictRaw.includes('insuffisant');
   const vc   = conf
     ? { bg: 'rgba(39,201,63,.06)',   border: 'rgba(39,201,63,.25)',  color: '#27c93f', icon: '✅' }
     : ins
@@ -1817,10 +1841,27 @@ function afficherRapport(r) {
   const vb = el('verdict-banner');
   vb.style.background  = vc.bg;
   vb.style.borderColor = vc.border;
+
+  // Score global
+  const scoreHtml = r.score_global != null
+    ? `<div style="text-align:right">
+        <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Score</div>
+        <div style="font-size:2rem;font-weight:700;font-family:'Playfair Display',serif;color:${vc.color}">${r.score_global}<span style="font-size:.85rem;color:var(--gray-1)">/100</span></div>
+      </div>`
+    : '';
+
+  // Fiabilité rapport
+  const fibColor = r.fiabilite_rapport === 'Élevée' ? '#27c93f' : r.fiabilite_rapport === 'Moyenne' ? '#E5A93A' : r.fiabilite_rapport ? '#ef5350' : null;
+  const fibHtml  = fibColor
+    ? `<span style="font-size:.72rem;padding:.2rem .65rem;border-radius:99px;background:${fibColor}22;border:1px solid ${fibColor}44;color:${fibColor};margin-top:.4rem;display:inline-block">Fiabilité rapport : ${r.fiabilite_rapport}</span>`
+    : '';
+
   el('verdict-text').style.color = vc.color;
-  el('verdict-text').textContent = r.verdict || '—';
-  el('verdict-icon').textContent = vc.icon;
-  el('resume-executif').textContent = r.resume_executif || '—';
+  el('verdict-text').textContent = verdictRaw;
+  el('verdict-icon').innerHTML   = scoreHtml || vc.icon;
+
+  const resumeEl = el('resume-executif');
+  resumeEl.innerHTML = (r.resume_executif || '—').replace(/\n/g, '<br>') + (fibHtml ? '<br><br>' + fibHtml : '');
 
   const criteres = r.criteres || [];
   const nbOk     = criteres.filter(c => c.conforme).length;
@@ -1982,15 +2023,17 @@ function afficherRapport(r) {
     }).join('');
   }
 
-  // Enveloppe + systèmes
-  if (r.analyse_enveloppe) {
-    el('enveloppe-synthese').textContent = r.analyse_enveloppe.synthese || '';
-    el('enveloppe-points').innerHTML = (r.analyse_enveloppe.points_attention || [])
+  // Enveloppe + Systèmes — clés différentes selon type_analyse
+  const enveloppeData  = r.analyse_enveloppe || r.enveloppe || null;
+  const systemesData   = r.systemes_energetiques || r.systemes || null;
+  if (enveloppeData) {
+    el('enveloppe-synthese').textContent = enveloppeData.synthese || '';
+    el('enveloppe-points').innerHTML = (enveloppeData.points_attention || [])
       .map(p => `<li>${p}</li>`).join('');
   }
-  if (r.systemes_energetiques) {
-    el('systemes-synthese').textContent = r.systemes_energetiques.synthese || '';
-    el('equipements-table').innerHTML = (r.systemes_energetiques.equipements || []).map(e => `
+  if (systemesData) {
+    el('systemes-synthese').textContent = systemesData.synthese || '';
+    el('equipements-table').innerHTML = (systemesData.equipements || []).map(e => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
         <div>
           <span style="color:var(--white);font-size:.8rem;font-weight:500">${e.poste}</span>
@@ -2004,6 +2047,47 @@ function afficherRapport(r) {
   }
 
   if (el('contexte-reglementaire')) el('contexte-reglementaire').textContent = r.contexte_reglementaire || '';
+
+  // Anomalies (incohérences détectées dans le rapport BET)
+  const anomalies = r.anomalies || [];
+  if (el('anomalies-wrap')) {
+    if (anomalies.length) {
+      el('anomalies-wrap').style.display = 'block';
+      el('anomalies-list').innerHTML = anomalies.map(a => {
+        const gc = a.gravite === 'bloquant' ? '#ef5350' : a.gravite === 'majeur' ? '#ff9800' : '#E5A93A';
+        const gb = a.gravite === 'bloquant' ? 'rgba(229,57,53,.07)' : a.gravite === 'majeur' ? 'rgba(255,152,0,.05)' : 'rgba(229,169,58,.05)';
+        return `<div style="padding:.9rem 1.1rem;border-radius:9px;border:1px solid ${gc}44;background:${gb};border-left:3px solid ${gc}">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem">
+            <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.1rem .45rem;border-radius:4px;background:${gc}22;color:${gc}">${a.gravite || ''}</span>
+            <strong style="font-size:.84rem;color:var(--white)">${a.critere || a.titre || ''}</strong>
+          </div>
+          <p style="font-size:.8rem;color:var(--gray-2);line-height:1.55;margin:0 0 .3rem">${a.description || ''}</p>
+          ${a.recommendation ? `<div style="font-size:.77rem;color:var(--gray-1)"><span style="color:var(--muted)">Recommandation : </span>${a.recommendation}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Cohérence factures
+  if (el('coherence-fac-wrap') && r.coherence_factures) {
+    el('coherence-fac-wrap').style.display = 'block';
+    const cf = r.coherence_factures;
+    const cfColor = cf.coherent ? '#27c93f' : '#ef5350';
+    const cfIcon  = cf.coherent ? '✓' : '✗';
+    el('coherence-fac-content').innerHTML = `
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
+        <span style="font-size:.9rem;color:${cfColor}">${cfIcon}</span>
+        <span style="font-size:.85rem;font-weight:600;color:${cfColor}">${cf.coherent ? 'Cohérent avec les factures' : 'Incohérence détectée avec les factures'}</span>
+      </div>
+      <p style="font-size:.82rem;color:var(--gray-2);line-height:1.6;margin:0">${cf.commentaire || ''}</p>`;
+  }
+
+  // Avis indépendant
+  if (el('avis-independant-wrap') && r.avis_independant) {
+    el('avis-independant-wrap').style.display = 'block';
+    el('avis-independant-text').textContent = r.avis_independant;
+  }
+
   el('mentions-legales').textContent = r.mentions_legales || '';
   el('rapport-content').style.display = 'block';
 }
