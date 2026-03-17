@@ -1065,8 +1065,23 @@ select.f-input option { background: #0c1929; }
           <span id="btn-text">Générer le rapport</span>
         </button>
         {% endif %}
-      </div>
-    </div>
+        
+        {% if request.user.is_staff %}
+
+             {% if document.dpe_classe_energie and document.dpe_conso_ep %}
+                 <h3>Étiquette DPE</h3>
+                 <img src="https://www.outils.immo/outils-immo.php?type=dpe&modele=2021&lettre={{ document.dpe_classe_energie|lower }}&valeur={{ document.dpe_conso_ep }}">
+             {% endif %}
+
+             {% if document.dpe_classe_ges and document.dpe_emission_ges %}
+                 <h3>Étiquette GES</h3>
+                 <img src="https://www.outils.immo/outils-immo.php?type=ges&modele=2021&lettre={{ document.dpe_classe_ges|lower }}&valeur={{ document.dpe_emission_ges }}">
+             {% endif %}
+
+        {% endif %}
+         
+        </div>
+        </div>
 
     <!-- Barre de progression -->
     <div id="progress-bar-wrap" class="progress-wrap">
