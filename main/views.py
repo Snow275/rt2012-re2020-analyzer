@@ -397,33 +397,33 @@ def analyser_rapport_thermique(texte, pdf_b64=None):
                 result = json.loads(resp.read().decode('utf-8'))
 
                 raw = result['content'][0]['text'].strip()
+
+                # enlever markdown éventuel
                 raw = raw.replace('```json', '').replace('```', '').strip()
 
-                # 🔥 corrige les guillemets cassés
-                raw = re.sub(r'(?<!\\)"(?![:,}\]])', "'", raw)
-
-                # 🔥 garde uniquement le JSON
-                start = raw.find('{')
-                end = raw.rfind('}') + 1
-                raw = raw[start:end]
+                # extraire uniquement le JSON
+                match = re.search(r'\{[\s\S]*\}', raw)
+                if match:
+                    raw = match.group(0)
 
                 try:
                     data = json.loads(raw)
+
                     print(f"PARSER OK — type={data.get('type_rapport')} norme={data.get('norme_suggeree')}")
                     return data
+
                 except Exception as json_err:
-                    print("❌ JSON cassé :", json_err)
+                    print("❌ JSON parsing error :", json_err)
                     print("RAW PREVIEW:", raw[:1000])
                     return _fallback_regex(texte)
 
         except Exception as e:
-            print("❌ JSON cassé :", e)
-            print("RAW PREVIEW:", raw[:1000])
-            # 🔥 fallback propre
+            print("❌ Erreur API Claude :", e)
+            try:
+                print("RAW PREVIEW:", raw[:1000])
+            except:
+                pass
             return _fallback_regex(texte)
-    except Exception as e:
-        print("❌ Erreur API Claude (réseau/timeout) :", e)
-        return _fallback_regex(texte)
 
 
 def _fallback_regex(texte):
