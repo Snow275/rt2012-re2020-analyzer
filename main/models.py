@@ -315,6 +315,49 @@ class DocumentFile(models.Model):
         return f"{self.document.name} — {self.nom}"
 
 
+class SiteSettings(models.Model):
+    """
+    Paramètres globaux du site — singleton (une seule ligne en base).
+    Accessible depuis l'admin Django.
+    """
+    maintenance_mode = models.BooleanField(
+        default=False,
+        verbose_name="Mode maintenance",
+        help_text="Activer pour afficher la page de maintenance à tous les visiteurs (sauf admins).",
+    )
+    maintenance_message = models.TextField(
+        blank=True,
+        default="Nous effectuons des mises à jour pour améliorer votre expérience. Nous serons de retour très bientôt.",
+        verbose_name="Message affiché",
+    )
+    maintenance_title = models.CharField(
+        max_length=200,
+        blank=True,
+        default="Site en maintenance",
+        verbose_name="Titre affiché",
+    )
+
+    class Meta:
+        verbose_name = "Paramètres du site"
+        verbose_name_plural = "Paramètres du site"
+
+    def __str__(self):
+        status = "🔴 EN MAINTENANCE" if self.maintenance_mode else "🟢 En ligne"
+        return f"Paramètres du site — {status}"
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass  # Empêcher la suppression
+
+
 class Analysis(models.Model):
     document    = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="analyses")
     standard    = models.ForeignKey(Standard, on_delete=models.CASCADE, null=True, blank=True, related_name="analyses")
