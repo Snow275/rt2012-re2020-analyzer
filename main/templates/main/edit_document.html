@@ -841,6 +841,66 @@ select.f-input option { background: #0c1929; }
     <!-- ── Résultat live après analyse AJAX ─────────────────── -->
     <div id="analyse-result" style="display:none;margin-bottom:1.5rem"></div>
 
+    <!-- ── Données DPE extraites ─────────────────────────────── -->
+    {% if document.dpe_classe_energie or document.dpe_conso_ep or document.dpe_classe_ges or document.dpe_emission_ges %}
+    <div class="card card--pad" style="padding:1.4rem;margin-bottom:1.5rem;border-color:rgba(200,168,75,.2)">
+      <h3 class="section-title" style="margin-bottom:1.1rem">🏠 Données DPE extraites</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.9rem;margin-bottom:.9rem">
+
+        {% if document.dpe_classe_energie %}
+        <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
+          <div style="font-size:.62rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Classe énergie</div>
+          <div style="font-size:2.4rem;font-weight:700;font-family:'Playfair Display',serif;line-height:1;
+            color:{% if document.dpe_classe_energie == 'A' %}#27c93f{% elif document.dpe_classe_energie == 'B' %}#4ade80{% elif document.dpe_classe_energie == 'C' %}#a3e635{% elif document.dpe_classe_energie == 'D' %}#facc15{% elif document.dpe_classe_energie == 'E' %}#fb923c{% elif document.dpe_classe_energie == 'F' %}#f87171{% else %}#ef5350{% endif %}">
+            {{ document.dpe_classe_energie }}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if document.dpe_classe_ges %}
+        <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
+          <div style="font-size:.62rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Classe GES</div>
+          <div style="font-size:2.4rem;font-weight:700;font-family:'Playfair Display',serif;line-height:1;
+            color:{% if document.dpe_classe_ges == 'A' %}#27c93f{% elif document.dpe_classe_ges == 'B' %}#4ade80{% elif document.dpe_classe_ges == 'C' %}#a3e635{% elif document.dpe_classe_ges == 'D' %}#facc15{% elif document.dpe_classe_ges == 'E' %}#fb923c{% elif document.dpe_classe_ges == 'F' %}#f87171{% else %}#ef5350{% endif %}">
+            {{ document.dpe_classe_ges }}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if document.dpe_conso_ep %}
+        <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
+          <div style="font-size:.62rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Conso. énergie primaire</div>
+          <div style="font-size:1.4rem;font-weight:700;color:var(--gold);line-height:1">{{ document.dpe_conso_ep }}</div>
+          <div style="font-size:.62rem;color:var(--gray-1);margin-top:.2rem">kWh ep/m².an</div>
+        </div>
+        {% endif %}
+
+        {% if document.dpe_emission_ges %}
+        <div style="background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem;text-align:center">
+          <div style="font-size:.62rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Émissions GES</div>
+          <div style="font-size:1.4rem;font-weight:700;color:var(--gold);line-height:1">{{ document.dpe_emission_ges }}</div>
+          <div style="font-size:.62rem;color:var(--gray-1);margin-top:.2rem">kg CO₂eq/m².an</div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      {% if document.dpe_surface_ref or document.dpe_date_visite or document.dpe_diagnostiqueur %}
+      <div style="display:flex;flex-direction:column;gap:.3rem;padding-top:.8rem;border-top:1px solid rgba(255,255,255,.05)">
+        {% if document.dpe_surface_ref %}
+        <div class="meta-row"><span>Surface de référence</span><span>{{ document.dpe_surface_ref }} m²</span></div>
+        {% endif %}
+        {% if document.dpe_date_visite %}
+        <div class="meta-row"><span>Date de visite</span><span>{{ document.dpe_date_visite }}</span></div>
+        {% endif %}
+        {% if document.dpe_diagnostiqueur %}
+        <div class="meta-row"><span>Diagnostiqueur</span><span>{{ document.dpe_diagnostiqueur }}</span></div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <div class="card card--pad" style="padding:1.8rem">
       <h3 class="section-title" style="margin-bottom:1.4rem">📁 Documents déposés par le client</h3>
 
