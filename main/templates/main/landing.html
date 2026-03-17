@@ -806,7 +806,7 @@ nav {
 .sm-step-icon.pending { background: rgba(255,255,255,0.05); color: var(--gray-1); }
 
 .suivi-features { display: flex; flex-direction: column; gap: 1.5rem; }
-.sf-item {
+.sf-item { display:flex; align-items:flex-start; gap:.75rem;
   display: flex;
   gap: 1.2rem;
   align-items: flex-start;
@@ -965,7 +965,7 @@ nav {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
-.form-guarantee::before { content: '🔒'; }
+.form-guarantee::before { content: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'; }
 
 /* ════════════════════════════════════════
    FOOTER
@@ -1375,6 +1375,24 @@ footer {
 .reveal { opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease; }
 .reveal.visible { opacity:1;transform:none; }
 
+
+  .country-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--gold);
+    background: rgba(200,168,75,.12);
+    border: 1px solid rgba(200,168,75,.25);
+    border-radius: 3px;
+    padding: .1rem .35rem;
+    margin-right: .3rem;
+    vertical-align: middle;
+    font-family: monospace;
+  }
+
 </style>
 </head>
 
@@ -1384,10 +1402,30 @@ footer {
 <div class="sp-toast" id="spToast">
   <div class="sp-toast-dot"></div>
   <div>
-    <strong>Dossier traité aujourd'hui</strong>
-    <span>Climawin RE2020 · 3 anomalies détectées</span>
+    <strong id="spToastTitle">Dossier traité aujourd'hui</strong>
+    <span id="spToastMsg">Climawin RE2020 · 3 anomalies détectées</span>
   </div>
 </div>
+
+<script>
+(function() {
+  var messages = [
+    { title: "Dossier traité aujourd'hui",      msg: "Climawin RE2020 · 3 anomalies détectées" },
+    { title: "Rapport livré ce matin",           msg: "RT2012 · Bbio hors seuil détecté" },
+    { title: "Validation terminée",              msg: "PEB Belgique · Conforme avec réserves" },
+    { title: "Anomalie détectée",                msg: "DH saisi à 140h au lieu de 1 400h" },
+    { title: "Dossier clôturé",                  msg: "Pléiades RE2020 · Score confiance 94%" },
+    { title: "Croisement factures effectué",     msg: "Écart de 63 kWh/m²/an avec le modèle" },
+    { title: "Rapport envoyé au client",         msg: "CNEB Canada · 2 points de vigilance" },
+    { title: "Vérification en cours",            msg: "Climawin RT2012 · Étanchéité à l'air" },
+    { title: "Dossier accepté",                  msg: "DPE officiel · Classe D contestée" },
+    { title: "Analyse terminée",                 msg: "LENOZ Luxembourg · Certification validée" },
+  ];
+  var r = messages[Math.floor(Math.random() * messages.length)];
+  document.getElementById('spToastTitle').textContent = r.title;
+  document.getElementById('spToastMsg').textContent   = r.msg;
+})();
+</script>
 
 <!-- ████ NAV ████ -->
 <nav>
@@ -1485,7 +1523,7 @@ footer {
 
   <div class="hero-card anim-r">
     <div class="hcard-header">
-      <div class="hcard-header-icon">🔍</div>
+      <div class="hcard-header-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
       <div>
         <h3>Ce que nous vérifions</h3>
         <p>Sur chaque rapport reçu</p>
@@ -1522,7 +1560,7 @@ footer {
       </div>
     </div>
     <div class="hcard-footer">
-      <div class="hcard-footer-icon">⏱</div>
+      <div class="hcard-footer-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
       <p>Délai garanti : <strong>10 jours ouvrés</strong> après réception du dossier complet.</p>
     </div>
   </div>
@@ -1530,15 +1568,15 @@ footer {
 
 <!-- ████ TRUST BAR ████ -->
 <div class="trust-bar">
-  <div class="tb-item">✓ <strong>Validation 100% indépendante</strong></div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> <strong>Validation 100% indépendante</strong></div>
   <div class="tb-sep"></div>
-  <div class="tb-item">📄 <strong>Climawin</strong> · Pléiades · DPE</div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> <strong>Climawin</strong> · Pléiades · DPE</div>
   <div class="tb-sep"></div>
-  <div class="tb-item">🌍 <strong>PEB</strong> (Belgique) · CNEB (Canada) · LENOZ (Lux.)</div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> <strong>PEB</strong> (Belgique) · CNEB (Canada) · LENOZ (Lux.)</div>
   <div class="tb-sep"></div>
-  <div class="tb-item">⏱ Livraison en <strong>10 jours</strong></div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Livraison en <strong>10 jours</strong></div>
   <div class="tb-sep"></div>
-  <div class="tb-item">🏗 <strong>Promoteurs</strong> · Investisseurs · MOA · BET</div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> <strong>Promoteurs</strong> · Investisseurs · MOA · BET</div>
 </div>
 
 <!-- ████ VALIDATION ████ -->
@@ -1552,19 +1590,19 @@ footer {
 
     <div class="validation-grid">
       <div class="val-card accent reveal">
-        <div class="val-card-icon">📊</div>
+        <div class="val-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
         <h4>Vérification des seuils réglementaires</h4>
         <p>Bbio, Cep, DH, Ic énergie — nous contrôlons chaque indicateur contre les valeurs de référence applicables au projet. RT2012, RE2020, PEB ou CNEB.</p>
         <div class="val-card-detail"><strong>Cas détecté :</strong> Cep &gt; Cep,réf non signalé — économie : renégociation du contrat de livraison.</div>
       </div>
       <div class="val-card reveal">
-        <div class="val-card-icon">🔎</div>
+        <div class="val-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
         <h4>Détection d'incohérences et d'anomalies</h4>
         <p>Hypothèses climatiques erronées, pont thermique sous-estimé, surface de référence discutable — nous croisons les données internes du rapport pour identifier les incohérences.</p>
         <div class="val-card-detail"><strong>Cas détecté :</strong> DH de 140h saisi au lieu de 1400h — résultat conforme artificiellement.</div>
       </div>
       <div class="val-card reveal">
-        <div class="val-card-icon">⚡</div>
+        <div class="val-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
         <h4>Croisement avec les consommations réelles</h4>
         <p>Si vous disposez de factures énergie, nous comparons les consommations modélisées aux consommations réelles. Un écart significatif peut indiquer une modélisation optimiste.</p>
         <div class="val-card-detail"><strong>Cas détecté :</strong> Modèle : 85 kWh/m²/an — réel : 148 kWh/m²/an. DPE contesté avec succès.</div>
@@ -1584,73 +1622,64 @@ footer {
 
     <div class="doc-grid">
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">🇫🇷</div>
         <div>
-          <strong>Climawin RT2012</strong>
+          <strong><span class="country-flag">FR</span> Climawin RT2012</strong>
           <span>Rapport thermique réglementaire RT2012 — export PDF ou XML natif</span>
           <span class="doc-item-norm">RT2012</span>
         </div>
       </div>
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">🇫🇷</div>
         <div>
-          <strong>Climawin RE2020</strong>
+          <strong><span class="country-flag">FR</span> Climawin RE2020</strong>
           <span>Rapport d'étude thermique RE2020 avec indicateurs Bbio, Cep et Ic</span>
           <span class="doc-item-norm">RE2020</span>
         </div>
       </div>
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">📐</div>
         <div>
-          <strong>Pléiades (IZUBA)</strong>
+          <strong><span class="country-flag">FR</span> Pléiades (IZUBA)</strong>
           <span>Simulations thermiques dynamiques STD et rapports de conformité</span>
           <span class="doc-item-norm">RT2012 · RE2020</span>
         </div>
       </div>
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">🏠</div>
         <div>
-          <strong>DPE officiel</strong>
+          <strong><span class="country-flag">FR</span> DPE officiel</strong>
           <span>Diagnostic de performance énergétique — logiciel certifié ADEME</span>
           <span class="doc-item-norm">DPE</span>
         </div>
       </div>
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">🇧🇪</div>
         <div>
-          <strong>PEB (Belgique)</strong>
+          <strong><span class="country-flag">BE</span> PEB (Belgique)</strong>
           <span>Performance Énergétique des Bâtiments — rapports régionaux (Wallonie, Bruxelles, Flandre)</span>
           <span class="doc-item-norm">PEB</span>
         </div>
       </div>
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">🇨🇦</div>
         <div>
-          <strong>CNEB (Canada)</strong>
+          <strong><span class="country-flag">CA</span> CNEB (Canada)</strong>
           <span>Code national de l'énergie pour les bâtiments — rapports de conformité</span>
           <span class="doc-item-norm">CNEB</span>
         </div>
       </div>
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">🇱🇺</div>
         <div>
-          <strong>LENOZ (Luxembourg)</strong>
+          <strong><span class="country-flag">LU</span> LENOZ (Luxembourg)</strong>
           <span>Lëtzebuerger Nohaltegkeetsstandard — certification durabilité</span>
           <span class="doc-item-norm">LENOZ</span>
         </div>
       </div>
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">✅</div>
         <div>
-          <strong>Attestation de conformité</strong>
+          <strong><span class="country-flag">FR</span> Attestation de conformité</strong>
           <span>Attestation RE2020 ou RT2012 à la livraison — vérification des valeurs déclarées</span>
           <span class="doc-item-norm">RT/RE</span>
         </div>
       </div>
       <div class="doc-item-card reveal">
-        <div class="doc-item-icon">🧾</div>
         <div>
-          <strong>Factures énergie</strong>
+          <strong><span class="country-flag">—</span> Factures énergie</strong>
           <span>Gaz, électricité — pour le croisement avec les consommations modélisées</span>
           <span class="doc-item-norm">Croisement</span>
         </div>
@@ -1708,7 +1737,7 @@ footer {
     <div class="profil-grid">
       <div class="profil-card reveal">
         <div class="profil-card-top">
-          <div class="profil-icon">🏗</div>
+          <div class="profil-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
           <div>
             <div class="profil-role">Promoteur / Maître d'ouvrage</div>
             <h4>Vérifier avant de signer</h4>
@@ -1726,7 +1755,7 @@ footer {
 
       <div class="profil-card reveal">
         <div class="profil-card-top">
-          <div class="profil-icon">💼</div>
+          <div class="profil-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
           <div>
             <div class="profil-role">Investisseur / Gestionnaire de patrimoine</div>
             <h4>Évaluer avant d'acquérir</h4>
@@ -1744,7 +1773,7 @@ footer {
 
       <div class="profil-card reveal">
         <div class="profil-card-top">
-          <div class="profil-icon">📐</div>
+          <div class="profil-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
           <div>
             <div class="profil-role">Architecte / Bureau d'études thermiques</div>
             <h4>Relecture externe avant livraison</h4>
@@ -1762,7 +1791,7 @@ footer {
 
       <div class="profil-card reveal">
         <div class="profil-card-top">
-          <div class="profil-icon">🏢</div>
+          <div class="profil-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
           <div>
             <div class="profil-role">Agent immobilier / Notaire</div>
             <h4>Sécuriser une transaction</h4>
@@ -1791,17 +1820,14 @@ footer {
 
     <div class="garanties-grid">
       <div class="garantie-card reveal">
-        <div class="garantie-icon">🔒</div>
         <h4>Indépendance totale</h4>
         <p>ConformExpert n'est lié à aucun bureau d'études, logiciel ou fabricant. Notre seul engagement est envers la conformité réglementaire et la fiabilité des données.</p>
       </div>
       <div class="garantie-card reveal">
-        <div class="garantie-icon">📅</div>
         <h4>Délai garanti 10 jours</h4>
         <p>Nous nous engageons contractuellement sur un délai de 10 jours ouvrés à compter de la réception du dossier complet. Aucun report sans notification préalable.</p>
       </div>
       <div class="garantie-card reveal">
-        <div class="garantie-icon">📄</div>
         <h4>Rapport structuré et actionnable</h4>
         <p>Chaque rapport de validation est livré en PDF, structuré par criticité — conforme, à surveiller, non-conforme — avec recommandations concrètes et actionnables.</p>
       </div>
@@ -1836,8 +1862,8 @@ footer {
             <div class="sm-bar-track"><div class="sm-bar-fill"></div></div>
           </div>
           <div class="sm-steps">
-            <div class="sm-step"><div class="sm-step-icon done">✓</div>Dossier reçu et validé</div>
-            <div class="sm-step"><div class="sm-step-icon done">✓</div>Extraction automatisée des données</div>
+            <div class="sm-step"><div class="sm-step-icon done"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></div>Dossier reçu et validé</div>
+            <div class="sm-step"><div class="sm-step-icon done"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></div>Extraction automatisée des données</div>
             <div class="sm-step"><div class="sm-step-icon active">→</div>Vérification seuils &amp; cohérence</div>
             <div class="sm-step"><div class="sm-step-icon pending">○</div>Rédaction du rapport de validation</div>
             <div class="sm-step"><div class="sm-step-icon pending">○</div>Livraison du rapport PDF</div>
@@ -1847,30 +1873,26 @@ footer {
 
       <div class="suivi-features reveal">
         <div class="sf-item">
-          <div class="sf-icon">🔗</div>
           <div class="sf-text">
-            <strong>Lien unique par dossier</strong>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--gold);flex-shrink:0;margin-top:2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><strong>Lien unique par dossier</strong>
             <span>Chaque client reçoit un lien de suivi personnalisé, accessible à tout moment sans connexion requise.</span>
           </div>
         </div>
         <div class="sf-item">
-          <div class="sf-icon">📊</div>
           <div class="sf-text">
-            <strong>Statut mis à jour en temps réel</strong>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--gold);flex-shrink:0;margin-top:2px"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><strong>Statut mis à jour en temps réel</strong>
             <span>Extraction, analyse, rédaction, livraison — chaque étape est mise à jour dès qu'elle est franchie.</span>
           </div>
         </div>
         <div class="sf-item">
-          <div class="sf-icon">📥</div>
           <div class="sf-text">
-            <strong>Téléchargement direct du rapport</strong>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--gold);flex-shrink:0;margin-top:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><strong>Téléchargement direct du rapport</strong>
             <span>Le rapport PDF de validation est disponible en téléchargement depuis la même page dès sa livraison.</span>
           </div>
         </div>
         <div class="sf-item">
-          <div class="sf-icon">💬</div>
           <div class="sf-text">
-            <strong>Échange inclus à la livraison</strong>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--gold);flex-shrink:0;margin-top:2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><strong>Échange inclus à la livraison</strong>
             <span>30 minutes d'échange avec l'analyste pour passer en revue les alertes et répondre à vos questions.</span>
           </div>
         </div>
