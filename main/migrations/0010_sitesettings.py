@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations, models, models
 
 
 class Migration(migrations.Migration):
@@ -8,20 +8,30 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql="""
-                CREATE TABLE IF NOT EXISTS main_sitesettings (
-                    id SERIAL PRIMARY KEY,
-                    maintenance_mode BOOLEAN NOT NULL DEFAULT FALSE,
-                    maintenance_message TEXT NOT NULL DEFAULT 'Nous effectuons des mises à jour pour améliorer votre expérience. Nous serons de retour très bientôt.',
-                    maintenance_title VARCHAR(200) NOT NULL DEFAULT 'Site en maintenance'
-                );
-
-                -- Insérer le singleton par défaut (pk=1)
-                INSERT INTO main_sitesettings (id, maintenance_mode)
-                VALUES (1, FALSE)
-                ON CONFLICT (id) DO NOTHING;
-            """,
-            reverse_sql="DROP TABLE IF EXISTS main_sitesettings;",
+        migrations.CreateModel(
+            name='SiteSettings',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('maintenance_mode', models.BooleanField(
+                    default=False,
+                    verbose_name='Mode maintenance',
+                    help_text='Activer pour afficher la page de maintenance à tous les visiteurs (sauf admins).',
+                )),
+                ('maintenance_message', models.TextField(
+                    blank=True,
+                    default='Nous effectuons des mises à jour pour améliorer votre expérience. Nous serons de retour très bientôt.',
+                    verbose_name='Message affiché',
+                )),
+                ('maintenance_title', models.CharField(
+                    max_length=200,
+                    blank=True,
+                    default='Site en maintenance',
+                    verbose_name='Titre affiché',
+                )),
+            ],
+            options={
+                'verbose_name': 'Paramètres du site',
+                'verbose_name_plural': 'Paramètres du site',
+            },
         ),
     ]
