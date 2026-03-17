@@ -1,3 +1,100 @@
-<h1>Le devis a été refusé</h1>
-<p>Votre décision a bien été enregistrée.</p>
-<p>Si vous avez changé d'avis, vous pouvez toujours nous recontacter.</p>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devis refusé — ConformExpert</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:#0C1929; color:#fff; min-height:100vh; display:grid; place-items:center; padding:2rem; }
+
+  .card {
+    background:#162438;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:16px;
+    padding:3rem 3.5rem;
+    max-width:520px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 40px 80px rgba(0,0,0,.4);
+  }
+
+  .icon {
+    width:64px; height:64px;
+    background:rgba(200,168,75,.08);
+    border:1px solid rgba(200,168,75,.2);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 1.8rem;
+  }
+  .icon svg { color:#C8A84B; }
+
+  .logo { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:2rem; }
+  .logo span { color:#C8A84B; }
+
+  h1 { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:700; margin-bottom:.6rem; line-height:1.2; }
+  .sub { font-size:.95rem; color:#8896A4; line-height:1.7; margin-bottom:2rem; font-weight:300; }
+
+  .info-box {
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:8px;
+    padding:1rem 1.4rem;
+    margin-bottom:2rem;
+    font-size:.85rem;
+    color:#8896A4;
+    line-height:1.6;
+  }
+
+  .btn {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background:transparent;
+    color:#C8A84B;
+    padding:.75rem 2rem;
+    border-radius:5px;
+    border:1.5px solid rgba(200,168,75,.35);
+    font-size:.9rem; font-weight:500;
+    text-decoration:none;
+    transition:all .2s;
+  }
+  .btn:hover { background:rgba(200,168,75,.08); border-color:rgba(200,168,75,.6); }
+
+  .footer-note { margin-top:2rem; font-size:.78rem; color:#3a5070; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="logo">Conform<span>Expert</span></div>
+
+  <div class="icon">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M9 12h6M12 9v6M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+    </svg>
+  </div>
+
+  <h1>Devis refusé</h1>
+  <p class="sub">
+    Votre décision a bien été enregistrée.
+    {% if devis.client_nom %}Merci, <strong style="color:#fff">{{ devis.client_nom }}</strong>.{% endif %}<br>
+    Nous espérons pouvoir vous accompagner dans le futur.
+  </p>
+
+  <div class="info-box">
+    Si vous avez changé d'avis ou souhaitez discuter d'une offre adaptée à votre projet,
+    n'hésitez pas à nous recontacter.
+  </div>
+
+  <a href="https://conformexpert.cc/contact" class="btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Nous contacter
+  </a>
+
+  <p class="footer-note">
+    <a href="https://conformexpert.cc" style="color:#3a5070;text-decoration:none">conformexpert.cc</a>
+  </p>
+
+</div>
+</body>
+</html>
