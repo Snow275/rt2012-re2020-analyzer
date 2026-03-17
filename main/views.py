@@ -392,31 +392,38 @@ def analyser_rapport_thermique(texte, pdf_b64=None):
             "https://api.anthropic.com/v1/messages",
             data=payload, headers=headers, method="POST",
         )
-try:
-        with urllib.request.urlopen(req, timeout=300) as resp:
-            result = json.loads(resp.read().decode('utf-8'))
+        try:
+            with urllib.request.urlopen(req, timeout=300) as resp:
+                result = json.loads(resp.read().decode('utf-8'))
 
-            raw = result['content'][0]['text'].strip()
-            raw = raw.replace('```json', '').replace('```', '').strip()
+                raw = result['content'][0]['text'].strip()
+                raw = raw.replace('```json', '').replace('```', '').strip()
 
-            # 🔥 corrige les guillemets cassés
-            raw = re.sub(r'(?<!\\)"(?![:,}\]])', "'", raw)
+                # 🔥 corrige les guillemets cassés
+                raw = re.sub(r'(?<!\\)"(?![:,}\]])', "'", raw)
 
-            # 🔥 garde uniquement le JSON
-            start = raw.find('{')
-            end = raw.rfind('}') + 1
-            raw = raw[start:end]
+                # 🔥 garde uniquement le JSON
+                start = raw.find('{')
+                end = raw.rfind('}') + 1
+                raw = raw[start:end]
 
-            try:
-                data = json.loads(raw)
-                print(f"PARSER OK — type={data.get('type_rapport')} norme={data.get('norme_suggeree')}")
-                return data
+                try:
+                    data = json.loads(raw)
+                    print(f"PARSER OK — type={data.get('type_rapport')} norme={data.get('norme_suggeree')}")
+                    return data
+                except Exception as json_err:
+                    print("❌ JSON cassé :", json_err)
+                    print("RAW PREVIEW:", raw[:1000])
+                    return _fallback_regex(texte)
 
-except Exception as e:
-    print("❌ JSON cassé :", e)
-    print("RAW PREVIEW:", raw[:1000])
-    # 🔥 fallback propre
-    return _fallback_regex(texte)
+        except Exception as e:
+            print("❌ JSON cassé :", e)
+            print("RAW PREVIEW:", raw[:1000])
+            # 🔥 fallback propre
+            return _fallback_regex(texte)
+    except Exception as e:
+        print("❌ Erreur API Claude (réseau/timeout) :", e)
+        return _fallback_regex(texte)
 
 
 def _fallback_regex(texte):
