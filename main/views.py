@@ -405,6 +405,9 @@ def analyser_rapport_thermique(texte, pdf_b64=None):
                 match = re.search(r'\{[\s\S]*\}', raw)
                 if match:
                     raw = match.group(0)
+                else:
+                    print("❌ Aucun JSON détecté")
+                    return _fallback_regex(texte)
 
                 try:
                     data = json.loads(raw)
