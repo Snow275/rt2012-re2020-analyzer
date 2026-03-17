@@ -2274,10 +2274,44 @@ def generer_rapport_ia(request, doc_id):
 
     factures_str = json.dumps(factures_data, ensure_ascii=False)
 
+    # ── 3b. Données d'extraction automatique (parser IA) ──────
+    extraction_json   = getattr(document, 'extraction_json', None) or {}
+    extraction_alertes = getattr(document, 'extraction_alertes', None) or []
+    logiciel_detecte  = getattr(document, 'logiciel_detecte', '') or ''
+    version_norme_det = getattr(document, 'version_norme_detectee', '') or ''
+
+    # Valeurs issues de l'extraction automatique (complement aux valeurs saisies manuellement)
+    valeurs_extraites = {}
+    if isinstance(extraction_json, dict):
+        valeurs_brutes = extraction_json.get('valeurs', {})
+        if isinstance(valeurs_brutes, dict):
+            valeurs_extraites = valeurs_brutes
+
+    # Construire la chaîne de valeurs extraites (uniquement celles absentes des valeurs manuelles)
+    lignes_extraction = []
+    for k, v in valeurs_extraites.items():
+        label_norm = k.lower().replace('_', ' ')
+        # Inclure même si déjà dans valeurs_connues — les deux sources sont utiles pour la vérification
+        lignes_extraction.append(f"  - {k} : {v}")
+    extraction_valeurs_str = '\n'.join(lignes_extraction) or "  (aucune valeur extraite automatiquement)"
+
+    # Alertes d'extraction
+    if isinstance(extraction_alertes, list) and extraction_alertes:
+        alertes_str = '\n'.join(f"  ⚠ {a}" for a in extraction_alertes)
+    else:
+        alertes_str = "  (aucune alerte d'extraction)"
+
+    # Source enrichie
+    source_donnees_enrichie = source_donnees
+    if logiciel_detecte:
+        source_donnees_enrichie += f" — Logiciel détecté : {logiciel_detecte}"
+    if version_norme_det:
+        source_donnees_enrichie += f" — Norme version : {version_norme_det}"
+
     # ── 4. System prompt ──────────────────────────────────────
     system_prompt = _build_system_prompt(
         type_analyse, ref, document, infos_batiment,
-        source_donnees, valeurs_str, norme, pca_seuils_str,
+        source_donnees_enrichie, valeurs_str, norme, pca_seuils_str,
     )
 
     # ── 6. Message utilisateur ────────────────────────────────
@@ -2297,40 +2331,102 @@ Tu es ConformExpert, un tiers expert indépendant mandaté pour valider ce rappo
 Lis attentivement le(s) document(s) PDF joint(s) — il s'agit du rapport thermique produit par le bureau d'études.
 Ton rôle est de le valider de manière indépendante, pas de le reproduire.
 
-INFORMATIONS COMPLÉMENTAIRES DU DOSSIER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INFORMATIONS DU DOSSIER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Bâtiment :
 {infos_batiment}
+Logiciel bureau d'études : {logiciel_detecte or 'Non détecté'}
+Version norme détectée : {version_norme_det or 'Non détectée'}
 
-Observations de l'expert terrain :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALEURS SAISIES MANUELLEMENT (admin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{valeurs_str}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALEURS EXTRAITES AUTOMATIQUEMENT (parser IA sur le PDF)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{extraction_valeurs_str}
+
+ALERTES DÉTECTÉES LORS DE L'EXTRACTION :
+{alertes_str}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OBSERVATIONS DE L'EXPERT (admin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {observations_expert}
 
-Factures énergétiques réelles (consommations mesurées) :
-{factures_str}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FACTURES ÉNERGÉTIQUES RÉELLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{factures_str if factures_data else "Aucune facture déposée pour ce dossier."}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TA MISSION DE VALIDATION INDÉPENDANTE
-
-1. Lire et analyser le rapport thermique joint
-2. Vérifier que les valeurs déclarées respectent les seuils réglementaires applicables
-3. Évaluer la cohérence des valeurs avec le type et l'âge du bâtiment
-4. Croiser les consommations théoriques du rapport avec les consommations réelles des factures
-5. Identifier toute anomalie, incohérence ou valeur suspecte
-6. Formuler un avis indépendant clair sur la qualité et la fiabilité du rapport
-7. Recommander des vérifications complémentaires si nécessaire
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Lire et analyser le rapport thermique joint (PDF)
+2. Croiser les valeurs du PDF avec les valeurs extraites automatiquement — signaler tout écart
+3. Vérifier que les valeurs respectent les seuils réglementaires applicables
+4. Évaluer la cohérence des valeurs avec le type et l'âge du bâtiment
+5. Traiter les alertes d'extraction comme des points de vigilance prioritaires
+6. Croiser les consommations théoriques avec les consommations réelles des factures si disponibles
+7. Intégrer les observations de l'expert admin dans l'analyse
+8. Formuler un avis indépendant clair sur la qualité et la fiabilité du rapport
 
 RÈGLES ABSOLUES
 - Ne jamais inventer de données ou de valeurs
 - Si une information est absente du dossier, le mentionner explicitement
-- Exprimer clairement les doutes et incertitudes
+- Les alertes d'extraction sont des signaux importants — les traiter sérieusement
 - Adopter le point de vue d'un auditeur externe, pas d'un co-auteur
 
 Génère le rapport de validation complet en respectant le format JSON défini dans les instructions système.
 """})
     else:
-        user_content.append({"type": "text", "text": (
-            f"Le PDF original n'est pas disponible. Génère le rapport JSON complet pour le dossier {ref} "
-            f"(type : {type_analyse}) en te basant exclusivement sur les informations fournies dans le contexte."
-        )})
+        # Fallback sans PDF — injecter TOUTES les données disponibles
+        user_content.append({"type": "text", "text": f"""
+Le PDF original n'est pas disponible sur le serveur.
+Génère le rapport de validation complet pour le dossier {ref} (type : {type_analyse})
+en te basant EXCLUSIVEMENT sur les données ci-dessous.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INFORMATIONS DU DOSSIER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Référence : {ref}
+Norme : {norme}
+Logiciel bureau d'études : {logiciel_detecte or 'Non détecté'}
+Version norme détectée : {version_norme_det or 'Non détectée'}
+
+Bâtiment :
+{infos_batiment}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALEURS SAISIES MANUELLEMENT (admin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{valeurs_str}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALEURS EXTRAITES AUTOMATIQUEMENT (parser IA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{extraction_valeurs_str}
+
+ALERTES DÉTECTÉES LORS DE L'EXTRACTION :
+{alertes_str}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OBSERVATIONS DE L'EXPERT (admin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{observations_expert}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FACTURES ÉNERGÉTIQUES RÉELLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{factures_str if factures_data else "Aucune facture déposée pour ce dossier."}
+
+Génère le rapport de validation complet en respectant le format JSON défini dans les instructions système.
+N'invente aucune valeur. Si une donnée est absente, indique "Non disponible" dans le champ concerné.
+"""})
 
     # ── 7. Appel API Claude ───────────────────────────────────
     try:
