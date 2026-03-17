@@ -1,14 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-<title>Devis accepté</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devis accepté — ConformExpert</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:#0C1929; color:#fff; min-height:100vh; display:grid; place-items:center; padding:2rem; }
+
+  .card {
+    background:#162438;
+    border:1px solid rgba(200,168,75,.2);
+    border-radius:16px;
+    padding:3rem 3.5rem;
+    max-width:520px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 40px 80px rgba(0,0,0,.4);
+  }
+
+  .icon {
+    width:64px; height:64px;
+    background:rgba(39,201,63,.1);
+    border:1px solid rgba(39,201,63,.25);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 1.8rem;
+  }
+  .icon svg { color:#27C93F; }
+
+  .logo { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:2rem; }
+  .logo span { color:#C8A84B; }
+
+  h1 { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:700; margin-bottom:.6rem; line-height:1.2; }
+  .sub { font-size:.95rem; color:#8896A4; line-height:1.7; margin-bottom:2rem; font-weight:300; }
+
+  .info-box {
+    background:rgba(200,168,75,.06);
+    border:1px solid rgba(200,168,75,.18);
+    border-radius:8px;
+    padding:1rem 1.4rem;
+    margin-bottom:2rem;
+    font-size:.85rem;
+    color:#C2CDD6;
+    line-height:1.6;
+  }
+  .info-box strong { color:#C8A84B; }
+
+  .ref { font-size:.78rem; color:#4a6080; margin-bottom:2rem; }
+
+  .btn {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background:#C8A84B; color:#0C1929;
+    padding:.75rem 2rem; border-radius:5px;
+    font-size:.9rem; font-weight:600;
+    text-decoration:none;
+    transition:all .2s;
+  }
+  .btn:hover { background:#E2C97A; transform:translateY(-1px); }
+
+  .footer-note { margin-top:2rem; font-size:.78rem; color:#3a5070; }
+</style>
 </head>
 <body>
+<div class="card">
 
-<h1>Votre devis a bien été accepté</h1>
+  <div class="logo">Conform<span>Expert</span></div>
 
-<p>Merci pour votre validation.</p>
-<p>Notre équipe va commencer l’analyse de votre dossier.</p>
+  <div class="icon">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <path d="M20 6 9 17l-5-5"/>
+    </svg>
+  </div>
 
+  <h1>Devis accepté</h1>
+  <p class="sub">
+    Merci pour votre confirmation,
+    {% if devis.client_nom %}<strong style="color:#fff">{{ devis.client_nom }}</strong>.{% endif %}<br>
+    Notre équipe va démarrer l'analyse de votre dossier.
+  </p>
+
+  <div class="info-box">
+    <strong>Délai de réalisation :</strong> 10 jours ouvrés à compter d'aujourd'hui.<br>
+    Vous recevrez un email dès que votre rapport de validation sera prêt.
+  </div>
+
+  {% if devis.document %}
+  <div class="ref">Référence dossier : DOC-{{ devis.document.id|stringformat:"04d" }} · {{ devis.document.name }}</div>
+  {% endif %}
+
+  <a href="https://conformexpert.cc" class="btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    Retour au site
+  </a>
+
+  <p class="footer-note">
+    Une question ? Contactez-nous à
+    <a href="mailto:contact@conformexpert.cc" style="color:#C8A84B;text-decoration:none">contact@conformexpert.cc</a>
+  </p>
+
+</div>
 </body>
 </html>
