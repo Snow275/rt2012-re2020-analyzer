@@ -377,7 +377,7 @@ def analyser_rapport_thermique(texte, pdf_b64=None):
 
         payload = json.dumps({
             "model": "claude-sonnet-4-5",
-            "max_tokens": 2000,
+            "max_tokens": 4000,
             "messages": [{"role": "user", "content": user_content}],
         }).encode('utf-8')
 
