@@ -9,17 +9,20 @@ class MaintenanceMiddleware:
     Les superusers Django peuvent toujours accéder au site.
     """
 
+    # URLs toujours accessibles même en maintenance
+    BYPASS_PATHS = ('/admin/', '/login/', '/logout/')
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         if self._is_maintenance_active():
-            # Superusers peuvent bypasser
-            if request.user.is_authenticated and request.user.is_superuser:
+            # Laisser passer login/admin (pour se connecter et désactiver la maintenance)
+            if any(request.path.startswith(p) for p in self.BYPASS_PATHS):
                 return self.get_response(request)
 
-            # Laisser passer l'admin Django (pour pouvoir désactiver la maintenance)
-            if request.path.startswith('/admin/'):
+            # Superusers peuvent bypasser
+            if request.user.is_authenticated and request.user.is_superuser:
                 return self.get_response(request)
 
             # Retourner la page de maintenance (503 Service Unavailable)
