@@ -1,6 +1,5 @@
 import os
 from django.shortcuts import render
-from django.http import HttpResponse
 
 
 class MaintenanceMiddleware:
@@ -24,7 +23,7 @@ class MaintenanceMiddleware:
                 return self.get_response(request)
 
             # Retourner la page de maintenance (503 Service Unavailable)
-            return render(request, 'maintenance.html', status=503)
+            return render(request, 'main/maintenance.html', status=503)
 
         return self.get_response(request)
 
