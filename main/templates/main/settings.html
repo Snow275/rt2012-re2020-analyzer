@@ -1,185 +1,37 @@
-{% extends 'main/base.html' %}
-{% load conformity_tags %}
-{% block title %}Paramètres{% endblock %}
+from django.db import migrations, models, models
 
-{% block content %}
-<style>
-@media (max-width: 768px) {
-  .seuils-grid { grid-template-columns: 1fr !important; }
-}
-</style>
-<div class="page-header">
-  <div class="ph-inner">
-    <span class="s-label">Paramètres</span>
-    <h1>Configuration des seuils</h1>
-    <p>Valeurs de référence utilisées pour les analyses de conformité — par pays et norme.</p>
-  </div>
-</div>
 
-<div class="container">
+class Migration(migrations.Migration):
 
-  {% for pays_code, pays_label, normes in seuils_par_pays %}
-  <div style="margin-bottom:2.5rem">
-    <h2 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--gray-1);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem">
-      <span>{{ pays_label }}</span>
-      <span style="display:inline-block;width:32px;height:1px;background:rgba(255,255,255,.1)"></span>
-    </h2>
-    <div class="seuils-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem">
-      {% for norme_code, norme_label, fields_seuils in normes %}
-      <div class="card fade-up" style="overflow:hidden">
-        <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.05)">
-          <div style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.25rem">Référentiel</div>
-          <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:0">{{ norme_label }}</h3>
-        </div>
-        <div style="padding:1.4rem 1.8rem">
-          <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem">
-            {% for label, val, unit in fields_seuils %}
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--navy-3);border-radius:6px">
-              <span style="font-size:.82rem;color:var(--gray-2)">{{ label }}{% if unit %} <span style="font-size:.7rem;color:var(--muted)">({{ unit }})</span>{% endif %}</span>
-              <span style="font-family:monospace;color:var(--gold);font-size:.88rem">{{ val }}</span>
-            </div>
-            {% endfor %}
-          </div>
+    dependencies = [
+        ('main', '0009_add_dpe_extraction_fields'),
+    ]
 
-          <!-- Bouton vérification Claude -->
-          <button
-            onclick="verifierSeuils('{{ norme_code }}')"
-            id="btn-{{ norme_code }}"
-            style="width:100%;padding:.6rem 1rem;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);color:var(--gold);border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:500;display:flex;align-items:center;justify-content:center;gap:.5rem"
-            onmouseover="this.style.background='rgba(200,168,75,.15)'"
-            onmouseout="this.style.background='rgba(200,168,75,.08)'">
-            <span id="btn-icon-{{ norme_code }}">🔍</span>
-            <span id="btn-text-{{ norme_code }}">Vérifier avec Claude</span>
-          </button>
-          <div id="result-{{ norme_code }}" style="display:none;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;line-height:1.6"></div>
-
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endfor %}
-
-<div style="margin-top:3rem">
-
-  <h2 style="
-      font-family:'Playfair Display',serif;
-      font-size:1rem;
-      color:var(--gray-1);
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      margin-bottom:1.2rem;
-      display:flex;
-      align-items:center;
-      gap:.6rem">
-    <span>PCA — Analyse technique</span>
-    <p style="font-size:.8rem;color:var(--gray-2);margin-bottom:1rem;max-width:600px">
-    Seuils utilisés pour l’analyse technique du bâtiment (PCA) : âge des systèmes,
-    risques techniques et paramètres structurels.
-    </p>
-    <span style="display:inline-block;width:32px;height:1px;background:rgba(255,255,255,.1)"></span>
-  </h2>
-
-  <div class="card fade-up" style="padding:1.4rem 1.8rem">
-
-    <div style="display:flex;flex-direction:column;gap:.6rem">
-      {% for label, val, unit in pca_seuils %}
-
-      <div style="
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          padding:.55rem .8rem;
-          background:var(--navy-3);
-          border-radius:6px">
-
-        <span style="font-size:.82rem;color:var(--gray-2)">
-          {{ label }}
-          {% if unit %}
-          <span style="font-size:.7rem;color:var(--muted)">({{ unit }})</span>
-          {% endif %}
-        </span>
-
-        <span style="font-family:monospace;color:var(--gold);font-size:.88rem">
-          {{ val }}
-        </span>
-
-      </div>
-
-      {% endfor %}
-    </div>
-
-  </div>
-
-</div>
-</div>
-
-<script>
-function verifierSeuils(norme) {
-  const btnText = document.getElementById('btn-text-' + norme);
-  const btnIcon = document.getElementById('btn-icon-' + norme);
-  const btn     = document.getElementById('btn-' + norme);
-  const result  = document.getElementById('result-' + norme);
-
-  btnText.textContent = 'Vérification en cours…';
-  btnIcon.textContent = '⏳';
-  btn.disabled = true;
-  result.style.display = 'none';
-
-  const formData = new FormData();
-  formData.append('norme', norme);
-  formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-  fetch('/verifier-seuils/', { method: 'POST', body: formData })
-  .then(r => r.json())
-  .then(data => {
-    btn.disabled = false;
-    btnIcon.textContent = '🔍';
-    btnText.textContent = 'Vérifier avec Claude';
-
-    if (data.error) {
-      result.style.cssText = 'display:block;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;background:rgba(255,69,58,.08);border:1px solid rgba(255,69,58,.2);color:#FF453A';
-      result.innerHTML = '⚠️ ' + data.error;
-      return;
-    }
-
-    const r = data.resultat;
-    const ok = r.a_jour;
-
-    result.style.cssText = ok
-      ? 'display:block;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;line-height:1.6;background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.15)'
-      : 'display:block;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;line-height:1.6;background:rgba(229,169,58,.06);border:1px solid rgba(229,169,58,.2)';
-
-    let html = `<div style="font-weight:600;margin-bottom:.4rem;color:${ok ? '#27C93F' : '#E5A93A'}">${ok ? '✓ Seuils à jour' : '⚠ Modifications détectées'}</div>`;
-    html += `<div style="color:var(--gray-2);margin-bottom:.6rem">${r.resume}</div>`;
-
-    if (r.modifications && r.modifications.length > 0) {
-      html += '<div style="display:flex;flex-direction:column;gap:.4rem;margin-top:.6rem">';
-      r.modifications.forEach(m => {
-        html += `<div style="padding:.5rem .7rem;background:rgba(0,0,0,.2);border-radius:6px">
-          <span style="color:var(--gray-2)">${m.critere}</span>
-          <span style="color:var(--muted);margin:0 .4rem">·</span>
-          <span style="font-family:monospace;color:#FF453A;text-decoration:line-through">${m.valeur_actuelle}</span>
-          <span style="margin:0 .4rem">→</span>
-          <span style="font-family:monospace;color:#27C93F">${m.valeur_officielle}</span>
-          ${m.commentaire ? `<div style="font-size:.76rem;color:var(--muted);margin-top:.2rem">${m.commentaire}</div>` : ''}
-        </div>`;
-      });
-      html += '</div>';
-    }
-
-    if (r.source) html += `<div style="margin-top:.6rem;font-size:.75rem;color:var(--muted)">📋 ${r.source}</div>`;
-    if (r.date_derniere_mise_a_jour) html += `<div style="font-size:.75rem;color:var(--muted)">📅 Mise à jour : ${r.date_derniere_mise_a_jour}</div>`;
-
-    result.innerHTML = html;
-  })
-  .catch(err => {
-    btn.disabled = false;
-    btnIcon.textContent = '🔍';
-    btnText.textContent = 'Vérifier avec Claude';
-    result.style.cssText = 'display:block;margin-top:.8rem;padding:.9rem;border-radius:8px;font-size:.82rem;background:rgba(255,69,58,.08);border:1px solid rgba(255,69,58,.2);color:#FF453A';
-    result.innerHTML = '⚠️ Erreur : ' + err.message;
-  });
-}
-</script>
-{% endblock %}
+    operations = [
+        migrations.CreateModel(
+            name='SiteSettings',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('maintenance_mode', models.BooleanField(
+                    default=False,
+                    verbose_name='Mode maintenance',
+                    help_text='Activer pour afficher la page de maintenance à tous les visiteurs (sauf admins).',
+                )),
+                ('maintenance_message', models.TextField(
+                    blank=True,
+                    default='Nous effectuons des mises à jour pour améliorer votre expérience. Nous serons de retour très bientôt.',
+                    verbose_name='Message affiché',
+                )),
+                ('maintenance_title', models.CharField(
+                    max_length=200,
+                    blank=True,
+                    default='Site en maintenance',
+                    verbose_name='Titre affiché',
+                )),
+            ],
+            options={
+                'verbose_name': 'Paramètres du site',
+                'verbose_name_plural': 'Paramètres du site',
+            },
+        ),
+    ]
