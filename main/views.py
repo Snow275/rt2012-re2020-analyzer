@@ -396,6 +396,19 @@ def analyser_rapport_thermique(texte, pdf_b64=None):
             result = json.loads(resp.read().decode('utf-8'))
             raw = result['content'][0]['text'].strip()
             raw = raw.replace('```json', '').replace('```', '').strip()
+
+            import re
+
+            raw = raw.replace('```json', '').replace('```', '').strip()
+
+            # 🔥 corrige les guillemets cassés
+            raw = re.sub(r'(?<!\\)"(?![:,}\]])', "'", raw)
+
+            # 🔥 garde uniquement le JSON
+            start = raw.find('{')
+            end = raw.rfind('}') + 1
+            raw = raw[start:end]
+            
             data = json.loads(raw)
             print(f"PARSER OK — type={data.get('type_rapport')} norme={data.get('norme_suggeree')}")
             return data
