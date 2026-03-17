@@ -392,41 +392,40 @@ def analyser_rapport_thermique(texte, pdf_b64=None):
             "https://api.anthropic.com/v1/messages",
             data=payload, headers=headers, method="POST",
         )
-        try:
-            with urllib.request.urlopen(req, timeout=300) as resp:
-                result = json.loads(resp.read().decode('utf-8'))
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
 
-                raw = result['content'][0]['text'].strip()
+            raw = result['content'][0]['text'].strip()
 
-                # enlever markdown éventuel
-                raw = raw.replace('```json', '').replace('```', '').strip()
+            # enlever markdown éventuel
+            raw = raw.replace('```json', '').replace('```', '').strip()
 
-                # extraire uniquement le JSON
-                match = re.search(r'\{[\s\S]*\}', raw)
-                if match:
-                    raw = match.group(0)
-                else:
-                    print("❌ Aucun JSON détecté")
-                    return _fallback_regex(texte)
+            # extraire uniquement le JSON
+            match = re.search(r'\{[\s\S]*\}', raw)
+            if match:
+                raw = match.group(0)
+            else:
+                print("❌ Aucun JSON détecté")
+                return _fallback_regex(texte)
 
-                try:
-                    data = json.loads(raw)
-
-                    print(f"PARSER OK — type={data.get('type_rapport')} norme={data.get('norme_suggeree')}")
-                    return data
-
-                except Exception as json_err:
-                    print("❌ JSON parsing error :", json_err)
-                    print("RAW PREVIEW:", raw[:1000])
-                    return _fallback_regex(texte)
-
-        except Exception as e:
-            print("❌ Erreur API Claude :", e)
             try:
+                data = json.loads(raw)
+
+                print(f"PARSER OK — type={data.get('type_rapport')} norme={data.get('norme_suggeree')}")
+                return data
+
+            except Exception as json_err:
+                print("❌ JSON parsing error :", json_err)
                 print("RAW PREVIEW:", raw[:1000])
-            except:
-                pass
-            return _fallback_regex(texte)
+                return _fallback_regex(texte)
+
+    except Exception as e:
+        print("❌ Erreur API Claude :", e)
+        try:
+            print("RAW PREVIEW:", raw[:1000])
+        except:
+            pass
+        return _fallback_regex(texte)
 
 
 def _fallback_regex(texte):
