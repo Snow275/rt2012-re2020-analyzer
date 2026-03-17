@@ -380,13 +380,21 @@
       <div class="cover-meta-row"><span class="cover-meta-label">Date d'analyse</span><span class="cover-meta-val">{{ document.upload_date|date:"d/m/Y" }}</span></div>
     </div>
     {% if rapport %}
+    {% with vraw=rapport.verdict|default:rapport.verdict_technique|default:rapport.verdict_energie|default:"—" %}
     <div class="cover-verdict-wrap">
       <div class="cover-verdict-label">Verdict</div>
-      <div class="cover-verdict {% if rapport.verdict == 'Conforme' %}cv-ok{% elif rapport.verdict == 'Données insuffisantes' %}cv-insuff{% else %}cv-ko{% endif %}">
-        {% if rapport.verdict == 'Conforme' %}✅{% elif rapport.verdict == 'Données insuffisantes' %}⏳{% else %}❌{% endif %}
-        {{ rapport.verdict|default:"—" }}
+      <div class="cover-verdict {% if 'Conforme' in vraw or 'Bon état' in vraw %}cv-ok{% elif 'insuffisant' in vraw %}cv-insuff{% else %}cv-ko{% endif %}">
+        {% if 'Conforme' in vraw or 'Bon état' in vraw %}✅{% elif 'insuffisant' in vraw %}⏳{% else %}❌{% endif %}
+        {{ vraw }}
       </div>
+      {% if rapport.score_global is not None %}
+      <div style="margin-top:.8rem">
+        <span style="font-size:.72rem;color:#8892A4;text-transform:uppercase;letter-spacing:.1em">Score global</span>
+        <div style="font-size:2rem;font-weight:700;font-family:'Playfair Display',serif;color:{% if 'Conforme' in vraw or 'Bon état' in vraw %}#27C93F{% else %}#ef5350{% endif %}">{{ rapport.score_global }}<span style="font-size:.9rem;color:#8892A4">/100</span></div>
+      </div>
+      {% endif %}
     </div>
+    {% endwith %}
     {% endif %}
   </div>
   <div class="cover-footer">
@@ -407,10 +415,13 @@
     <li><span class="toc-item">Analyse détaillée des critères</span><span class="toc-dots"></span><span class="toc-page">4</span></li>
     {% if rapport and rapport.points_forts %}<li><span class="toc-item">Points forts identifiés</span><span class="toc-dots"></span><span class="toc-page">4</span></li>{% endif %}
     {% if rapport and rapport.non_conformites %}<li><span class="toc-item">Non-conformités détaillées</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
+    {% if rapport and rapport.anomalies %}<li><span class="toc-item">Anomalies & incohérences détectées</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
     {% if rapport and rapport.recommandations %}<li><span class="toc-item">Recommandations & plan d'action</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
-    {% if rapport and rapport.analyse_enveloppe or rapport and rapport.systemes_energetiques %}<li><span class="toc-item">Enveloppe thermique & systèmes énergétiques</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
+    {% if rapport and rapport.coherence_factures %}<li><span class="toc-item">Cohérence avec les consommations réelles</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
+    {% if rapport and rapport.analyse_enveloppe or rapport and rapport.enveloppe or rapport and rapport.systemes_energetiques or rapport and rapport.systemes %}<li><span class="toc-item">Enveloppe thermique & systèmes énergétiques</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
     {% if rapport and rapport.contexte_reglementaire %}<li><span class="toc-item">Contexte réglementaire</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
-    <li><span class="toc-item">Mentions légales</span><span class="toc-dots"></span><span class="toc-page">6</span></li>
+    {% if rapport and rapport.avis_independant %}<li><span class="toc-item">Avis indépendant ConformExpert</span><span class="toc-dots"></span><span class="toc-page">7</span></li>{% endif %}
+    <li><span class="toc-item">Mentions légales</span><span class="toc-dots"></span><span class="toc-page">7</span></li>
   </ol>
   <div class="toc-notice">
     <strong>Note :</strong> Ce rapport est établi sur la base des documents fournis et constitue une analyse documentaire indépendante. Il ne se substitue pas à une attestation officielle de conformité délivrée par un bureau d'études thermiques certifié.
@@ -447,17 +458,40 @@
 
   {% if rapport %}
 
-    {% with v=rapport.verdict %}
+    {% with vraw=rapport.verdict|default:rapport.verdict_technique|default:rapport.verdict_energie|default:"—" %}
+    {% with vconf="Conforme" in vraw or "Bon état" in vraw %}
+    {% with vins="insuffisant" in vraw %}
 
     <!-- Verdict -->
-    <div class="verdict-box fu {% if v == 'Conforme' %}conform{% elif v == 'Données insuffisantes' %}insuff{% else %}nonconf{% endif %}">
+    <div class="verdict-box fu {% if vconf %}conform{% elif vins %}insuff{% else %}nonconf{% endif %}">
       <div>
-        <div class="verdict-label">Verdict — {{ document.norme }}</div>
-        <div class="verdict-text {% if v == 'Conforme' %}conform{% elif v == 'Données insuffisantes' %}insuff{% else %}nonconf{% endif %}">{{ v|default:"—" }}</div>
+        <div class="verdict-label">
+          {% if document.type_analyse == 'pca' %}État technique global{% else %}Verdict — {{ document.norme }}{% endif %}
+        </div>
+        <div class="verdict-text {% if vconf %}conform{% elif vins %}insuff{% else %}nonconf{% endif %}">{{ vraw }}</div>
+        {% if rapport.fiabilite_rapport %}
+        <span style="display:inline-block;margin-top:.5rem;font-size:.73rem;padding:.2rem .7rem;border-radius:99px;
+          background:{% if rapport.fiabilite_rapport == 'Élevée' %}rgba(39,201,63,.15){% elif rapport.fiabilite_rapport == 'Moyenne' %}rgba(229,169,58,.15){% else %}rgba(229,57,53,.15){% endif %};
+          color:{% if rapport.fiabilite_rapport == 'Élevée' %}#27C93F{% elif rapport.fiabilite_rapport == 'Moyenne' %}#E5A93A{% else %}#ef5350{% endif %};
+          border:1px solid {% if rapport.fiabilite_rapport == 'Élevée' %}rgba(39,201,63,.3){% elif rapport.fiabilite_rapport == 'Moyenne' %}rgba(229,169,58,.3){% else %}rgba(229,57,53,.3){% endif %}">
+          Fiabilité rapport : {{ rapport.fiabilite_rapport }}
+        </span>
+        {% endif %}
       </div>
-      <div class="verdict-icon">{% if v == 'Conforme' %}✅{% elif v == 'Données insuffisantes' %}⏳{% else %}❌{% endif %}</div>
+      <div>
+        {% if rapport.score_global is not None %}
+        <div style="text-align:center">
+          <div style="font-size:2.8rem;font-weight:700;font-family:'Playfair Display',serif;line-height:1;color:{% if vconf %}#27C93F{% elif vins %}#888899{% else %}#ef5350{% endif %}">{{ rapport.score_global }}</div>
+          <div style="font-size:.72rem;color:var(--gray1);margin-top:.15rem">/100</div>
+        </div>
+        {% else %}
+        <div class="verdict-icon">{% if vconf %}✅{% elif vins %}⏳{% else %}❌{% endif %}</div>
+        {% endif %}
+      </div>
     </div>
 
+    {% endwith %}
+    {% endwith %}
     {% endwith %}
 
     <!-- Résumé -->
@@ -567,24 +601,25 @@
     {% endif %}
 
     <!-- Enveloppe + Systèmes -->
-    {% if rapport.analyse_enveloppe or rapport.systemes_energetiques %}
+    {% with env=rapport.analyse_enveloppe|default:rapport.enveloppe sys=rapport.systemes_energetiques|default:rapport.systemes %}
+    {% if env or sys %}
     <div class="grid-2">
-      {% if rapport.analyse_enveloppe %}
+      {% if env %}
       <div class="card" style="padding:1.6rem">
         <div class="section-title" style="color:var(--gold)">🏗️ Enveloppe thermique</div>
-        <p style="font-size:.87rem;color:var(--gray2);line-height:1.65;margin-bottom:.7rem">{{ rapport.analyse_enveloppe.synthese }}</p>
-        {% if rapport.analyse_enveloppe.points_attention %}
+        <p style="font-size:.87rem;color:var(--gray2);line-height:1.65;margin-bottom:.7rem">{{ env.synthese }}</p>
+        {% if env.points_attention %}
         <ul style="padding-left:1.2rem;font-size:.82rem;color:var(--gray1);display:flex;flex-direction:column;gap:.35rem">
-          {% for pt in rapport.analyse_enveloppe.points_attention %}<li>{{ pt }}</li>{% endfor %}
+          {% for pt in env.points_attention %}<li>{{ pt }}</li>{% endfor %}
         </ul>
         {% endif %}
       </div>
       {% endif %}
-      {% if rapport.systemes_energetiques %}
+      {% if sys %}
       <div class="card" style="padding:1.6rem">
         <div class="section-title" style="color:var(--gold)">⚡ Systèmes énergétiques</div>
-        <p style="font-size:.87rem;color:var(--gray2);line-height:1.65;margin-bottom:.7rem">{{ rapport.systemes_energetiques.synthese }}</p>
-        {% for e in rapport.systemes_energetiques.equipements %}
+        <p style="font-size:.87rem;color:var(--gray2);line-height:1.65;margin-bottom:.7rem">{{ sys.synthese }}</p>
+        {% for e in sys.equipements %}
         <div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
           <div>
             <span style="color:var(--white);font-size:.83rem;font-weight:500">{{ e.poste }}</span>
@@ -599,6 +634,7 @@
       {% endif %}
     </div>
     {% endif %}
+    {% endwith %}
 
     <!-- Contexte -->
     {% if rapport.contexte_reglementaire %}
@@ -667,6 +703,53 @@
           💡 Projections calculées sur la base de votre consommation actuelle et des mesures recommandées dans ce rapport.
         </div>
       </div>
+    </div>
+    {% endif %}
+
+    <!-- Anomalies / Incohérences rapport BET -->
+    {% if rapport.anomalies %}
+    <div style="margin-bottom:1.4rem">
+      <div class="section-title" style="color:#E5A93A">🔎 Anomalies & incohérences détectées dans le rapport</div>
+      {% for a in rapport.anomalies %}
+      {% with gc=a.gravite|default:"mineur" %}
+      <div class="nc-item {{ gc }}" style="margin-bottom:.8rem">
+        <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.6rem">
+          <span class="nc-gravite {{ gc }}">{{ gc }}</span>
+          <strong style="color:var(--white);font-size:.9rem">{{ a.critere|default:a.titre|default:"" }}</strong>
+        </div>
+        <p style="font-size:.86rem;color:var(--gray2);margin-bottom:.5rem;line-height:1.55">{{ a.description|default:"" }}</p>
+        {% if a.recommendation %}
+        <div style="font-size:.8rem"><span style="color:var(--muted)">Recommandation : </span>{{ a.recommendation }}</div>
+        {% endif %}
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Cohérence factures -->
+    {% if rapport.coherence_factures %}
+    {% with cf=rapport.coherence_factures %}
+    <div class="card" style="padding:1.4rem;margin-bottom:1.4rem;border-color:{% if cf.coherent %}rgba(39,201,63,.25){% else %}rgba(229,57,53,.25){% endif %};background:{% if cf.coherent %}rgba(39,201,63,.04){% else %}rgba(229,57,53,.04){% endif %}">
+      <div class="section-title" style="color:var(--gold)">⚡ Cohérence avec les consommations réelles</div>
+      <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem">
+        <span style="font-size:1.1rem">{% if cf.coherent %}✅{% else %}⚠️{% endif %}</span>
+        <span style="font-size:.9rem;font-weight:600;color:{% if cf.coherent %}#27C93F{% else %}#ef5350{% endif %}">
+          {% if cf.coherent %}Cohérent avec les factures{% else %}Incohérence détectée avec les factures réelles{% endif %}
+        </span>
+      </div>
+      {% if cf.commentaire %}
+      <p style="font-size:.87rem;color:var(--gray2);line-height:1.65;margin:0">{{ cf.commentaire }}</p>
+      {% endif %}
+    </div>
+    {% endwith %}
+    {% endif %}
+
+    <!-- Avis indépendant ConformExpert -->
+    {% if rapport.avis_independant %}
+    <div class="card" style="padding:1.6rem;margin-bottom:1.4rem;border-color:rgba(200,168,75,.25);background:rgba(200,168,75,.04)">
+      <div class="section-title" style="color:var(--gold)">💬 Avis indépendant ConformExpert</div>
+      <p style="font-size:.9rem;color:var(--gray2);line-height:1.75;margin:0;font-style:italic">{{ rapport.avis_independant }}</p>
     </div>
     {% endif %}
 
