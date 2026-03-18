@@ -174,7 +174,6 @@ footer a{color:var(--gold);text-decoration:none}
   <ul class="nav-links">
     {% if user.is_authenticated %}
       <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Dashboard</a></li>
-      <li><a href="{% url 'results' %}" {% if request.resolver_match.url_name == 'results' %}class="active"{% endif %}>Résultats</a></li>
       <li><a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a></li>
       <li><a href="{% url 'devis_list' %}" {% if request.resolver_match.url_name == 'devis_list' or request.resolver_match.url_name == 'devis_create' or request.resolver_match.url_name == 'devis_edit' %}class="active"{% endif %}>Devis</a></li>
       <li><a href="{% url 'settings' %}" {% if request.resolver_match.url_name == 'settings' %}class="active"{% endif %}>Paramètres</a></li>
@@ -199,7 +198,6 @@ footer a{color:var(--gold);text-decoration:none}
   <button class="nav-mobile-close" id="navMobileClose" aria-label="Fermer">✕</button>
   {% if user.is_authenticated %}
     <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Dashboard</a>
-    <a href="{% url 'results' %}" {% if request.resolver_match.url_name == 'results' %}class="active"{% endif %}>Résultats</a>
     <a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a>
     <a href="{% url 'devis_list' %}" {% if request.resolver_match.url_name == 'devis_list' or request.resolver_match.url_name == 'devis_create' or request.resolver_match.url_name == 'devis_edit' %}class="active"{% endif %}>Devis</a>
     <a href="{% url 'settings' %}" {% if request.resolver_match.url_name == 'settings' %}class="active"{% endif %}>Paramètres</a>
