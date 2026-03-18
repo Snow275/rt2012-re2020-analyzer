@@ -2316,11 +2316,11 @@ function setLang(lang) {
   applyTranslations(lang);
 }
 
-// Init on load
-(function() {
+// Init on DOMContentLoaded to ensure all elements exist
+document.addEventListener('DOMContentLoaded', function() {
   const saved = localStorage.getItem('ce_lang') || 'fr';
-  if (saved === 'en') applyTranslations('en');
-})();
+  applyTranslations(saved);
+});
 </script>
 
 </body>
