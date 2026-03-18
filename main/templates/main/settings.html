@@ -7,7 +7,7 @@
   /* ── Navigation sticky ─────────────────────────────────────── */
   .params-nav {
     position: sticky;
-    top: 0;
+    top: var(--topbar-height, 60px);
     z-index: 50;
     background: rgba(15,20,35,.85);
     backdrop-filter: blur(12px);
@@ -281,6 +281,14 @@
   }
   .pca-item:hover { border-color: rgba(200,168,75,.15); }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const nav = document.querySelector('nav, header, .navbar, [class*="topbar"], [class*="nav-top"]');
+  if (nav) {
+    document.documentElement.style.setProperty('--topbar-height', nav.offsetHeight + 'px');
+  }
+});
+</script>
 
 <!-- PAGE HEADER -->
 <div class="page-header">
@@ -294,9 +302,17 @@
 <!-- NAV STICKY -->
 <div class="params-nav">
   <div class="params-nav-inner">
-    <a class="nav-pill" href="#administration">⚙️ Administration</a>
+    <a class="nav-pill" href="#administration">⚙ Administration</a>
     {% for pays_code, pays_label, normes in seuils_par_pays %}
-    <a class="nav-pill" href="#pays-{{ pays_code|lower }}">{{ pays_label }}</a>
+    <a class="nav-pill" href="#pays-{{ pays_code|lower }}">
+      {% if pays_code == 'FR' %}🇫🇷
+      {% elif pays_code == 'BE' %}🇧🇪
+      {% elif pays_code == 'CH' %}🇨🇭
+      {% elif pays_code == 'CA' %}🇨🇦
+      {% elif pays_code == 'LU' %}🇱🇺
+      {% endif %}
+      {{ pays_label }}
+    </a>
     {% endfor %}
     <a class="nav-pill" href="#pca">🔧 PCA</a>
   </div>
