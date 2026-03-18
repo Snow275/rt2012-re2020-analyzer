@@ -235,18 +235,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
   </div>
   {% endif %}
 
-  {% if document.extraction_alertes %}
-  <div style="margin-bottom:2rem">
-    <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#ef9a9a;margin-bottom:.7rem;display:flex;align-items:center;gap:.4rem">
-      <span>⚠</span> <span data-ti18n="alert.vigilance">Points de vigilance détectés lors de l'analyse automatique</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:.5rem">
-      {% for alerte in document.extraction_alertes %}
-      <div class="alerte-item"><span class="alerte-icon">⚠</span>{{ alerte }}</div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+
 
   <div class="tracking-grid">
 
