@@ -404,3 +404,27 @@ class Devis(models.Model):
 
     def __str__(self):
         return f"Devis {self.id} — {self.client_nom}"
+
+
+class Message(models.Model):
+    AUTEUR_CHOICES = [
+        ('admin',  'ConformExpert'),
+        ('client', 'Client'),
+    ]
+
+    document    = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='messages')
+    auteur      = models.CharField(max_length=10, choices=AUTEUR_CHOICES, default='admin')
+    contenu     = models.TextField()
+    fichier     = models.FileField(upload_to='messages/', blank=True, null=True)
+    fichier_nom = models.CharField(max_length=255, blank=True, default='')
+    lu_admin    = models.BooleanField(default=False)
+    lu_client   = models.BooleanField(default=False)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Message'
+        verbose_name_plural = 'Messages'
+
+    def __str__(self):
+        return f"[{self.get_auteur_display()}] {self.document.name} — {self.created_at:%d/%m/%Y %H:%M}"
