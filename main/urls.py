@@ -47,6 +47,10 @@ urlpatterns = [
     path('facture/<int:facture_id>/analyser/',             views.analyser_facture,         name='analyser_facture'),
     path('facture/<int:facture_id>/supprimer/',            views.supprimer_facture,        name='supprimer_facture'),
 
+    # ── MESSAGERIE ───────────────────────────────────────────────────────
+    path('dossier/<int:doc_id>/message/',          views.admin_send_message,  name='admin_send_message'),
+    path('suivi/<str:token>/message/',             views.client_send_message, name='client_send_message'),
+
     # ── API ──────────────────────────────────────────────────────────────
     path('api/documents/',           views.api_document_list,   name='api_document_list'),
     path('api/documents/<int:pk>/',  views.api_document_detail, name='api_document_detail'),
