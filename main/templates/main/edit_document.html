@@ -572,7 +572,7 @@ select.f-input option { background: #0c1929; }
         {% endif %}
       </span>
       {% if document.type_analyse == 'energie' %}
-        <span class="badge badge--energie">⚡ Pré-analyse énergétique</span>
+        <span class="badge badge--energie">Pré-analyse énergétique</span>
       {% elif document.type_analyse == 'pca' %}
         <span class="badge badge--pca">🏗️ Pré-analyse technique</span>
       {% elif document.type_analyse == 'complet' %}
@@ -594,12 +594,12 @@ select.f-input option { background: #0c1929; }
        ONGLETS
   ══════════════════════════════════════════════════════ -->
   <div class="tab-bar">
-    <button onclick="showTab('infos')"        id="tab-infos"        class="tab-btn tab-btn--active">📋 Informations</button>
-    <button onclick="showTab('documents')"    id="tab-documents"    class="tab-btn">📁 Documents</button>
-    <button onclick="showTab('emails')"       id="tab-emails"       class="tab-btn">✉️ Emails</button>
-    <button onclick="showTab('rapport-ia')"   id="tab-rapport-ia"   class="tab-btn">🤖 Rapport IA</button>
-    <button onclick="showTab('observations')" id="tab-observations" class="tab-btn">🔍 Observations</button>
-    <button onclick="showTab('factures')"     id="tab-factures"     class="tab-btn">⚡ Factures</button>
+    <button onclick="showTab('infos')"        id="tab-infos"        class="tab-btn tab-btn--active">Informations</button>
+    <button onclick="showTab('documents')"    id="tab-documents"    class="tab-btn">Documents</button>
+    <button onclick="showTab('emails')"       id="tab-emails"       class="tab-btn">Communication</button>
+    <button onclick="showTab('rapport-ia')"   id="tab-rapport-ia"   class="tab-btn">Rapport IA</button>
+    <button onclick="showTab('observations')" id="tab-observations" class="tab-btn">Observations</button>
+    <button onclick="showTab('factures')"     id="tab-factures"     class="tab-btn">Factures</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════
@@ -828,7 +828,7 @@ select.f-input option { background: #0c1929; }
     <!-- Pas encore analysé -->
     <div style="margin-bottom:1.5rem;padding:1rem 1.4rem;border-radius:10px;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.12);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
       <div>
-        <div style="font-size:.82rem;color:var(--white);font-weight:500">🔍 Documents non encore analysés</div>
+        <div style="font-size:.82rem;color:var(--white);font-weight:500">Documents non encore analysés</div>
         <div style="font-size:.76rem;color:var(--gray-1);margin-top:.2rem">Cliquez sur Analyser pour détecter automatiquement le type de rapport et extraire les valeurs thermiques.</div>
       </div>
       <button id="btn-analyser-doc" onclick="analyserDocument()"
@@ -902,7 +902,7 @@ select.f-input option { background: #0c1929; }
     {% endif %}
 
     <div class="card card--pad" style="padding:1.8rem">
-      <h3 class="section-title" style="margin-bottom:1.4rem">📁 Documents déposés par le client</h3>
+      <h3 class="section-title" style="margin-bottom:1.4rem">Documents déposés par le client</h3>
 
       {% if document.fichiers.all %}
       <div style="display:flex;flex-direction:column;gap:.7rem">
@@ -946,48 +946,154 @@ select.f-input option { background: #0c1929; }
        ONGLET EMAILS
   ══════════════════════════════════════════════════════ -->
   <div id="panel-emails" style="display:none">
-    <div class="card card--pad">
-      <h3 class="section-title" style="margin-bottom:1.2rem">✉️ Workflow emails client</h3>
+    <style>
+      .comm-grid { display:grid;grid-template-columns:1fr 1fr;gap:1.2rem }
+      @media(max-width:768px){ .comm-grid { grid-template-columns:1fr } }
+      .comm-card { background:var(--navy-2);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1.4rem }
+      .comm-card-title { font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);font-weight:600;margin-bottom:1rem }
+      .msg-list { display:flex;flex-direction:column;gap:.6rem;max-height:320px;overflow-y:auto;margin-bottom:1rem;padding-right:.2rem }
+      .msg-item { padding:.7rem .9rem;border-radius:8px;font-size:.82rem;line-height:1.5 }
+      .msg-item.sent { background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.2);margin-left:2rem }
+      .msg-item.received { background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-right:2rem }
+      .msg-meta { font-size:.7rem;color:var(--gray-1);margin-bottom:.3rem;display:flex;justify-content:space-between }
+      .msg-composer { display:flex;flex-direction:column;gap:.6rem }
+      .msg-composer textarea { background:var(--navy-3);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:var(--white);font-size:.83rem;padding:.7rem .9rem;resize:vertical;min-height:80px;font-family:inherit }
+      .msg-composer textarea:focus { outline:none;border-color:rgba(200,168,75,.4) }
+      .msg-composer-actions { display:flex;align-items:center;gap:.7rem;flex-wrap:wrap }
+      .attach-label { display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:7px;font-size:.78rem;color:var(--gray-1);cursor:pointer;transition:border-color .2s }
+      .attach-label:hover { border-color:rgba(200,168,75,.3);color:var(--gold) }
+      .attach-label input { display:none }
+      .attach-preview { font-size:.74rem;color:var(--gold);background:rgba(200,168,75,.08);padding:.3rem .7rem;border-radius:5px;display:none }
+      .email-step-compact { display:flex;align-items:center;gap:.8rem;padding:.6rem .8rem;background:var(--navy-3);border-radius:8px;border:1px solid rgba(255,255,255,.05) }
+      .email-step-compact:hover { border-color:rgba(200,168,75,.2) }
+      .step-dot { width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0 }
+      .step-info { flex:1 }
+      .step-info strong { font-size:.84rem;color:var(--white);font-weight:500 }
+      .step-info span { font-size:.74rem;color:var(--gray-1);display:block;margin-top:.1rem }
+      .step-send-btn { padding:.4rem .9rem;border-radius:6px;font-size:.78rem;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid;transition:opacity .15s }
+      .step-send-btn:hover { opacity:.8 }
+      .step-send-btn:disabled { opacity:.35;cursor:not-allowed }
+    </style>
 
-      {% if not document.client_email %}
-      <div class="email-alert email-alert--warn">
-        ⚠️ Aucun email client — renseignez l'email dans l'onglet <strong>Informations</strong> d'abord.
-      </div>
-      {% else %}
-      <div class="email-alert email-alert--success">
-        ✓ Email client : <strong>{{ document.client_email }}</strong>
-      </div>
-      {% endif %}
+    {% if not document.client_email %}
+    <div class="email-alert email-alert--warn" style="margin-bottom:1.2rem">
+      Aucun email client — renseignez l'email dans l'onglet <strong>Informations</strong> d'abord.
+    </div>
+    {% else %}
+    <div class="email-alert email-alert--success" style="margin-bottom:1.2rem">
+      ✓ Client : <strong>{{ document.client_email }}</strong>
+    </div>
+    {% endif %}
 
-      <div style="display:flex;flex-direction:column;gap:.7rem">
-        {% for num, color, bg, title, desc, type in email_steps %}
-        <div class="email-step">
-          <div class="email-step__num" style="background:{{ bg }};color:{{ color }}">{{ num }}</div>
-          <div style="flex:1">
-            <div class="email-step__title">{{ title }}</div>
-            <div class="email-step__desc">{{ desc }}</div>
+    <div class="comm-grid">
+
+      {# ── COL GAUCHE : Messagerie ── #}
+      <div class="comm-card">
+        <div class="comm-card-title">Message au client</div>
+
+        <div class="msg-list" id="msgList">
+          <div style="text-align:center;padding:1.5rem 0;font-size:.8rem;color:var(--gray-1)">
+            Aucun message pour ce dossier.
           </div>
-          {% if type == 'devis' %}
-          <button type="button" onclick="ouvrirModalDevis()"
-            {% if not document.client_email %}disabled{% endif %}
-            style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.5rem 1.2rem;border-radius:7px;font-size:.82rem;cursor:{% if document.client_email %}pointer{% else %}not-allowed{% endif %};opacity:{% if document.client_email %}1{% else %}.4{% endif %};font-weight:500;font-family:inherit">
-            ✉ Envoyer
-          </button>
-          {% else %}
-          <form method="post" action="{% url 'send_email_manual' document.id type %}">
-            {% csrf_token %}
-            <button type="submit"
-              {% if not document.client_email %}disabled{% endif %}
-              style="background:{{ bg }};border:1px solid {{ color }}55;color:{{ color }};padding:.5rem 1.2rem;border-radius:7px;font-size:.82rem;cursor:{% if document.client_email %}pointer{% else %}not-allowed{% endif %};opacity:{% if document.client_email %}1{% else %}.4{% endif %};font-weight:500;font-family:inherit">
-              ✉ Envoyer
-            </button>
-          </form>
-          {% endif %}
         </div>
-        {% endfor %}
+
+        <div class="msg-composer">
+          <textarea id="msgText" placeholder="Écrire un message au client…"></textarea>
+          <div class="msg-composer-actions">
+            <label class="attach-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Joindre un fichier
+              <input type="file" id="msgAttach" onchange="showAttach(this)">
+            </label>
+            <span class="attach-preview" id="attachPreview"></span>
+            <button type="button" onclick="sendMessage()"
+              {% if not document.client_email %}disabled{% endif %}
+              class="btn btn-gold btn-sm" style="margin-left:auto">
+              Envoyer
+            </button>
+          </div>
+        </div>
       </div>
+
+      {# ── COL DROITE : Workflow emails ── #}
+      <div class="comm-card">
+        <div class="comm-card-title">Emails automatiques</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          {% for num, color, bg, title, desc, type in email_steps %}
+          <div class="email-step-compact">
+            <div class="step-dot" style="background:{{ bg }};color:{{ color }}">{{ num }}</div>
+            <div class="step-info">
+              <strong>{{ title }}</strong>
+              <span>{{ desc }}</span>
+            </div>
+            {% if type == 'devis' %}
+            <button type="button" onclick="ouvrirModalDevis()"
+              {% if not document.client_email %}disabled{% endif %}
+              class="step-send-btn"
+              style="background:{{ bg }};border-color:{{ color }}55;color:{{ color }}">
+              Envoyer
+            </button>
+            {% else %}
+            <form method="post" action="{% url 'send_email_manual' document.id type %}" style="margin:0">
+              {% csrf_token %}
+              <button type="submit"
+                {% if not document.client_email %}disabled{% endif %}
+                class="step-send-btn"
+                style="background:{{ bg }};border-color:{{ color }}55;color:{{ color }}">
+                Envoyer
+              </button>
+            </form>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        {# Dépôt de document pour le client #}
+        <div style="margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,.06)">
+          <div class="comm-card-title" style="margin-bottom:.8rem">Déposer un document client</div>
+          <form method="post" action="{% url 'upload_rapport_pdf' document.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
+              <label class="attach-label" style="flex:1;justify-content:center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Choisir un fichier (PDF)
+                <input type="file" name="rapport_pdf" accept=".pdf" onchange="this.parentElement.querySelector('span') ? this.parentElement.querySelector('span').textContent=this.files[0].name : null">
+              </label>
+              <button type="submit" class="btn btn-gold btn-sm">Déposer</button>
+            </div>
+            <p style="font-size:.72rem;color:var(--gray-1);margin:.5rem 0 0">
+              Le fichier sera accessible depuis le lien de suivi du client.
+            </p>
+          </form>
+        </div>
+      </div>
+
     </div>
   </div><!-- /panel-emails -->
+
+  <script>
+  function showAttach(input) {
+    const preview = document.getElementById('attachPreview');
+    if (input.files && input.files[0]) {
+      preview.textContent = input.files[0].name;
+      preview.style.display = 'inline-flex';
+    }
+  }
+  function sendMessage() {
+    const text = document.getElementById('msgText').value.trim();
+    if (!text) return;
+    const list = document.getElementById('msgList');
+    const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+    const item = document.createElement('div');
+    item.className = 'msg-item sent';
+    item.innerHTML = '<div class="msg-meta"><span>Vous</span><span>' + now + '</span></div>' + text;
+    list.querySelector('div[style]') && list.querySelector('div[style]').remove();
+    list.appendChild(item);
+    document.getElementById('msgText').value = '';
+    document.getElementById('attachPreview').style.display = 'none';
+    list.scrollTop = list.scrollHeight;
+  }
+  </script>
 
   <!-- Modal devis -->
   <div id="modal-devis" class="modal-overlay">
@@ -1039,7 +1145,7 @@ select.f-input option { background: #0c1929; }
     <!-- Bandeau statut + boutons -->
     <div class="rapport-header">
       <div>
-        <p class="rapport-header__label">🤖 Rapport d'analyse IA</p>
+        <p class="rapport-header__label">Rapport d'analyse IA</p>
         <p class="rapport-header__desc">
           {% if document.type_analyse == 'energie' %}
             Pré-analyse énergétique — <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
@@ -1114,7 +1220,7 @@ select.f-input option { background: #0c1929; }
       <!-- Résumé + KPIs -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
         <div class="card card--pad" style="padding:1.4rem">
-          <h4 class="section-cap section-cap--gold">📋 Résumé exécutif</h4>
+          <h4 class="section-cap section-cap--gold">Résumé exécutif</h4>
           <p id="resume-executif" style="font-size:.86rem;color:var(--gray-2);line-height:1.65;margin:0"></p>
         </div>
         <div class="card card--pad" style="padding:1.4rem">
@@ -1136,7 +1242,7 @@ select.f-input option { background: #0c1929; }
       <!-- Tableau critères — énergie et complet -->
       {% if document.type_analyse != 'pca' %}
       <div class="card card--pad" style="padding:1.4rem;margin-bottom:1.4rem;overflow-x:auto">
-        <h4 class="section-cap section-cap--gold">🔍 Analyse des critères</h4>
+        <h4 class="section-cap section-cap--gold">Analyse des critères</h4>
         <table style="width:100%;border-collapse:collapse;font-size:.83rem">
           <thead>
             <tr style="background:#0C1929">
@@ -1190,7 +1296,7 @@ select.f-input option { background: #0c1929; }
 
       <!-- Risques PCA -->
       <div id="pca-risques-wrap" style="margin-bottom:1.2rem;display:none">
-        <h4 class="section-cap section-cap--red">⚠️ Risques identifiés</h4>
+        <h4 class="section-cap section-cap--red">Risques identifiés</h4>
         <div id="pca-risques-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
       </div>
 
@@ -1202,7 +1308,7 @@ select.f-input option { background: #0c1929; }
 
       <!-- Budget PCA -->
       <div id="pca-budget-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
-        <h4 class="section-cap section-cap--gold">💰 Enveloppe budgétaire</h4>
+        <h4 class="section-cap section-cap--gold">Enveloppe budgétaire</h4>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:.9rem">
           <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.9rem 1rem">
             <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Court terme</div>
@@ -1234,7 +1340,7 @@ select.f-input option { background: #0c1929; }
       <!-- Non-conformités / Risques -->
       <div id="nonconf-wrap" style="margin-bottom:1.4rem;display:none">
         <h4 class="section-cap section-cap--red">
-          {% if document.type_analyse == 'pca' %}⚠️ Risques identifiés{% else %}⚠️ Non-conformités{% endif %}
+          {% if document.type_analyse == 'pca' %}Risques identifiés{% else %}Non-conformités{% endif %}
         </h4>
         <div id="nonconf-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
       </div>
@@ -1267,7 +1373,7 @@ select.f-input option { background: #0c1929; }
           <ul id="enveloppe-points" style="margin:0;padding-left:1.1rem;font-size:.8rem;color:var(--gray-1);display:flex;flex-direction:column;gap:.3rem"></ul>
         </div>
         <div class="card card--pad" style="padding:1.4rem">
-          <h4 class="section-cap section-cap--gold">⚡ Systèmes énergétiques</h4>
+          <h4 class="section-cap section-cap--gold">Systèmes énergétiques</h4>
           <p id="systemes-synthese" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin-bottom:.7rem"></p>
           <div id="equipements-table" style="font-size:.8rem"></div>
         </div>
@@ -1477,7 +1583,7 @@ select.f-input option { background: #0c1929; }
 
               <!-- Électricité -->
               <div>
-                <label class="label-caps">⚡ Installation électrique</label>
+                <label class="label-caps">Installation électrique</label>
                 <select name="obs_elec_etat" class="f-input">
                   <option value="">État —</option>
                   <option value="bon"     {% if document.obs_elec_etat == 'bon'     %}selected{% endif %}>✅ Bon — tableau récent</option>
@@ -1510,11 +1616,11 @@ select.f-input option { background: #0c1929; }
 
           <!-- Risques identifiés -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--sm" style="color:#ef5350">⚠️ Risques identifiés</h3>
+            <h3 class="section-title section-title--sm" style="color:#ef5350">Risques identifiés</h3>
             <div style="display:flex;flex-direction:column;gap:.7rem">
               {% if document.annee_construction and document.annee_construction < 1997 %}
               <div class="amiante-warn">
-                ⚠️ Bâtiment construit avant 1997 — risque amiante détecté automatiquement
+                Bâtiment construit avant 1997 — risque amiante détecté automatiquement
               </div>
               {% endif %}
               <div>
@@ -1588,7 +1694,7 @@ select.f-input option { background: #0c1929; }
 
           <!-- Données énergétiques -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--sm">⚡ Données énergétiques</h3>
+            <h3 class="section-title section-title--sm">Données énergétiques</h3>
             <div style="display:flex;flex-direction:column;gap:.7rem">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
                 <div>
