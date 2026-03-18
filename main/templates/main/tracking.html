@@ -212,12 +212,6 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
       <span><span data-ti18n="header.received">Reçu le</span> {{ document.upload_date|date:"d/m/Y" }}</span>
       {% if document.type_analyse or document.norme %}
       <span style="opacity:.3">·</span>
-      <span style="color:var(--gold)">
-        {% if document.type_analyse == 'pca' %}<span data-ti18n="header.mission.pca">Pré-analyse technique</span>
-        {% elif document.type_analyse == 'complet' %}<span data-ti18n="header.mission.complet">Analyse complète</span>
-        {% elif document.norme %}<span data-ti18n="header.mission.validation">Validation</span> {{ document.norme }}
-        {% else %}<span data-ti18n="header.mission.default">Validation thermique</span>{% endif %}
-      </span>
       {% endif %}
     </p>
   </div>
@@ -227,7 +221,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
 
   {% if devis_accepte %}
   <div style="background:rgba(39,201,63,.07);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1.1rem 1.4rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
-    <span style="font-size:1.4rem">✅</span>
+    <span>✅</span>
     <div>
       <div style="font-size:.92rem;color:#27c93f;font-weight:600" data-ti18n="devis.title">Devis accepté — la validation a démarré !</div>
       <div style="font-size:.8rem;color:var(--gray-1);margin-top:.25rem" data-ti18n="devis.desc">Un email de confirmation vous a été envoyé. Revenez sur cette page pour suivre l'avancement.</div>
@@ -235,358 +229,292 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
   </div>
   {% endif %}
 
+  {# ═══════════════════════════════════════════════════════════
+     ZONE 1 — STATUT + PROGRESSION (pleine largeur)
+  ═══════════════════════════════════════════════════════════ #}
+  <div class="card" style="padding:2rem;margin-bottom:1.5rem;border-color:rgba(200,168,75,.15)">
 
-
-  <div class="tracking-grid">
-
-    {# ═══ COL GAUCHE #}
-    <div>
-      <div class="card" style="padding:1.8rem;margin-bottom:1.5rem;border-color:rgba(200,168,75,.15)">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.6rem">
-          <div>
-            <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-1);margin-bottom:.5rem" data-ti18n="status.label">Statut du dossier</div>
-            {% if document.status == 'recu' %}
-              <span class="badge-status badge-recu">📥 <span data-ti18n="status.recu">Dossier reçu</span></span>
-            {% elif document.status == 'en_cours' %}
-              <span class="badge-status badge-encours">🔍 <span data-ti18n="status.encours">Validation en cours</span></span>
-            {% else %}
-              <span class="badge-status badge-termine">✓ <span data-ti18n="status.termine">Rapport disponible</span></span>
-            {% endif %}
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:.68rem;color:var(--gray-1);margin-bottom:.3rem" data-ti18n="deadline.label">Délai garanti</div>
-            <div style="font-size:.88rem;color:var(--gold);font-weight:600" data-ti18n="deadline.val">10 jours ouvrés</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:1.8rem">
-          <div style="display:flex;justify-content:space-between;font-size:.73rem;color:var(--gray-1);margin-bottom:.5rem">
-            <span data-ti18n="progress.label">Avancement</span>
-            <span style="color:var(--gold);font-weight:600">{{ progress_pct }}%</span>
-          </div>
-          <div style="height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
-            <div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#C8A84B,#e0c070);width:{{ progress_pct }}%;transition:width .8s ease"></div>
-          </div>
-        </div>
-
+    {# Ligne supérieure : statut + délai #}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.6rem">
+      <div style="display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap">
         <div>
-          {% for step_label, step_state in step_list %}
-          <div class="step-row">
-            <div class="step-dot {{ step_state }}">
-              {% if step_state == 'done' %}✓{% elif step_state == 'active' %}→{% else %}○{% endif %}
-            </div>
-            <span style="font-size:.83rem;{% if step_state == 'done' %}color:var(--gray-2){% elif step_state == 'active' %}color:var(--white);font-weight:500{% else %}color:var(--muted){% endif %}">
-              {{ step_label }}
-            </span>
-          </div>
-          {% if not forloop.last %}<div class="step-connector"></div>{% endif %}
-          {% endfor %}
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-1);margin-bottom:.4rem" data-ti18n="status.label">Statut du dossier</div>
+          {% if document.status == 'recu' %}
+            <span class="badge-status badge-recu">📥 <span data-ti18n="status.recu">Dossier reçu</span></span>
+          {% elif document.status == 'en_cours' %}
+            <span class="badge-status badge-encours">🔍 <span data-ti18n="status.encours">Validation en cours</span></span>
+          {% else %}
+            <span class="badge-status badge-termine">✓ <span data-ti18n="status.termine">Rapport disponible</span></span>
+          {% endif %}
         </div>
       </div>
-
-      {% if document.status == 'termine' %}
-      <div style="display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.5rem">
-        <a href="{% url 'rapport_ia_client' document.tracking_token %}" class="btn-rapport-primary">
-          📄 <span data-ti18n="btn.rapport">Consulter le rapport de validation</span>
-        </a>
-        {% if document.rapport_pdf %}
-        <a href="{{ document.rapport_pdf.url }}" target="_blank" download class="btn-rapport-secondary">
-          ⬇ <span data-ti18n="btn.pdf">Télécharger le PDF</span>
-        </a>
-        {% endif %}
+      <div style="text-align:right">
+        <div style="font-size:.65rem;color:var(--gray-1);margin-bottom:.3rem" data-ti18n="deadline.label">Délai garanti</div>
+        <div style="font-size:.9rem;color:var(--gold);font-weight:600" data-ti18n="deadline.val">10 jours ouvrés</div>
       </div>
-      {% endif %}
-
-      {% if document.status == 'recu' %}
-      <div class="card" style="padding:1.4rem;background:rgba(200,168,75,.03);border-color:rgba(200,168,75,.15)">
-        <div style="font-size:.85rem;color:var(--gold);font-weight:500;margin-bottom:.5rem">⏳ <span data-ti18n="waiting.title">En attente de validation</span></div>
-        <p style="font-size:.8rem;color:var(--gray-2);line-height:1.7;margin:0" data-ti18n="waiting.desc">
-          Votre dossier est en cours d'examen. Vous recevrez un email avec le devis dès qu'il sera validé par notre équipe.
-        </p>
-      </div>
-      {% endif %}
     </div>
 
-    {# ═══ COL DROITE #}
-    <div style="display:flex;flex-direction:column;gap:1.5rem">
-
-      <div class="card" style="padding:1.8rem">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.2rem;color:var(--gold)" data-ti18n="info.title">Informations du dossier</h3>
-        <div>
-          {% if document.client_name %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.client">Client</span>
-            <span class="info-val">{{ document.client_name }}</span>
-          </div>
-          {% endif %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.ref">Référence</span>
-            <span style="font-size:.83rem;color:var(--gold);font-family:monospace;font-weight:600">DOC-{{ document.id|stringformat:"04d" }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.mission">Type de mission</span>
-            <span class="info-val">
-              {% if document.type_analyse == 'pca' %}<span data-ti18n="mission.pca">Pré-analyse technique (PCA)</span>
-              {% elif document.type_analyse == 'complet' %}<span data-ti18n="mission.complet">Analyse complète</span>
-              {% else %}<span data-ti18n="mission.default">Validation thermique</span>{% endif %}
-            </span>
-          </div>
-          {% if document.norme and document.type_analyse != 'pca' %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.norme">Norme</span>
-            <span style="font-size:.83rem;color:var(--white);font-weight:500">{{ document.norme }}</span>
-          </div>
-          {% endif %}
-          {% if document.logiciel_detecte %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.logiciel">Logiciel BET</span>
-            <span class="info-val">{{ document.logiciel_detecte }}</span>
-          </div>
-          {% endif %}
-          {% if document.version_norme_detectee %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.version">Version norme</span>
-            <span class="info-val">{{ document.version_norme_detectee }}</span>
-          </div>
-          {% endif %}
-          {% if document.get_building_type_display %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.building">Type de bâtiment</span>
-            <span class="info-val">{{ document.get_building_type_display }}</span>
-          </div>
-          {% endif %}
-          {% if document.surface_totale %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.surface">Surface</span>
-            <span class="info-val">{{ document.surface_totale }} m²</span>
-          </div>
-          {% endif %}
-          {% if document.annee_construction %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.year">Année construction</span>
-            <span class="info-val">{{ document.annee_construction }}</span>
-          </div>
-          {% endif %}
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.date">Date de réception</span>
-            <span class="info-val">{{ document.upload_date|date:"d/m/Y à H:i" }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label" data-ti18n="info.link">Lien de suivi</span>
-            <button id="copyBtn" onclick="
-              navigator.clipboard.writeText('{{ request.build_absolute_uri }}');
-              const lang = localStorage.getItem('ce_lang') || 'fr';
-              const tr = TRACKING_TR[lang] || TRACKING_TR['fr'];
-              this.innerHTML = tr['info.copied'];
-              setTimeout(()=>{ this.innerHTML = tr['info.copy']; }, 2000)"
-              style="background:none;border:none;color:var(--gold);font-size:.78rem;cursor:pointer;padding:0;font-family:inherit"
-              data-ti18n="info.copy">
-              🔗 Copier
-            </button>
-          </div>
-        </div>
+    {# Barre de progression #}
+    <div style="margin-bottom:1.6rem">
+      <div style="display:flex;justify-content:space-between;font-size:.73rem;color:var(--gray-1);margin-bottom:.5rem">
+        <span data-ti18n="progress.label">Avancement</span>
+        <span style="color:var(--gold);font-weight:600">{{ progress_pct }}%</span>
       </div>
-
-      {% if document.status == 'termine' %}
-      <div class="card" style="padding:1.8rem;border-color:rgba(200,168,75,.2)">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.3rem;color:var(--gold)" data-ti18n="result.title">Résultat de la validation</h3>
-        <div style="display:flex;align-items:center;gap:1.4rem;margin-bottom:1.3rem">
-          {% if rapport_ia_score %}
-          <div class="score-ring-wrap">
-            <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/>
-              <circle cx="40" cy="40" r="32" fill="none" stroke="#C8A84B" stroke-width="6"
-                stroke-dasharray="201" stroke-dashoffset="{{ rapport_ia_score_offset }}" stroke-linecap="round"/>
-            </svg>
-            <div class="score-ring-label">
-              <span class="score-ring-num">{{ rapport_ia_score }}</span>
-              <span class="score-ring-sub">/100</span>
-            </div>
-          </div>
-          {% endif %}
-          <div style="flex:1">
-            <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.5rem">
-              {% if document.type_analyse == 'pca' %}<span data-ti18n="result.verdict.pca">État technique global</span>{% else %}<span data-ti18n="result.verdict">Verdict</span> {{ document.norme }}{% endif %}
-            </div>
-            {% if document.is_conform is None %}
-              <span style="color:var(--muted);font-size:.88rem" data-ti18n="result.analyzing">En cours d'analyse</span>
-            {% elif document.is_conform %}
-              <div style="font-size:1.15rem;font-weight:700;color:#27c93f;font-family:'Playfair Display',serif" data-ti18n="result.conform">✓ Conforme</div>
-              <div style="font-size:.75rem;color:var(--gray-1);margin-top:.3rem" data-ti18n="result.conform.sub">Rapport du bureau d'études validé</div>
-            {% else %}
-              <div style="font-size:1.15rem;font-weight:700;color:#ef5350;font-family:'Playfair Display',serif" data-ti18n="result.nonconform">✗ Non conforme</div>
-              <div style="font-size:.75rem;color:var(--gray-1);margin-top:.3rem" data-ti18n="result.nonconform.sub">Des points d'attention ont été identifiés</div>
-            {% endif %}
-          </div>
-        </div>
-
-        {% if document.dpe_classe_energie %}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1.2rem">
-          <div class="kpi-box">
-            <div class="kpi-label" data-ti18n="result.energy">Classe énergie</div>
-            <div class="kpi-val">{{ document.dpe_classe_energie }}</div>
-          </div>
-          {% if document.dpe_classe_ges %}
-          <div class="kpi-box">
-            <div class="kpi-label" data-ti18n="result.ges">Classe GES</div>
-            <div class="kpi-val">{{ document.dpe_classe_ges }}</div>
-          </div>
-          {% endif %}
-        </div>
-        {% endif %}
-
-        {% if document.rt2012_bbio or document.rt2012_cep or document.re2020_energy_efficiency or document.re2020_carbon_emissions or document.re2020_thermal_comfort or document.peb_espec or document.dpe_conso_ep %}
-        <div style="margin-bottom:1.2rem">
-          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.7rem" data-ti18n="result.keyvals">Valeurs clés</div>
-          <div style="display:flex;flex-direction:column;gap:.0rem">
-            {% if document.rt2012_bbio %}
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-              <span style="color:var(--gray-1)">Bbio</span>
-              <span style="color:var(--white);font-weight:500">{{ document.rt2012_bbio }}</span>
-            </div>{% endif %}
-            {% if document.rt2012_cep %}
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-              <span style="color:var(--gray-1)">Cep</span>
-              <span style="color:var(--white);font-weight:500">{{ document.rt2012_cep }} kWh ep/m².an</span>
-            </div>{% endif %}
-            {% if document.re2020_energy_efficiency %}
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-              <span style="color:var(--gray-1)">Cep,nr</span>
-              <span style="color:var(--white);font-weight:500">{{ document.re2020_energy_efficiency }} kWh/m².an</span>
-            </div>{% endif %}
-            {% if document.re2020_carbon_emissions %}
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-              <span style="color:var(--gray-1)">Ic énergie</span>
-              <span style="color:var(--white);font-weight:500">{{ document.re2020_carbon_emissions }} kgCO₂/m².an</span>
-            </div>{% endif %}
-            {% if document.re2020_thermal_comfort %}
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-              <span style="color:var(--gray-1)" data-ti18n="result.summer">DH confort d'été</span>
-              <span style="color:var(--white);font-weight:500">{{ document.re2020_thermal_comfort }} DH</span>
-            </div>{% endif %}
-            {% if document.peb_espec %}
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-              <span style="color:var(--gray-1)">Espec (PEB)</span>
-              <span style="color:var(--white);font-weight:500">{{ document.peb_espec }} kWh/m².an</span>
-            </div>{% endif %}
-            {% if document.dpe_conso_ep %}
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;padding:.35rem 0">
-              <span style="color:var(--gray-1)" data-ti18n="result.conso">Conso. énergie primaire</span>
-              <span style="color:var(--white);font-weight:500">{{ document.dpe_conso_ep }} kWh ep/m².an</span>
-            </div>{% endif %}
-          </div>
-        </div>
-        {% endif %}
-
-        <p style="font-size:.79rem;color:var(--gray-1);line-height:1.65;margin:0" data-ti18n="result.desc">
-          Le rapport complet contient l'avis indépendant de ConformExpert, les anomalies détectées et les recommandations détaillées.
-        </p>
+      <div style="height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
+        <div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#C8A84B,#e0c070);width:{{ progress_pct }}%;transition:width .8s ease"></div>
       </div>
-
-      {% else %}
-      <div class="card" style="padding:1.8rem;background:rgba(200,168,75,.03);border-color:rgba(200,168,75,.12)">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:1.1rem;color:var(--gold)" data-ti18n="preview.title">Ce que contiendra le rapport</h3>
-        <div style="display:flex;flex-direction:column">
-          <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.1">Vérification indépendante des valeurs déclarées</span></div>
-          <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.2">Détection des anomalies et incohérences</span></div>
-          <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.3">Croisement avec les consommations réelles</span></div>
-          <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.4">Avis indépendant sur la fiabilité du rapport</span></div>
-          <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.5">Recommandations et plan d'action détaillé</span></div>
-          {% if document.type_analyse == 'pca' or document.type_analyse == 'complet' %}
-          <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.6">État technique des composants du bâtiment</span></div>
-          <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.7">Plan de travaux priorisé avec estimations budgétaires</span></div>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-
-      {% if document.factures.exists %}
-      <div class="card" style="padding:1.4rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
-          <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;color:var(--gold);margin:0" data-ti18n="invoices.title">Factures énergétiques</h3>
-          <span style="font-size:.72rem;color:var(--gray-1)">{{ document.factures.count }} fichier{% if document.factures.count > 1 %}s{% endif %}</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:.4rem">
-          {% for facture in document.factures.all %}
-          <div style="display:flex;align-items:center;justify-content:space-between;font-size:.8rem;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-            <span style="color:var(--gray-2)">{{ facture.get_type_energie_display|default:facture.type_energie }}</span>
-            <span style="color:{% if facture.analyse_ok %}#27c93f{% else %}var(--gray-1){% endif %};font-size:.75rem">
-              {% if facture.analyse_ok %}<span data-ti18n="invoices.analyzed">✓ Analysée</span>{% else %}<span data-ti18n="invoices.pending">En attente</span>{% endif %}
-            </span>
-          </div>
-          {% endfor %}
-        </div>
-        <p style="font-size:.75rem;color:var(--gray-1);margin:.7rem 0 0;line-height:1.55" data-ti18n="invoices.desc">
-          Ces factures seront croisées avec les consommations modélisées dans le rapport thermique.
-        </p>
-      </div>
-      {% endif %}
-
-      <div class="card" style="padding:1.5rem">
-        <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:1rem" data-ti18n="contact.title">Messages ConformExpert</div>
-
-        {# Liste des messages #}
-        <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;max-height:320px;overflow-y:auto" id="msgListClient">
-          {% for msg in document.messages.all %}
-          <div style="padding:.7rem .9rem;border-radius:8px;font-size:.82rem;line-height:1.55;
-            {% if msg.auteur == 'admin' %}
-              background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.15);margin-right:1.5rem
-            {% else %}
-              background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-left:1.5rem
-            {% endif %}">
-            <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--gray-1);margin-bottom:.3rem">
-              <span>{% if msg.auteur == 'admin' %}ConformExpert{% else %}Vous{% endif %}</span>
-              <span>{{ msg.created_at|date:"d/m/Y à H:i" }}</span>
-            </div>
-            <div style="color:var(--gray-2)">{{ msg.contenu }}</div>
-            {% if msg.fichier %}
-            <a href="{{ msg.fichier.url }}" target="_blank"
-              style="display:inline-flex;align-items:center;gap:.4rem;margin-top:.5rem;font-size:.75rem;color:var(--gold);text-decoration:none">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-              {{ msg.fichier_nom|default:"Fichier joint" }}
-            </a>
-            {% endif %}
-          </div>
-          {% empty %}
-          <div style="text-align:center;padding:1.5rem 0;font-size:.8rem;color:var(--gray-1)">
-            Aucun message pour ce dossier.
-          </div>
-          {% endfor %}
-        </div>
-
-        {# Formulaire réponse client #}
-        <form method="post" action="{% url 'client_send_message' document.tracking_token %}" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:.6rem">
-          {% csrf_token %}
-          <textarea name="contenu" rows="3" placeholder="Écrire un message…"
-            style="background:var(--navy-3);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:var(--white);font-size:.82rem;padding:.7rem .9rem;resize:vertical;font-family:inherit;width:100%;box-sizing:border-box"
-            onfocus="this.style.borderColor='rgba(200,168,75,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
-          <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
-            <label style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .8rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.75rem;color:var(--gray-1);cursor:pointer">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-              Joindre un fichier
-              <input type="file" name="fichier" style="display:none">
-            </label>
-            <button type="submit" class="btn btn-gold btn-sm" style="margin-left:auto" data-ti18n="contact.btn">
-              Envoyer
-            </button>
-          </div>
-        </form>
-      </div>
-
     </div>
+
+    {# Étapes horizontales #}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.5rem">
+      {% for step_label, step_state in step_list %}
+      <div style="display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-radius:8px;
+        {% if step_state == 'done' %}background:rgba(39,201,63,.07);border:1px solid rgba(39,201,63,.15)
+        {% elif step_state == 'active' %}background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2)
+        {% else %}background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05){% endif %}">
+        <div class="step-dot {{ step_state }}" style="flex-shrink:0;width:22px;height:22px;font-size:.65rem">
+          {% if step_state == 'done' %}✓{% elif step_state == 'active' %}→{% else %}○{% endif %}
+        </div>
+        <span style="font-size:.76rem;
+          {% if step_state == 'done' %}color:var(--gray-2)
+          {% elif step_state == 'active' %}color:var(--white);font-weight:500
+          {% else %}color:var(--muted){% endif %}">
+          {{ step_label }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# CTA rapport si terminé #}
+    {% if document.status == 'termine' %}
+    <div style="display:flex;gap:.8rem;margin-top:1.4rem;flex-wrap:wrap">
+      <a href="{% url 'rapport_ia_client' document.tracking_token %}" class="btn-rapport-primary" style="flex:1;min-width:200px">
+        📄 <span data-ti18n="btn.rapport">Consulter le rapport de validation</span>
+      </a>
+      {% if document.rapport_pdf %}
+      <a href="{{ document.rapport_pdf.url }}" target="_blank" download class="btn-rapport-secondary" style="flex:1;min-width:160px">
+        ⬇ <span data-ti18n="btn.pdf">Télécharger le PDF</span>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# Message attente #}
+    {% if document.status == 'recu' %}
+    <div style="margin-top:1.2rem;padding:1rem 1.2rem;background:rgba(200,168,75,.04);border-radius:8px;border:1px solid rgba(200,168,75,.12)">
+      <div style="font-size:.82rem;color:var(--gold);font-weight:500;margin-bottom:.3rem">⏳ <span data-ti18n="waiting.title">En attente de validation</span></div>
+      <p style="font-size:.78rem;color:var(--gray-2);line-height:1.65;margin:0" data-ti18n="waiting.desc">
+        Votre dossier est en cours d'examen. Vous recevrez un email avec le devis dès qu'il sera validé par notre équipe.
+      </p>
+    </div>
+    {% endif %}
   </div>
 
+  {# ═══════════════════════════════════════════════════════════
+     ZONE 2 — INFOS + CONTENU/RÉSULTATS + FACTURES (3 colonnes)
+  ═══════════════════════════════════════════════════════════ #}
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;align-items:start">
+    @media(max-width:900px){grid-template-columns:1fr 1fr}
+    @media(max-width:600px){grid-template-columns:1fr}
+
+    {# Colonne 1 : Infos dossier #}
+    <div class="card" style="padding:1.5rem">
+      <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1rem;color:var(--gold)" data-ti18n="info.title">Informations du dossier</h3>
+      {% if document.client_name %}
+      <div class="info-row"><span class="info-label" data-ti18n="info.client">Client</span><span class="info-val">{{ document.client_name }}</span></div>
+      {% endif %}
+      <div class="info-row">
+        <span class="info-label" data-ti18n="info.ref">Référence</span>
+        <span style="font-size:.82rem;color:var(--gold);font-family:monospace;font-weight:600">DOC-{{ document.id|stringformat:"04d" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label" data-ti18n="info.mission">Mission</span>
+        <span class="info-val">
+          {% if document.type_analyse == 'pca' %}<span data-ti18n="mission.pca">Pré-analyse (PCA)</span>
+          {% elif document.type_analyse == 'complet' %}<span data-ti18n="mission.complet">Analyse complète</span>
+          {% else %}<span data-ti18n="mission.default">Validation thermique</span>{% endif %}
+        </span>
+      </div>
+      {% if document.norme and document.type_analyse != 'pca' %}
+      <div class="info-row"><span class="info-label" data-ti18n="info.norme">Norme</span><span style="font-size:.82rem;color:var(--white);font-weight:500">{{ document.norme }}</span></div>
+      {% endif %}
+      {% if document.logiciel_detecte %}
+      <div class="info-row"><span class="info-label" data-ti18n="info.logiciel">Logiciel</span><span class="info-val">{{ document.logiciel_detecte }}</span></div>
+      {% endif %}
+      {% if document.get_building_type_display %}
+      <div class="info-row"><span class="info-label" data-ti18n="info.building">Bâtiment</span><span class="info-val">{{ document.get_building_type_display }}</span></div>
+      {% endif %}
+      {% if document.surface_totale %}
+      <div class="info-row"><span class="info-label" data-ti18n="info.surface">Surface</span><span class="info-val">{{ document.surface_totale }} m²</span></div>
+      {% endif %}
+      <div class="info-row"><span class="info-label" data-ti18n="info.date">Reçu le</span><span class="info-val">{{ document.upload_date|date:"d/m/Y" }}</span></div>
+      <div class="info-row">
+        <span class="info-label" data-ti18n="info.link">Lien</span>
+        <button id="copyBtn" onclick="
+          navigator.clipboard.writeText('{{ request.build_absolute_uri }}');
+          const lang = localStorage.getItem('ce_lang') || 'fr';
+          const tr = TRACKING_TR[lang] || TRACKING_TR['fr'];
+          this.innerHTML = tr['info.copied'];
+          setTimeout(()=>{ this.innerHTML = tr['info.copy']; }, 2000)"
+          style="background:none;border:none;color:var(--gold);font-size:.78rem;cursor:pointer;padding:0;font-family:inherit"
+          data-ti18n="info.copy">Copier</button>
+      </div>
+    </div>
+
+    {# Colonne 2 : Résultats ou Contenu à venir #}
+    {% if document.status == 'termine' %}
+    <div class="card" style="padding:1.5rem;border-color:rgba(200,168,75,.15)">
+      <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1rem;color:var(--gold)" data-ti18n="result.title">Résultat de la validation</h3>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem">
+        {% if rapport_ia_score %}
+        <div class="score-ring-wrap">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#C8A84B" stroke-width="6"
+              stroke-dasharray="201" stroke-dashoffset="{{ rapport_ia_score_offset }}" stroke-linecap="round"/>
+          </svg>
+          <div class="score-ring-label">
+            <span class="score-ring-num">{{ rapport_ia_score }}</span>
+            <span class="score-ring-sub">/100</span>
+          </div>
+        </div>
+        {% endif %}
+        <div style="flex:1">
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">
+            {% if document.type_analyse == 'pca' %}<span data-ti18n="result.verdict.pca">État technique</span>{% else %}<span data-ti18n="result.verdict">Verdict</span> {{ document.norme }}{% endif %}
+          </div>
+          {% if document.is_conform is None %}
+            <span style="color:var(--muted);font-size:.85rem" data-ti18n="result.analyzing">En cours</span>
+          {% elif document.is_conform %}
+            <div style="font-size:1.1rem;font-weight:700;color:#27c93f;font-family:'Playfair Display',serif" data-ti18n="result.conform">✓ Conforme</div>
+            <div style="font-size:.73rem;color:var(--gray-1);margin-top:.2rem" data-ti18n="result.conform.sub">Rapport validé</div>
+          {% else %}
+            <div style="font-size:1.1rem;font-weight:700;color:#ef5350;font-family:'Playfair Display',serif" data-ti18n="result.nonconform">✗ Non conforme</div>
+            <div style="font-size:.73rem;color:var(--gray-1);margin-top:.2rem" data-ti18n="result.nonconform.sub">Points d'attention identifiés</div>
+          {% endif %}
+        </div>
+      </div>
+      {% if document.rt2012_bbio or document.rt2012_cep or document.re2020_energy_efficiency or document.dpe_conso_ep %}
+      <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.6rem" data-ti18n="result.keyvals">Valeurs clés</div>
+      {% if document.rt2012_bbio %}<div class="info-row"><span class="info-label">Bbio</span><span class="info-val">{{ document.rt2012_bbio }}</span></div>{% endif %}
+      {% if document.rt2012_cep %}<div class="info-row"><span class="info-label">Cep</span><span class="info-val">{{ document.rt2012_cep }} kWh/m².an</span></div>{% endif %}
+      {% if document.re2020_energy_efficiency %}<div class="info-row"><span class="info-label">Cep,nr</span><span class="info-val">{{ document.re2020_energy_efficiency }} kWh/m².an</span></div>{% endif %}
+      {% if document.dpe_conso_ep %}<div class="info-row"><span class="info-label" data-ti18n="result.conso">Conso. EP</span><span class="info-val">{{ document.dpe_conso_ep }} kWh/m².an</span></div>{% endif %}
+      {% endif %}
+      <p style="font-size:.75rem;color:var(--gray-1);line-height:1.6;margin:.8rem 0 0" data-ti18n="result.desc">
+        Le rapport complet contient l'avis indépendant, les anomalies détectées et les recommandations.
+      </p>
+    </div>
+    {% else %}
+    <div class="card" style="padding:1.5rem;background:rgba(200,168,75,.03);border-color:rgba(200,168,75,.1)">
+      <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1rem;color:var(--gold)" data-ti18n="preview.title">Ce que contiendra le rapport</h3>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.1">Vérification indépendante des valeurs</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.2">Détection des anomalies</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.3">Croisement consommations réelles</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.4">Avis indépendant de fiabilité</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.5">Recommandations et plan d'action</span></div>
+      {% if document.type_analyse == 'pca' or document.type_analyse == 'complet' %}
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.6">État technique des composants</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.7">Plan de travaux priorisé</span></div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# Colonne 3 : Factures (si présentes) sinon vide #}
+    {% if document.factures.exists %}
+    <div class="card" style="padding:1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;color:var(--gold);margin:0" data-ti18n="invoices.title">Factures énergétiques</h3>
+        <span style="font-size:.7rem;color:var(--gray-1)">{{ document.factures.count }} fichier{% if document.factures.count > 1 %}s{% endif %}</span>
+      </div>
+      {% for facture in document.factures.all %}
+      <div class="info-row">
+        <span class="info-label">{{ facture.get_type_energie_display|default:facture.type_energie }}</span>
+        <span style="font-size:.75rem;color:{% if facture.analyse_ok %}#27c93f{% else %}var(--gray-1){% endif %}">
+          {% if facture.analyse_ok %}<span data-ti18n="invoices.analyzed">✓ Analysée</span>{% else %}<span data-ti18n="invoices.pending">En attente</span>{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+      <p style="font-size:.73rem;color:var(--gray-1);margin:.8rem 0 0;line-height:1.55" data-ti18n="invoices.desc">
+        Croisées avec les consommations modélisées.
+      </p>
+    </div>
+    {% else %}
+    <div></div>
+    {% endif %}
+
+  </div>
+
+  {# Responsive fix pour la grille #}
+  <style>
+  @media(max-width:900px){
+    div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
+  }
+  @media(max-width:600px){
+    div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr!important}
+  }
+  </style>
+
+  {# ═══════════════════════════════════════════════════════════
+     ZONE 3 — MESSAGERIE (pleine largeur)
+  ═══════════════════════════════════════════════════════════ #}
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:1rem" data-ti18n="contact.title">Messages ConformExpert</div>
+
+    <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;max-height:260px;overflow-y:auto" id="msgListClient">
+      {% for msg in document.messages.all %}
+      <div style="padding:.7rem .9rem;border-radius:8px;font-size:.82rem;line-height:1.55;
+        {% if msg.auteur == 'admin' %}
+          background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.15);margin-right:20%
+        {% else %}
+          background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-left:20%
+        {% endif %}">
+        <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--gray-1);margin-bottom:.3rem">
+          <span>{% if msg.auteur == 'admin' %}ConformExpert{% else %}Vous{% endif %}</span>
+          <span>{{ msg.created_at|date:"d/m/Y à H:i" }}</span>
+        </div>
+        <div style="color:var(--gray-2)">{{ msg.contenu }}</div>
+        {% if msg.fichier %}
+        <a href="{{ msg.fichier.url }}" target="_blank"
+          style="display:inline-flex;align-items:center;gap:.4rem;margin-top:.5rem;font-size:.75rem;color:var(--gold);text-decoration:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          {{ msg.fichier_nom|default:"Fichier joint" }}
+        </a>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div style="text-align:center;padding:1.2rem 0;font-size:.8rem;color:var(--gray-1)">
+        Aucun message pour ce dossier.
+      </div>
+      {% endfor %}
+    </div>
+
+    <form method="post" action="{% url 'client_send_message' document.tracking_token %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div style="display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:end">
+        <textarea name="contenu" rows="2" placeholder="Écrire un message…"
+          style="background:var(--navy-3);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:var(--white);font-size:.82rem;padding:.7rem .9rem;resize:vertical;font-family:inherit;width:100%;box-sizing:border-box"
+          onfocus="this.style.borderColor='rgba(200,168,75,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <label style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .8rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.75rem;color:var(--gray-1);cursor:pointer;white-space:nowrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+            Joindre
+            <input type="file" name="fichier" style="display:none">
+          </label>
+          <button type="submit" class="btn btn-gold btn-sm" data-ti18n="contact.btn">Envoyer</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════
+     BANDEAU CONFIANCE
+  ═══════════════════════════════════════════════════════════ #}
   <div class="trust-footer">
     <div class="trust-footer-stats">
-      <div class="trust-stat">
-        <strong>100%</strong>
-        <span data-ti18n="trust.independent">Indépendant</span>
-      </div>
+      <div class="trust-stat"><strong>100%</strong><span data-ti18n="trust.independent">Indépendant</span></div>
       <div class="trust-sep"></div>
-      <div class="trust-stat">
-        <strong>10j</strong>
-        <span data-ti18n="trust.deadline">Délai garanti</span>
-      </div>
+      <div class="trust-stat"><strong>10j</strong><span data-ti18n="trust.deadline">Délai garanti</span></div>
       <div class="trust-sep"></div>
       <div class="trust-stat"><strong>RT/RE</strong><span>2012 · 2020 · DPE</span></div>
       <div class="trust-sep"></div>
