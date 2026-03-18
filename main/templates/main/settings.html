@@ -302,19 +302,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- NAV STICKY -->
 <div class="params-nav">
   <div class="params-nav-inner">
-    <a class="nav-pill" href="#administration">⚙ Administration</a>
+    <a class="nav-pill" href="#administration">Administration</a>
     {% for pays_code, pays_label, normes in seuils_par_pays %}
-    <a class="nav-pill" href="#pays-{{ pays_code|lower }}">
-      {% if pays_code == 'FR' %}🇫🇷
-      {% elif pays_code == 'BE' %}🇧🇪
-      {% elif pays_code == 'CH' %}🇨🇭
-      {% elif pays_code == 'CA' %}🇨🇦
-      {% elif pays_code == 'LU' %}🇱🇺
-      {% endif %}
-      {{ pays_label }}
-    </a>
+    <a class="nav-pill" href="#pays-{{ pays_code|lower }}">{{ pays_label }}</a>
     {% endfor %}
-    <a class="nav-pill" href="#pca">🔧 PCA</a>
+    <a class="nav-pill" href="#pca">PCA</a>
   </div>
 </div>
 
