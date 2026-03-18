@@ -1781,7 +1781,7 @@ def download_report(request, document_id):
          "CNEB : Code national de l'énergie pour les bâtiments (Canada)  |  "
          "LENOZ : Règlement grand-ducal du 23 juillet 2016 (Luxembourg)"),
         ("Contact",
-         "ConformExpert  ·  contact@conformexpert.fr  ·  Délai garanti 15 jours ouvrés"),
+         "ConformExpert  ·  contact@conformexpert.fr  ·  Délai garanti 10 jours ouvrés"),
     ]
     for k, v in disc_items:
         disc_t = Table([[
