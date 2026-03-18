@@ -16,7 +16,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Document, DocumentFile, Analysis, Devis, FactureEnergie
+from .models import Document, DocumentFile, Analysis, Devis, FactureEnergie, Message
 from .forms import DocumentForm, ContactForm
 from .serializers import DocumentSerializer, AnalysisSerializer
 
@@ -785,11 +785,19 @@ def tracking(request, token):
         progress_pct = 60
         devis_accepte = True
 
+    # Marquer les messages admin comme lus par le client
+    document.messages.filter(auteur='admin', lu_client=False).update(lu_client=True)
+
+    rapport_ia_score = None
+    rapport_ia_score_offset = 201
+
     return render(request, 'main/tracking.html', {
         'document': document,
         'step_list': step_list,
         'progress_pct': progress_pct,
         'devis_accepte': devis_accepte,
+        'rapport_ia_score': rapport_ia_score,
+        'rapport_ia_score_offset': rapport_ia_score_offset,
     })
 
 
@@ -2975,3 +2983,34 @@ def devis_delete(request, devis_id):
         d.delete()
         messages.success(request, 'Devis supprimé.')
     return redirect('devis_list')
+
+
+# ── MESSAGERIE ────────────────────────────────────────────────────────────────
+
+@login_required(login_url='/login/')
+def admin_send_message(request, doc_id):
+    document = get_object_or_404(Document, id=doc_id)
+    if request.method == 'POST':
+        contenu = request.POST.get('contenu', '').strip()
+        fichier = request.FILES.get('fichier')
+        if contenu or fichier:
+            msg = Message(document=document, auteur='admin', contenu=contenu)
+            if fichier:
+                msg.fichier = fichier
+                msg.fichier_nom = fichier.name
+            msg.save()
+    return redirect('edit_document', doc_id=doc_id)
+
+
+def client_send_message(request, token):
+    document = get_object_or_404(Document, tracking_token=token)
+    if request.method == 'POST':
+        contenu = request.POST.get('contenu', '').strip()
+        fichier = request.FILES.get('fichier')
+        if contenu or fichier:
+            msg = Message(document=document, auteur='client', contenu=contenu)
+            if fichier:
+                msg.fichier = fichier
+                msg.fichier_nom = fichier.name
+            msg.save()
+    return redirect('tracking', token=token)
