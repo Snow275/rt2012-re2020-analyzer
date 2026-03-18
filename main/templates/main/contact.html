@@ -20,7 +20,18 @@ const CONTACT_TR = {
     "form.title":   "Formulaire de contact",
     "form.sub":     "R\u00e9ponse sous 48h ouvr\u00e9es",
     "form.submit":  "Envoyer le message \u2192",
-    "tooltip":      "Pour les pays hors France, indiquer l\u2019indicatif du pays (ex\u00a0: +32, +41)"
+    "tooltip":      "Pour les pays hors France, indiquer l\u2019indicatif du pays (ex\u00a0: +32, +41)",
+    "field.name":       "Nom complet",
+    "field.email":      "Email",
+    "field.phone":      "T\u00e9l\u00e9phone",
+    "field.profile":    "Profil",
+    "field.message":    "Message",
+    "profile.select":   "S\u00e9lectionner\u2026",
+    "profile.archi":    "Architecte / Bureau d\u2019\u00e9tudes",
+    "profile.promoteur":"Promoteur / Ma\u00eetre d\u2019ouvrage",
+    "profile.agent":    "Agent immobilier",
+    "profile.part":     "Particulier",
+    "profile.autre":    "Autre"
   },
   en: {
     "label":        "Contact",
@@ -32,7 +43,18 @@ const CONTACT_TR = {
     "form.title":   "Contact form",
     "form.sub":     "Reply within 48 business hours",
     "form.submit":  "Send message \u2192",
-    "tooltip":      "For countries outside France, include the country code (e.g. +32, +41)"
+    "tooltip":      "For countries outside France, include the country code (e.g. +32, +41)",
+    "field.name":       "Full name",
+    "field.email":      "Email",
+    "field.phone":      "Phone",
+    "field.profile":    "Profile",
+    "field.message":    "Message",
+    "profile.select":   "Select\u2026",
+    "profile.archi":    "Architect / Engineering firm",
+    "profile.promoteur":"Developer / Project owner",
+    "profile.agent":    "Real estate agent",
+    "profile.part":     "Individual",
+    "profile.autre":    "Other"
   }
 };
 
@@ -43,6 +65,35 @@ function applyContactLang() {
     const key = el.getAttribute('data-ci18n');
     if (tr[key] !== undefined) el.innerHTML = tr[key];
   });
+
+  // Patch Django form labels (rendered server-side)
+  const labelMap = {
+    'id_name':    'field.name',
+    'id_email':   'field.email',
+    'id_phone':   'field.phone',
+    'id_profile': 'field.profile',
+    'id_message': 'field.message',
+  };
+  Object.entries(labelMap).forEach(([fieldId, key]) => {
+    const input = document.getElementById(fieldId);
+    if (input) {
+      const label = document.querySelector('label[for="' + fieldId + '"]');
+      if (label && tr[key]) {
+        // Keep the * if present
+        const hasStar = label.textContent.includes('*');
+        label.innerHTML = tr[key] + (hasStar ? ' *' : '');
+      }
+    }
+  });
+
+  // Patch select options for profile
+  const profileSelect = document.getElementById('id_profile');
+  if (profileSelect) {
+    const optMap = ['profile.select','profile.archi','profile.promoteur','profile.agent','profile.part','profile.autre'];
+    Array.from(profileSelect.options).forEach((opt, i) => {
+      if (optMap[i] && tr[optMap[i]]) opt.text = tr[optMap[i]];
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', applyContactLang);
