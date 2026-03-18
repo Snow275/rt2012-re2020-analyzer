@@ -533,17 +533,55 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
       </div>
       {% endif %}
 
-      <div class="card" style="padding:1.5rem;background:rgba(255,255,255,.01)">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem">
-          <div>
-            <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:.25rem" data-ti18n="contact.title">Une question sur votre dossier ?</div>
-            <div style="font-size:.76rem;color:var(--gray-1)" data-ti18n="contact.sub">Notre équipe répond sous 24h ouvrées</div>
+      <div class="card" style="padding:1.5rem">
+        <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:1rem" data-ti18n="contact.title">Messages ConformExpert</div>
+
+        {# Liste des messages #}
+        <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;max-height:320px;overflow-y:auto" id="msgListClient">
+          {% for msg in document.messages.all %}
+          <div style="padding:.7rem .9rem;border-radius:8px;font-size:.82rem;line-height:1.55;
+            {% if msg.auteur == 'admin' %}
+              background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.15);margin-right:1.5rem
+            {% else %}
+              background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-left:1.5rem
+            {% endif %}">
+            <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--gray-1);margin-bottom:.3rem">
+              <span>{% if msg.auteur == 'admin' %}ConformExpert{% else %}Vous{% endif %}</span>
+              <span>{{ msg.created_at|date:"d/m/Y à H:i" }}</span>
+            </div>
+            <div style="color:var(--gray-2)">{{ msg.contenu }}</div>
+            {% if msg.fichier %}
+            <a href="{{ msg.fichier.url }}" target="_blank"
+              style="display:inline-flex;align-items:center;gap:.4rem;margin-top:.5rem;font-size:.75rem;color:var(--gold);text-decoration:none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              {{ msg.fichier_nom|default:"Fichier joint" }}
+            </a>
+            {% endif %}
           </div>
-          <a href="{% url 'contact' %}"
-            style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2);border-radius:7px;color:var(--gold);font-size:.82rem;font-weight:500;text-decoration:none;transition:background .2s"
-            onmouseover="this.style.background='rgba(200,168,75,.14)'" onmouseout="this.style.background='rgba(200,168,75,.08)'"
-            data-ti18n="contact.btn">✉ Nous contacter</a>
+          {% empty %}
+          <div style="text-align:center;padding:1.5rem 0;font-size:.8rem;color:var(--gray-1)">
+            Aucun message pour ce dossier.
+          </div>
+          {% endfor %}
         </div>
+
+        {# Formulaire réponse client #}
+        <form method="post" action="{% url 'client_send_message' document.tracking_token %}" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:.6rem">
+          {% csrf_token %}
+          <textarea name="contenu" rows="3" placeholder="Écrire un message…"
+            style="background:var(--navy-3);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:var(--white);font-size:.82rem;padding:.7rem .9rem;resize:vertical;font-family:inherit;width:100%;box-sizing:border-box"
+            onfocus="this.style.borderColor='rgba(200,168,75,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
+          <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+            <label style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .8rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.75rem;color:var(--gray-1);cursor:pointer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Joindre un fichier
+              <input type="file" name="fichier" style="display:none">
+            </label>
+            <button type="submit" class="btn btn-gold btn-sm" style="margin-left:auto" data-ti18n="contact.btn">
+              Envoyer
+            </button>
+          </div>
+        </form>
       </div>
 
     </div>
