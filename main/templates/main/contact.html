@@ -3,14 +3,56 @@
 @media (max-width: 768px) { .tooltip-text { white-space: normal !important; width: 180px; } }
 </style>
 {% extends 'main/base.html' %}
-{% block title %}Contact{% endblock %}
+{% block title %}{% if LANGUAGE == 'en' %}Contact{% else %}Contact{% endif %}{% endblock %}
 
 {% block content %}
+
+<script>
+// ── i18n contact ────────────────────────────────────────────
+const CONTACT_TR = {
+  fr: {
+    "label":        "Contact",
+    "h1":           "Nous contacter",
+    "sub":          "Une question sur un dossier\u00a0? Un projet \u00e0 discuter\u00a0? R\u00e9ponse sous 48h.",
+    "card.desc":    "Analyse ind\u00e9pendante de conformit\u00e9 selon le r\u00e9f\u00e9rentiel.<br>D\u00e9lai garanti 10 jours ouvr\u00e9s.",
+    "card.quote":   "\u00abPour d\u00e9poser directement un dossier avec vos documents, utilisez le formulaire de d\u00e9p\u00f4t d\u00e9di\u00e9.\u00bb",
+    "card.btn":     "D\u00e9poser un dossier \u2192",
+    "form.title":   "Formulaire de contact",
+    "form.sub":     "R\u00e9ponse sous 48h ouvr\u00e9es",
+    "form.submit":  "Envoyer le message \u2192",
+    "tooltip":      "Pour les pays hors France, indiquer l\u2019indicatif du pays (ex\u00a0: +32, +41)"
+  },
+  en: {
+    "label":        "Contact",
+    "h1":           "Contact us",
+    "sub":          "A question about a file? A project to discuss? We reply within 48 hours.",
+    "card.desc":    "Independent compliance analysis against the applicable standard.<br>Guaranteed 10 business day turnaround.",
+    "card.quote":   "\u201cTo submit a file with your documents directly, use the dedicated submission form.\u201d",
+    "card.btn":     "Submit a file \u2192",
+    "form.title":   "Contact form",
+    "form.sub":     "Reply within 48 business hours",
+    "form.submit":  "Send message \u2192",
+    "tooltip":      "For countries outside France, include the country code (e.g. +32, +41)"
+  }
+};
+
+function applyContactLang() {
+  const lang = localStorage.getItem('ce_lang') || 'fr';
+  const tr = CONTACT_TR[lang] || CONTACT_TR['fr'];
+  document.querySelectorAll('[data-ci18n]').forEach(el => {
+    const key = el.getAttribute('data-ci18n');
+    if (tr[key] !== undefined) el.innerHTML = tr[key];
+  });
+}
+
+document.addEventListener('DOMContentLoaded', applyContactLang);
+</script>
+
 <div class="page-header">
   <div class="ph-inner">
-    <span class="s-label">Contact</span>
-    <h1>Nous contacter</h1>
-    <p>Une question sur un dossier ? Un projet à discuter ? Réponse sous 48h.</p>
+    <span class="s-label" data-ci18n="label">Contact</span>
+    <h1 data-ci18n="h1">Nous contacter</h1>
+    <p data-ci18n="sub">Une question sur un dossier ? Un projet à discuter ? Réponse sous 48h.</p>
   </div>
 </div>
 
@@ -19,9 +61,9 @@
 
     <div class="fade-up">
       <div class="card" style="padding:2rem;margin-bottom:1.5rem">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem">📍 ConformExpert</h3>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem">ConformExpert</h3>
         <div style="display:flex;flex-direction:column;gap:.8rem">
-          <div style="font-size:.85rem;color:var(--gray-2);font-weight:300;line-height:1.7">
+          <div style="font-size:.85rem;color:var(--gray-2);font-weight:300;line-height:1.7" data-ci18n="card.desc">
             Analyse indépendante de conformité selon le référentiel.<br>
             Délai garanti 10 jours ouvrés.
           </div>
@@ -31,17 +73,17 @@
         </div>
       </div>
       <div class="card" style="padding:2rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
-        <p style="font-size:.83rem;color:var(--gray-2);font-weight:300;line-height:1.75;font-style:italic">
+        <p style="font-size:.83rem;color:var(--gray-2);font-weight:300;line-height:1.75;font-style:italic" data-ci18n="card.quote">
           "Pour déposer directement un dossier avec vos documents, utilisez le formulaire de dépôt dédié."
         </p>
-        <a href="{% url 'import' %}" class="btn btn-gold btn-sm" style="margin-top:1rem;display:inline-flex">Déposer un dossier →</a>
+        <a href="{% url 'import' %}" class="btn btn-gold btn-sm" style="margin-top:1rem;display:inline-flex" data-ci18n="card.btn">Déposer un dossier →</a>
       </div>
     </div>
 
     <div class="card card-gold fade-up-2" style="overflow:hidden">
       <div style="background:linear-gradient(135deg,var(--navy-3),var(--navy-2));padding:2rem 2.5rem;border-bottom:1px solid rgba(200,168,75,.1)">
-        <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem">Formulaire de contact</h2>
-        <p style="font-size:.82rem;color:var(--gray-1);font-weight:300">Réponse sous 48h ouvrées</p>
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.3rem" data-ci18n="form.title">Formulaire de contact</h2>
+        <p style="font-size:.82rem;color:var(--gray-1);font-weight:300" data-ci18n="form.sub">Réponse sous 48h ouvrées</p>
       </div>
       <div style="padding:2.5rem">
         <form method="post">
@@ -64,7 +106,7 @@
                 {{ form.phone.label }}
                 <span style="position:relative;display:inline-flex;align-items:center" class="tooltip-wrap">
                   <span style="width:14px;height:14px;border-radius:50%;background:rgba(200,168,75,.2);border:1px solid rgba(200,168,75,.4);color:var(--gold);font-size:.65rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:default">i</span>
-                  <span class="tooltip-text" style="position:absolute;top:calc(100% + 6px);left:0;transform:none;background:#0C1929;border:1px solid rgba(200,168,75,.25);color:var(--gray-2);font-size:.72rem;font-weight:400;padding:.4rem .7rem;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;z-index:99">
+                  <span class="tooltip-text" data-ci18n="tooltip" style="position:absolute;top:calc(100% + 6px);left:0;transform:none;background:#0C1929;border:1px solid rgba(200,168,75,.25);color:var(--gray-2);font-size:.72rem;font-weight:400;padding:.4rem .7rem;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;z-index:99">
                     Pour les pays hors France, indiquer l'indicatif du pays (ex : +32, +41)
                   </span>
                 </span>
@@ -81,7 +123,7 @@
             {{ form.message }}
             {% if form.message.errors %}<span class="form-error">{{ form.message.errors.0 }}</span>{% endif %}
           </div>
-          <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:1rem">Envoyer le message →</button>
+          <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:1rem" data-ci18n="form.submit">Envoyer le message →</button>
         </form>
       </div>
     </div>
