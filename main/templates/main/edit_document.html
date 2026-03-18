@@ -989,30 +989,48 @@ select.f-input option { background: #0c1929; }
 
       {# ── COL GAUCHE : Messagerie ── #}
       <div class="comm-card">
-        <div class="comm-card-title">Message au client</div>
+        <div class="comm-card-title">Messages avec le client</div>
 
         <div class="msg-list" id="msgList">
+          {% for msg in document.messages.all %}
+          <div class="msg-item {% if msg.auteur == 'admin' %}sent{% else %}received{% endif %}">
+            <div class="msg-meta">
+              <span>{% if msg.auteur == 'admin' %}Vous{% else %}{{ document.client_name|default:"Client" }}{% endif %}</span>
+              <span>{{ msg.created_at|date:"d/m H:i" }}</span>
+            </div>
+            <div>{{ msg.contenu }}</div>
+            {% if msg.fichier %}
+            <a href="{{ msg.fichier.url }}" target="_blank"
+              style="display:inline-flex;align-items:center;gap:.4rem;margin-top:.4rem;font-size:.73rem;color:var(--gold);text-decoration:none">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              {{ msg.fichier_nom|default:"Fichier joint" }}
+            </a>
+            {% endif %}
+          </div>
+          {% empty %}
           <div style="text-align:center;padding:1.5rem 0;font-size:.8rem;color:var(--gray-1)">
             Aucun message pour ce dossier.
           </div>
+          {% endfor %}
         </div>
 
-        <div class="msg-composer">
-          <textarea id="msgText" placeholder="Écrire un message au client…"></textarea>
+        <form method="post" action="{% url 'admin_send_message' document.id %}" enctype="multipart/form-data" class="msg-composer">
+          {% csrf_token %}
+          <textarea name="contenu" id="msgText" placeholder="Écrire un message au client…"></textarea>
           <div class="msg-composer-actions">
             <label class="attach-label">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
               Joindre un fichier
-              <input type="file" id="msgAttach" onchange="showAttach(this)">
+              <input type="file" name="fichier" id="msgAttach" onchange="showAttach(this)">
             </label>
             <span class="attach-preview" id="attachPreview"></span>
-            <button type="button" onclick="sendMessage()"
+            <button type="submit"
               {% if not document.client_email %}disabled{% endif %}
               class="btn btn-gold btn-sm" style="margin-left:auto">
               Envoyer
             </button>
           </div>
-        </div>
+        </form>
       </div>
 
       {# ── COL DROITE : Workflow emails ── #}
@@ -1079,20 +1097,11 @@ select.f-input option { background: #0c1929; }
       preview.style.display = 'inline-flex';
     }
   }
-  function sendMessage() {
-    const text = document.getElementById('msgText').value.trim();
-    if (!text) return;
+  // Auto-scroll message list to bottom
+  document.addEventListener('DOMContentLoaded', function() {
     const list = document.getElementById('msgList');
-    const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-    const item = document.createElement('div');
-    item.className = 'msg-item sent';
-    item.innerHTML = '<div class="msg-meta"><span>Vous</span><span>' + now + '</span></div>' + text;
-    list.querySelector('div[style]') && list.querySelector('div[style]').remove();
-    list.appendChild(item);
-    document.getElementById('msgText').value = '';
-    document.getElementById('attachPreview').style.display = 'none';
-    list.scrollTop = list.scrollHeight;
-  }
+    if (list) list.scrollTop = list.scrollHeight;
+  });
   </script>
 
   <!-- Modal devis -->
