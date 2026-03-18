@@ -41,6 +41,9 @@
 .trust-stat strong { display:block;font-size:1.05rem;font-weight:700;color:var(--gold) }
 .trust-stat span { font-size:.7rem;color:var(--gray-1);margin-top:.1rem;display:block }
 .trust-sep { width:1px;height:28px;background:rgba(255,255,255,.07) }
+.tracking-3col { display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;align-items:start }
+@media(max-width:900px){ .tracking-3col { grid-template-columns:1fr 1fr } }
+@media(max-width:600px){ .tracking-3col { grid-template-columns:1fr } }
 </style>
 
 <script>
@@ -229,9 +232,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
   </div>
   {% endif %}
 
-  {# ═══════════════════════════════════════════════════════════
-     ZONE 1 — STATUT + PROGRESSION (pleine largeur)
-  ═══════════════════════════════════════════════════════════ #}
+
   <div class="card" style="padding:2rem;margin-bottom:1.5rem;border-color:rgba(200,168,75,.15)">
 
     {# Ligne supérieure : statut + délai #}
@@ -310,14 +311,9 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
     {% endif %}
   </div>
 
-  {# ═══════════════════════════════════════════════════════════
-     ZONE 2 — INFOS + CONTENU/RÉSULTATS + FACTURES (3 colonnes)
-  ═══════════════════════════════════════════════════════════ #}
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;align-items:start">
-    @media(max-width:900px){grid-template-columns:1fr 1fr}
-    @media(max-width:600px){grid-template-columns:1fr}
 
-    {# Colonne 1 : Infos dossier #}
+  <div class="tracking-3col">
+
     <div class="card" style="padding:1.5rem">
       <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1rem;color:var(--gold)" data-ti18n="info.title">Informations du dossier</h3>
       {% if document.client_name %}
@@ -361,7 +357,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
       </div>
     </div>
 
-    {# Colonne 2 : Résultats ou Contenu à venir #}
+
     {% if document.status == 'termine' %}
     <div class="card" style="padding:1.5rem;border-color:rgba(200,168,75,.15)">
       <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1rem;color:var(--gold)" data-ti18n="result.title">Résultat de la validation</h3>
@@ -420,7 +416,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
     </div>
     {% endif %}
 
-    {# Colonne 3 : Factures (si présentes) sinon vide #}
+
     {% if document.factures.exists %}
     <div class="card" style="padding:1.5rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
@@ -445,19 +441,9 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
 
   </div>
 
-  {# Responsive fix pour la grille #}
-  <style>
-  @media(max-width:900px){
-    div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
-  }
-  @media(max-width:600px){
-    div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr!important}
-  }
-  </style>
 
-  {# ═══════════════════════════════════════════════════════════
-     ZONE 3 — MESSAGERIE (pleine largeur)
-  ═══════════════════════════════════════════════════════════ #}
+
+
   <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
     <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:1rem" data-ti18n="contact.title">Messages ConformExpert</div>
 
@@ -507,9 +493,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
     </form>
   </div>
 
-  {# ═══════════════════════════════════════════════════════════
-     BANDEAU CONFIANCE
-  ═══════════════════════════════════════════════════════════ #}
+
   <div class="trust-footer">
     <div class="trust-footer-stats">
       <div class="trust-stat"><strong>100%</strong><span data-ti18n="trust.independent">Indépendant</span></div>
