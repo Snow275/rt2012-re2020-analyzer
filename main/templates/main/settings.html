@@ -304,9 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="params-nav-inner">
     <a class="nav-pill" href="#administration">Administration</a>
     {% for pays_code, pays_label, normes in seuils_par_pays %}
-    <a class="nav-pill" href="#pays-{{ pays_code|lower }}">
-      <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:3px;font-size:.58rem;font-weight:700;letter-spacing:.02em;background:rgba(200,168,75,.15);color:var(--gold);border:1px solid rgba(200,168,75,.25);margin-right:.3rem;font-family:monospace">{{ pays_code }}</span>{{ pays_label|slice:"3:" }}
-    </a>
+    <a class="nav-pill" href="#pays-{{ pays_code|lower }}">{{ pays_label|slice:"3:" }}</a>
     {% endfor %}
     <a class="nav-pill" href="#pca">PCA</a>
   </div>
