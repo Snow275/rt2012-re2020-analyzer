@@ -1393,6 +1393,38 @@ footer {
     font-family: monospace;
   }
 
+
+/* ── Lang toggle ─────────────────────────────────────────── */
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-left: .8rem;
+  flex-shrink: 0;
+}
+.lang-btn {
+  padding: .3rem .55rem;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--gray-1);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+  line-height: 1;
+}
+.lang-btn.active {
+  background: var(--gold);
+  color: var(--navy);
+}
+.lang-btn:hover:not(.active) { color: var(--white); }
+
 </style>
 </head>
 
@@ -1434,15 +1466,19 @@ footer {
     <span style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--white)">Conform<span style="color:var(--gold)">Expert</span></span>
   </a>
   <ul class="nav-links">
-    <li><a href="#validation">Validation</a></li>
-    <li><a href="#comment">Processus</a></li>
-    <li><a href="#profils">Profils</a></li>
-    <li><a href="#suivi">Suivi</a></li>
+    <li><a href="#validation" data-i18n="nav.validation">Validation</a></li>
+    <li><a href="#comment" data-i18n="nav.process">Processus</a></li>
+    <li><a href="#profils" data-i18n="nav.profils">Profils</a></li>
+    <li><a href="#suivi" data-i18n="nav.suivi">Suivi</a></li>
     <li><a href="{% url 'import' %}" class="nav-cta">Déposer un dossier</a></li>
     {% if user.is_authenticated and user.is_staff %}
     <li style="margin-left:.5rem"><a href="{% url 'home' %}" style="font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gray-2)'">Dashboard</a></li>
     {% endif %}
   </ul>
+  <div class="lang-toggle" id="langToggle">
+    <button class="lang-btn active" id="btnFR" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" id="btnEN" onclick="setLang('en')">EN</button>
+  </div>
   <button class="nav-hamburger" id="hamburgerBtn" aria-label="Menu" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
@@ -1451,15 +1487,19 @@ footer {
 <!-- Mobile menu -->
 <div class="nav-mobile-menu" id="mobileMenu" role="dialog" aria-modal="true">
   <button class="nav-mobile-close" id="mobileClose" aria-label="Fermer le menu">✕</button>
-  <a href="#validation" class="mobile-link">Validation</a>
-  <a href="#comment" class="mobile-link">Processus</a>
-  <a href="#profils" class="mobile-link">Profils</a>
-  <a href="#suivi" class="mobile-link">Suivi dossier</a>
+  <a href="#validation" class="mobile-link" data-i18n="nav.validation">Validation</a>
+  <a href="#comment" class="mobile-link" data-i18n="nav.process">Processus</a>
+  <a href="#profils" class="mobile-link" data-i18n="nav.profils">Profils</a>
+  <a href="#suivi" class="mobile-link" data-i18n="nav.suivi">Suivi dossier</a>
   <a href="#faq" class="mobile-link">FAQ</a>
   <a href="{% url 'import' %}" class="nav-cta mobile-link">Déposer un dossier</a>
   {% if user.is_authenticated and user.is_staff %}
   <a href="{% url 'home' %}" class="mobile-link">Dashboard</a>
   {% endif %}
+  <div class="lang-toggle" style="margin-top:1rem;align-self:flex-start">
+    <button class="lang-btn active" id="btnFR_m" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" id="btnEN_m" onclick="setLang('en')">EN</button>
+  </div>
 </div>
 
 <script>
@@ -1484,7 +1524,7 @@ footer {
   <div class="hero-left">
     <div class="soft-badge anim-1">
       <span class="soft-badge-dot"></span>
-      Tiers indépendant · Validation réglementaire
+      <span data-i18n="hero.badge">Tiers indépendant · Validation réglementaire</span>
     </div>
 
     <h1 class="anim-2">
@@ -1492,12 +1532,12 @@ footer {
       <em>vérifié par un tiers.</em>
     </h1>
 
-    <p class="hero-desc anim-3">
+    <p class="hero-desc anim-3" data-i18n="hero.desc">
       ConformExpert n'est pas un bureau d'études. Nous sommes le regard externe qui contrôle vos rapports Climawin, Pléiades et DPE — seuils réglementaires, cohérence des valeurs, croisement avec les consommations réelles.
     </p>
 
     <div class="logiciels-bar anim-3">
-      <span class="logiciels-bar-label">Fichiers acceptés</span>
+      <span class="logiciels-bar-label" data-i18n="hero.files">Fichiers acceptés</span>
       <span class="logiciel-tag"><span class="lt-dot"></span>Climawin RT2012</span>
       <span class="logiciel-tag"><span class="lt-dot"></span>Climawin RE2020</span>
       <span class="logiciel-tag"><span class="lt-dot"></span>Pléiades</span>
@@ -1514,10 +1554,10 @@ footer {
     </div>
 
     <div class="hero-stats anim-4">
-      <div class="hero-stat"><strong>10j</strong><span>Délai garanti</span></div>
-      <div class="hero-stat"><strong>100%</strong><span>Indépendant</span></div>
-      <div class="hero-stat"><strong>6</strong><span>Normes couvertes</span></div>
-      <div class="hero-stat"><strong>PDF</strong><span>Rapport livré</span></div>
+      <div class="hero-stat"><strong>10j</strong><span data-i18n="hero.stat1">Délai garanti</span></div>
+      <div class="hero-stat"><strong>100%</strong><span data-i18n="hero.stat2">Indépendant</span></div>
+      <div class="hero-stat"><strong>6</strong><span data-i18n="hero.stat3">Normes couvertes</span></div>
+      <div class="hero-stat"><strong>PDF</strong><span data-i18n="hero.stat4">Rapport livré</span></div>
     </div>
   </div>
 
@@ -1525,37 +1565,37 @@ footer {
     <div class="hcard-header">
       <div class="hcard-header-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
       <div>
-        <h3>Ce que nous vérifions</h3>
-        <p>Sur chaque rapport reçu</p>
+        <h3 data-i18n="hcard.title">Ce que nous vérifions</h3>
+        <p data-i18n="hcard.sub">Sur chaque rapport reçu</p>
       </div>
     </div>
     <div class="hcard-body">
       <div class="process-row">
         <div class="pr-num">1</div>
         <div class="pr-content">
-          <strong>Conformité des seuils réglementaires</strong>
-          <span>Bbio, Cep, DH, Ic énergie — vérification contre les valeurs de référence RT2012 / RE2020</span>
+          <strong data-i18n="hcard.step1">Conformité des seuils réglementaires</strong>
+          <span data-i18n="hcard.step1d">Bbio, Cep, DH, Ic énergie — vérification contre les valeurs de référence RT2012 / RE2020</span>
         </div>
       </div>
       <div class="process-row">
         <div class="pr-num">2</div>
         <div class="pr-content">
-          <strong>Cohérence et plausibilité des valeurs</strong>
-          <span>Détection des incohérences internes, hypothèses irréalistes, paramètres hors normes</span>
+          <strong data-i18n="hcard.step2">Cohérence et plausibilité des valeurs</strong>
+          <span data-i18n="hcard.step2d">Détection des incohérences internes, hypothèses irréalistes, paramètres hors normes</span>
         </div>
       </div>
       <div class="process-row">
         <div class="pr-num">3</div>
         <div class="pr-content">
-          <strong>Croisement avec les consommations réelles</strong>
-          <span>Comparaison modèle vs factures énergie — détection des écarts significatifs</span>
+          <strong data-i18n="hcard.step3">Croisement avec les consommations réelles</strong>
+          <span data-i18n="hcard.step3d">Comparaison modèle vs factures énergie — détection des écarts significatifs</span>
         </div>
       </div>
       <div class="process-row">
         <div class="pr-num">4</div>
         <div class="pr-content">
-          <strong>Avis de tiers indépendant</strong>
-          <span>Rapport de validation PDF avec score de confiance, alertes et recommandations</span>
+          <strong data-i18n="hcard.step4">Avis de tiers indépendant</strong>
+          <span data-i18n="hcard.step4d">Rapport de validation PDF avec score de confiance, alertes et recommandations</span>
         </div>
       </div>
     </div>
@@ -1583,9 +1623,9 @@ footer {
 <section class="section" id="validation">
   <div class="section-inner">
     <div class="reveal">
-      <span class="s-label">Pourquoi un tiers ?</span>
-      <h2 class="s-title">Ce qu'un bureau d'études<br><em>ne peut pas vérifier lui-même</em></h2>
-      <p class="s-sub">Un bureau d'études produit votre rapport thermique. ConformExpert joue le rôle du regard externe — celui qui contrôle que les valeurs sont cohérentes, les seuils respectés, et les conclusions fiables.</p>
+      <span class="s-label" data-i18n="section.why">Pourquoi un tiers ?</span>
+      <h2 class="s-title" data-i18n="val.title">Ce qu'un bureau d'études<br><em>ne peut pas vérifier lui-même</em></h2>
+      <p class="s-sub" data-i18n="val.sub">Un bureau d'études produit votre rapport thermique. ConformExpert joue le rôle du regard externe — celui qui contrôle que les valeurs sont cohérentes, les seuils respectés, et les conclusions fiables.</p>
     </div>
 
     <div class="validation-grid">
@@ -1615,7 +1655,7 @@ footer {
 <section class="section alt" id="documents">
   <div class="section-inner">
     <div class="reveal">
-      <span class="s-label">Documents acceptés</span>
+      <span class="s-label" data-i18n="section.docs">Documents acceptés</span>
       <h2 class="s-title">Tous les formats de rapports<br>thermiques et énergétiques</h2>
       <p class="s-sub">Déposez vos fichiers directement depuis votre logiciel métier. ConformExpert reconnaît et analyse les formats standards des principaux outils du secteur.</p>
     </div>
@@ -1692,8 +1732,8 @@ footer {
 <section class="section" id="comment">
   <div class="section-inner">
     <div class="reveal">
-      <span class="s-label">Comment ça marche</span>
-      <h2 class="s-title">De la réception du dossier<br>à la livraison du rapport</h2>
+      <span class="s-label" data-i18n="section.process">Comment ça marche</span>
+      <h2 class="s-title" data-i18n="process.title">De la réception du dossier<br>à la livraison du rapport</h2>
     </div>
 
     <div class="how-grid">
@@ -1729,8 +1769,8 @@ footer {
 <section class="section alt" id="profils">
   <div class="section-inner">
     <div class="reveal">
-      <span class="s-label">Vous êtes…</span>
-      <h2 class="s-title">Une validation adaptée<br>à votre métier</h2>
+      <span class="s-label" data-i18n="section.profils">Vous êtes…</span>
+      <h2 class="s-title" data-i18n="profils.title">Une validation adaptée<br>à votre métier</h2>
       <p class="s-sub">Promoteur, investisseur, maître d'ouvrage ou bureau d'études — chaque profil a ses enjeux. ConformExpert vous donne le regard externe indépendant dont vous avez besoin.</p>
     </div>
 
@@ -1814,7 +1854,7 @@ footer {
 <section class="section" id="garanties">
   <div class="section-inner">
     <div class="reveal">
-      <span class="s-label">Nos engagements</span>
+      <span class="s-label" data-i18n="section.garanties">Nos engagements</span>
       <h2 class="s-title">Ce que vous pouvez<br>exiger de nous</h2>
     </div>
 
@@ -1839,8 +1879,8 @@ footer {
 <section class="section alt" id="suivi">
   <div class="section-inner">
     <div class="reveal">
-      <span class="s-label">Suivi en temps réel</span>
-      <h2 class="s-title">Votre dossier,<br>visible à chaque étape.</h2>
+      <span class="s-label" data-i18n="section.suivi">Suivi en temps réel</span>
+      <h2 class="s-title" data-i18n="suivi.title">Votre dossier,<br>visible à chaque étape.</h2>
     </div>
 
     <div class="suivi-layout">
@@ -2126,5 +2166,162 @@ setTimeout(() => {
 }, 9500);
 </script>
 
+
+<script>
+// ── i18n — traductions FR/EN ────────────────────────────────
+const TRANSLATIONS = {
+  fr: {
+    // Nav
+    'nav.validation':   'Validation',
+    'nav.process':      'Processus',
+    'nav.profils':      'Profils',
+    'nav.suivi':        'Suivi',
+    'nav.cta':          'Déposer un dossier',
+    // Hero badge
+    'hero.badge':       'Tiers indépendant · Validation réglementaire',
+    'hero.h1':          'Le rapport thermique de votre bureau d'études,<br><em>vérifié par un tiers.</em>',
+    'hero.desc':        'ConformExpert n'est pas un bureau d'études. Nous sommes le regard externe qui contrôle vos rapports Climawin, Pléiades et DPE — seuils réglementaires, cohérence des valeurs, croisement avec les consommations réelles.',
+    'hero.files':       'Fichiers acceptés',
+    'hero.btn1':        'Déposer mon dossier',
+    'hero.btn2':        'Voir ce qu'on vérifie',
+    'hero.stat1':       'Délai garanti',
+    'hero.stat2':       'Indépendant',
+    'hero.stat3':       'Normes couvertes',
+    'hero.stat4':       'Rapport livré',
+    // Hero card
+    'hcard.title':      'Ce que nous vérifions',
+    'hcard.sub':        'Sur chaque rapport reçu',
+    'hcard.step1':      'Conformité des seuils réglementaires',
+    'hcard.step1d':     'Bbio, Cep, DH, Ic énergie — vérification contre les valeurs de référence RT2012 / RE2020',
+    'hcard.step2':      'Cohérence et plausibilité des valeurs',
+    'hcard.step2d':     'Détection des incohérences internes, hypothèses irréalistes, paramètres hors normes',
+    'hcard.step3':      'Croisement avec les consommations réelles',
+    'hcard.step3d':     'Comparaison modèle vs factures énergie — détection des écarts significatifs',
+    'hcard.step4':      'Avis de tiers indépendant',
+    'hcard.step4d':     'Rapport de validation PDF avec score de confiance, alertes et recommandations',
+    'hcard.footer':     'Délai garanti : <strong>10 jours ouvrés</strong> après réception du dossier complet.',
+    // Trust bar
+    'trust.1':          '<strong>Validation 100% indépendante</strong>',
+    'trust.2':          '<strong>Climawin</strong> · Pléiades · DPE',
+    'trust.3':          '<strong>PEB</strong> (Belgique) · CNEB (Canada) · LENOZ (Lux.)',
+    'trust.4':          'Livraison en <strong>10 jours</strong>',
+    'trust.5':          '<strong>Promoteurs</strong> · Investisseurs · MOA · BET',
+    // Section labels
+    'section.why':      'Pourquoi un tiers ?',
+    'section.docs':     'Documents acceptés',
+    'section.process':  'Comment ça marche',
+    'section.profils':  'Vous êtes…',
+    'section.garanties':'Nos engagements',
+    'section.suivi':    'Suivi en temps réel',
+    // Validation section
+    'val.title':        'Ce qu'un bureau d'études<br><em>ne peut pas vérifier lui-même</em>',
+    'val.sub':          'Un bureau d'études produit votre rapport thermique. ConformExpert joue le rôle du regard externe — celui qui contrôle que les valeurs sont cohérentes, les seuils respectés, et les conclusions fiables.',
+    // Process
+    'process.title':    'De la réception du dossier<br>à la livraison du rapport',
+    // Profils
+    'profils.title':    'Une validation adaptée<br>à votre métier',
+    'profils.sub':      'Promoteur, investisseur, maître d'ouvrage ou bureau d'études — chaque profil a ses enjeux. ConformExpert vous donne le regard externe indépendant dont vous avez besoin.',
+    // Suivi
+    'suivi.title':      'Votre dossier,<br>visible à chaque étape.',
+    // Footer CTA
+    'footer.deposit':   'Déposer un dossier',
+  },
+  en: {
+    // Nav
+    'nav.validation':   'Validation',
+    'nav.process':      'Process',
+    'nav.profils':      'Profiles',
+    'nav.suivi':        'Tracking',
+    'nav.cta':          'Submit a file',
+    // Hero badge
+    'hero.badge':       'Independent third party · Regulatory validation',
+    'hero.h1':          'Your energy consultant's thermal report,<br><em>verified by a third party.</em>',
+    'hero.desc':        'ConformExpert is not an energy consultancy. We are the independent eye that reviews your Climawin, Pléiades and DPE reports — regulatory thresholds, data consistency, cross-checking with actual consumption.',
+    'hero.files':       'Accepted files',
+    'hero.btn1':        'Submit my file',
+    'hero.btn2':        'See what we verify',
+    'hero.stat1':       'Guaranteed deadline',
+    'hero.stat2':       'Independent',
+    'hero.stat3':       'Standards covered',
+    'hero.stat4':       'PDF report',
+    // Hero card
+    'hcard.title':      'What we verify',
+    'hcard.sub':        'On every report received',
+    'hcard.step1':      'Regulatory threshold compliance',
+    'hcard.step1d':     'Bbio, Cep, DH, Ic energy — verified against RT2012 / RE2020 reference values',
+    'hcard.step2':      'Data consistency & plausibility',
+    'hcard.step2d':     'Detection of internal inconsistencies, unrealistic assumptions, out-of-range parameters',
+    'hcard.step3':      'Cross-check with actual consumption',
+    'hcard.step3d':     'Model vs. energy bills — detection of significant discrepancies',
+    'hcard.step4':      'Independent third-party opinion',
+    'hcard.step4d':     'PDF validation report with confidence score, alerts and recommendations',
+    'hcard.footer':     'Guaranteed turnaround: <strong>10 business days</strong> after receipt of complete file.',
+    // Trust bar
+    'trust.1':          '<strong>100% independent validation</strong>',
+    'trust.2':          '<strong>Climawin</strong> · Pléiades · DPE',
+    'trust.3':          '<strong>PEB</strong> (Belgium) · CNEB (Canada) · LENOZ (Lux.)',
+    'trust.4':          'Delivered in <strong>10 days</strong>',
+    'trust.5':          '<strong>Developers</strong> · Investors · MOA · Engineers',
+    // Section labels
+    'section.why':      'Why a third party?',
+    'section.docs':     'Accepted documents',
+    'section.process':  'How it works',
+    'section.profils':  'You are…',
+    'section.garanties':'Our commitments',
+    'section.suivi':    'Real-time tracking',
+    // Validation section
+    'val.title':        'What an energy consultant<br><em>cannot verify themselves</em>',
+    'val.sub':          'An energy consultancy produces your thermal report. ConformExpert acts as the independent reviewer — checking that values are consistent, thresholds respected, and conclusions reliable.',
+    // Process
+    'process.title':    'From file reception<br>to report delivery',
+    // Profils
+    'profils.title':    'Validation tailored<br>to your profession',
+    'profils.sub':      'Developer, investor, project owner or engineering firm — each profile has its own stakes. ConformExpert gives you the independent external perspective you need.',
+    // Suivi
+    'suivi.title':      'Your file,<br>visible at every step.',
+    // Footer CTA
+    'footer.deposit':   'Submit a file',
+  }
+};
+
+function t(key) {
+  const lang = localStorage.getItem('ce_lang') || 'fr';
+  return TRANSLATIONS[lang][key] || TRANSLATIONS['fr'][key] || key;
+}
+
+function applyTranslations(lang) {
+  // Update all [data-i18n] elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = TRANSLATIONS[lang][key] || TRANSLATIONS['fr'][key];
+    if (val !== undefined) el.innerHTML = val;
+  });
+
+  // Update lang buttons
+  ['btnFR','btnFR_m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', lang === 'fr');
+  });
+  ['btnEN','btnEN_m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', lang === 'en');
+  });
+
+  // Update html lang attribute
+  document.documentElement.lang = lang === 'en' ? 'en' : 'fr';
+}
+
+function setLang(lang) {
+  localStorage.setItem('ce_lang', lang);
+  applyTranslations(lang);
+}
+
+// Init on load
+(function() {
+  const saved = localStorage.getItem('ce_lang') || 'fr';
+  if (saved === 'en') applyTranslations('en');
+})();
+</script>
+
 </body>
-  </html>
+       </html>
