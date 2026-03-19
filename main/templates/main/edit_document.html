@@ -81,8 +81,8 @@
   letter-spacing: .04em;
 }
 .badge--energie { background: rgba(59,130,246,.12);  color: #60a5fa; border: 1px solid rgba(59,130,246,.2); }
-.badge--pca     { background: rgba(168,85,247,.12);  color: #c084fc; border: 1px solid rgba(168,85,247,.2); }
-.badge--complet { background: rgba(200,168,75,.12);  color: #C8A84B; border: 1px solid rgba(200,168,75,.2); }
+.badge--carbone { background: rgba(34,197,94,.1);    color: #4ade80; border: 1px solid rgba(34,197,94,.2); }
+
 
 /* ═══════════════════════════════════════════════
    FORM ELEMENTS
@@ -397,7 +397,7 @@ select.f-input option { background: #0c1929; }
 .rt-row .seuil   { font-size: .7rem; color: var(--muted); width: 60px; text-align: right; }
 
 /* ═══════════════════════════════════════════════
-   PCA STATS
+   CARBONE STATS
 ═══════════════════════════════════════════════ */
 .stat-box {
   background: var(--navy-3);
@@ -573,10 +573,10 @@ select.f-input option { background: #0c1929; }
       </span>
       {% if document.type_analyse == 'energie' %}
         <span class="badge badge--energie">Pré-analyse énergétique</span>
-      {% elif document.type_analyse == 'pca' %}
-        <span class="badge badge--pca">🏗️ Pré-analyse technique</span>
-      {% elif document.type_analyse == 'complet' %}
-        <span class="badge badge--complet">📊 Analyse complète</span>
+      {% elif document.type_analyse == 'carbone' %}
+        <span class="badge badge--carbone">🌿 Bilan carbone</span>
+      {% elif document.type_analyse == 'carbone' %}
+        <span class="badge badge--carbone">🌿 Bilan carbone</span>
       {% endif %}
     </p>
   </div>
@@ -709,10 +709,10 @@ select.f-input option { background: #0c1929; }
         <!-- COLONNE DROITE — conditionnelle selon type_analyse -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
 
-          {% if document.type_analyse == 'pca' %}
-          <!-- PCA : pas de valeurs RT/RE2020 -->
+          {% if document.type_analyse == 'carbone' %}
+          <!-- CARBONE : pas de valeurs RT/RE2020 -->
           <div class="card card--pad">
-            <h3 class="section-title section-title--purple" style="margin-bottom:.8rem">🏗️ Pré-analyse technique (PCA)</h3>
+            <h3 class="section-title section-title--purple" style="margin-bottom:.8rem">🌿 Bilan carbone (PCA)</h3>
             <div style="padding:.9rem 1rem;background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.15);border-radius:8px">
               <p style="font-size:.83rem;color:var(--gray-2);line-height:1.6;margin:0">
                 Ce dossier est soumis pour une <strong style="color:#c084fc">pré-analyse technique</strong> uniquement.<br>
@@ -725,7 +725,7 @@ select.f-input option { background: #0c1929; }
           {% else %}
           <!-- Énergie ou Complet : champs RT2012 / RE2020 -->
 
-          {% if document.norme == 'RT2012' or document.type_analyse == 'complet' %}
+          {% if document.norme == 'RT2012' or document.type_analyse == 'carbone' %}
           <div class="card card--pad">
             <h3 class="section-title">RT2012 — Valeurs mesurées</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
@@ -742,7 +742,7 @@ select.f-input option { background: #0c1929; }
           </div>
           {% endif %}
 
-          {% if document.norme == 'RE2020' or document.type_analyse == 'complet' %}
+          {% if document.norme == 'RE2020' or document.type_analyse == 'carbone' %}
           <div class="card card--pad">
             <h3 class="section-title">RE2020 — Valeurs mesurées</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
@@ -1120,9 +1120,9 @@ select.f-input option { background: #0c1929; }
             <div>
               <label class="label-caps">Type d'analyse</label>
               <select name="type_analyse" class="f-input">
-                <option value="energie" {% if document.type_analyse == 'energie' %}selected{% endif %}>Énergétique</option>
-                <option value="pca"     {% if document.type_analyse == 'pca'     %}selected{% endif %}>Technique (PCA)</option>
-                <option value="complet" {% if document.type_analyse == 'complet' %}selected{% endif %}>Analyse complète</option>
+                <option value="energie" {% if document.type_analyse == 'energie' %}selected{% endif %}>Validation thermique &amp; énergétique</option>
+                <option value="carbone" {% if document.type_analyse == 'carbone'     %}selected{% endif %}>Bilan carbone immobilier</option>
+                <option </option>
               </select>
             </div>
             <div>
@@ -1158,8 +1158,8 @@ select.f-input option { background: #0c1929; }
         <p class="rapport-header__desc">
           {% if document.type_analyse == 'energie' %}
             Pré-analyse énergétique — <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
-          {% elif document.type_analyse == 'pca' %}
-            Pré-analyse technique (PCA) — {{ document.get_building_type_display }} · {{ document.get_pays_display }}
+          {% elif document.type_analyse == 'carbone' %}
+            Bilan carbone immobilier — {{ document.get_building_type_display }} · {{ document.get_pays_display }}
           {% else %}
             Analyse complète — <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
           {% endif %}
@@ -1219,7 +1219,7 @@ select.f-input option { background: #0c1929; }
       <div id="verdict-banner" class="verdict-banner">
         <div>
           <div class="verdict-label">
-            {% if document.type_analyse == 'pca' %}État technique global{% else %}Verdict — {{ document.norme }}{% endif %}
+            {% if document.type_analyse == 'carbone' %}État technique global{% else %}Verdict — {{ document.norme }}{% endif %}
           </div>
           <div id="verdict-text" class="verdict-text"></div>
         </div>
@@ -1237,11 +1237,11 @@ select.f-input option { background: #0c1929; }
           <div style="display:flex;gap:.8rem;margin-bottom:.9rem">
             <div id="kpi-conforme" class="kpi-box kpi-box--ok">
               <div class="kpi-box__val">—</div>
-              <div class="kpi-box__lbl">{% if document.type_analyse == 'pca' %}Conformes{% else %}Conformes{% endif %}</div>
+              <div class="kpi-box__lbl">{% if document.type_analyse == 'carbone' %}Conformes{% else %}Conformes{% endif %}</div>
             </div>
             <div id="kpi-nonconforme" class="kpi-box kpi-box--ko">
               <div class="kpi-box__val">—</div>
-              <div class="kpi-box__lbl">{% if document.type_analyse == 'pca' %}Risques{% else %}Non conformes{% endif %}</div>
+              <div class="kpi-box__lbl">{% if document.type_analyse == 'carbone' %}Risques{% else %}Non conformes{% endif %}</div>
             </div>
           </div>
           <div id="mini-bars" style="display:flex;flex-direction:column;gap:.45rem"></div>
@@ -1249,7 +1249,7 @@ select.f-input option { background: #0c1929; }
       </div>
 
       <!-- Tableau critères — énergie et complet -->
-      {% if document.type_analyse != 'pca' %}
+      {% if document.type_analyse != 'carbone' %}
       <div class="card card--pad" style="padding:1.4rem;margin-bottom:1.4rem;overflow-x:auto">
         <h4 class="section-cap section-cap--gold">Analyse des critères</h4>
         <table style="width:100%;border-collapse:collapse;font-size:.83rem">
@@ -1267,56 +1267,56 @@ select.f-input option { background: #0c1929; }
       </div>
       {% endif %}
 
-      <!-- PCA : état technique + risques + travaux + budget -->
-      {% if document.type_analyse == 'pca' or document.type_analyse == 'complet' %}
+      <!-- CARBONE : état technique + risques + travaux + budget -->
+      {% if document.type_analyse == 'carbone' or document.type_analyse == 'carbone' %}
 
       <!-- Stats PCA -->
-      <div id="pca-stats-wrap" style="display:none;margin-bottom:1.2rem">
+      <div id="carbone-stats-wrap" style="display:none;margin-bottom:1.2rem">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem">
           <div class="stat-box">
-            <div id="pca-nb-composants" class="stat-box__val" style="color:var(--white)">—</div>
+            <div id="carbone-nb-composants" class="stat-box__val" style="color:var(--white)">—</div>
             <div class="stat-box__lbl">Composants</div>
           </div>
           <div class="stat-box" style="border-color:rgba(39,201,63,.2)">
-            <div id="pca-nb-bons" class="stat-box__val" style="color:#27c93f">—</div>
+            <div id="carbone-nb-bons" class="stat-box__val" style="color:#27c93f">—</div>
             <div class="stat-box__lbl">En bon état</div>
           </div>
           <div class="stat-box" style="border-color:rgba(239,83,80,.2)">
-            <div id="pca-nb-risques" class="stat-box__val" style="color:#ef5350">—</div>
+            <div id="carbone-nb-risques" class="stat-box__val" style="color:#ef5350">—</div>
             <div class="stat-box__lbl">Risques</div>
           </div>
           <div class="stat-box" style="border-color:rgba(200,168,75,.2)">
-            <div id="pca-nb-travaux" class="stat-box__val" style="color:var(--gold)">—</div>
+            <div id="carbone-nb-travaux" class="stat-box__val" style="color:var(--gold)">—</div>
             <div class="stat-box__lbl">Travaux</div>
           </div>
         </div>
       </div>
 
       <!-- État technique -->
-      <div id="pca-etat-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+      <div id="carbone-etat-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
         <h4 class="section-cap section-cap--purple">🏗️ État technique — Composants</h4>
         <div style="border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
           <div style="display:grid;grid-template-columns:1.8fr 1fr 2.5fr 80px;gap:.8rem;padding:.5rem 1rem;background:rgba(0,0,0,.2);font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-1)">
             <span>Composant</span><span>État</span><span>Observation</span><span>Vétusté</span>
           </div>
-          <div id="pca-etat-list"></div>
+          <div id="carbone-etat-list"></div>
         </div>
       </div>
 
       <!-- Risques PCA -->
-      <div id="pca-risques-wrap" style="margin-bottom:1.2rem;display:none">
-        <h4 class="section-cap section-cap--red">Risques identifiés</h4>
-        <div id="pca-risques-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
+      <div id="carbone-risques-wrap" style="margin-bottom:1.2rem;display:none">
+        <h4 class="section-cap section-cap--red">Risques carbone</h4>
+        <div id="carbone-risques-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
       </div>
 
       <!-- Travaux PCA -->
-      <div id="pca-travaux-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+      <div id="carbone-travaux-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
         <h4 class="section-cap section-cap--blue">🔧 Plan de travaux</h4>
-        <div id="pca-travaux-list" style="display:flex;flex-direction:column;gap:.55rem"></div>
+        <div id="carbone-travaux-list" style="display:flex;flex-direction:column;gap:.55rem"></div>
       </div>
 
       <!-- Budget PCA -->
-      <div id="pca-budget-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
+      <div id="carbone-budget-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
         <h4 class="section-cap section-cap--gold">Enveloppe budgétaire</h4>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:.9rem">
           <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.9rem 1rem">
@@ -1349,7 +1349,7 @@ select.f-input option { background: #0c1929; }
       <!-- Non-conformités / Risques -->
       <div id="nonconf-wrap" style="margin-bottom:1.4rem;display:none">
         <h4 class="section-cap section-cap--red">
-          {% if document.type_analyse == 'pca' %}Risques identifiés{% else %}Non-conformités{% endif %}
+          {% if document.type_analyse == 'carbone' %}Risques carbone{% else %}Non-conformités{% endif %}
         </h4>
         <div id="nonconf-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
       </div>
@@ -1389,7 +1389,7 @@ select.f-input option { background: #0c1929; }
       </div>
 
       <!-- Contexte réglementaire -->
-      {% if document.type_analyse != 'pca' %}
+      {% if document.type_analyse != 'carbone' %}
       <div class="card card--pad" style="padding:1.4rem;margin-bottom:1.4rem">
         <h4 class="section-cap section-cap--gold">📜 Contexte réglementaire</h4>
         <p id="contexte-reglementaire" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin:0"></p>
@@ -1623,9 +1623,9 @@ select.f-input option { background: #0c1929; }
             </div>
           </div>
 
-          <!-- Risques identifiés -->
+          <!-- Risques carbone -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--sm" style="color:#ef5350">Risques identifiés</h3>
+            <h3 class="section-title section-title--sm" style="color:#ef5350">Risques carbone</h3>
             <div style="display:flex;flex-direction:column;gap:.7rem">
               {% if document.annee_construction and document.annee_construction < 1997 %}
               <div class="amiante-warn">
@@ -1963,8 +1963,8 @@ async function genererRapportIA(force) {
   progressWrap.style.display = 'block';
   setProgress(5, 'Envoi du document à Claude…');
 
-  const labels = TYPE_ANALYSE === 'pca'
-    ? ['Lecture des documents techniques…', "Analyse de l'enveloppe et des systèmes…", 'Identification des risques…']
+  const labels = TYPE_ANALYSE === 'carbone'
+    ? ['Lecture des documents…', 'Analyse des émissions carbone…', 'Identification des leviers de réduction…']
     : ['Lecture du document thermique…', `Analyse des critères {{ document.norme }}…`, 'Génération des recommandations…'];
 
   const prog = setInterval(() => {
@@ -2018,7 +2018,7 @@ async function genererRapportIA(force) {
 function afficherRapport(r) {
   const el = id => document.getElementById(id);
 
-  // Verdict — supporte RT/RE (verdict) et PCA (verdict_technique / verdict_energie)
+  // Verdict — supporte RT/RE (verdict) et carbone (verdict)
   const verdictRaw  = r.verdict || r.verdict_technique || r.verdict_energie || '—';
   const conf = ['Conforme','Bon état général','Bon état'].some(v => verdictRaw.startsWith(v));
   const ins  = verdictRaw.includes('insuffisantes') || verdictRaw.includes('insuffisant');
@@ -2088,19 +2088,19 @@ function afficherRapport(r) {
     }).join('');
   }
 
-  // Stats + état technique PCA
-  if (el('pca-stats-wrap') && (r.etat_technique || []).length) {
-    el('pca-stats-wrap').style.display = 'block';
+  // Stats + postes émission carbone
+  if (el('carbone-stats-wrap') && (r.etat_technique || []).length) {
+    el('carbone-stats-wrap').style.display = 'block';
     const nbBons = (r.etat_technique || []).filter(e => e.etat === 'Bon').length;
-    el('pca-nb-composants').textContent = (r.etat_technique || []).length;
-    el('pca-nb-bons').textContent       = nbBons;
-    el('pca-nb-risques').textContent    = (r.risques  || []).length;
-    el('pca-nb-travaux').textContent    = (r.travaux  || []).length;
+    el('carbone-nb-composants').textContent = (r.etat_technique || []).length;
+    el('carbone-nb-bons').textContent       = nbBons;
+    el('carbone-nb-risques').textContent    = (r.risques  || []).length;
+    el('carbone-nb-travaux').textContent    = (r.travaux  || []).length;
   }
 
-  if (el('pca-etat-wrap') && (r.etat_technique || []).length) {
-    el('pca-etat-wrap').style.display = 'block';
-    el('pca-etat-list').innerHTML = r.etat_technique.map(e => {
+  if (el('carbone-etat-wrap') && (r.etat_technique || []).length) {
+    el('carbone-etat-wrap').style.display = 'block';
+    el('carbone-etat-list').innerHTML = r.etat_technique.map(e => {
       const ec  = e.etat === 'Bon' ? '#27c93f' : e.etat === 'Moyen' ? '#E5A93A' : '#ef5350';
       const pct = e.etat === 'Bon' ? '88'      : e.etat === 'Moyen' ? '52'      : '22';
       return `<div style="display:grid;grid-template-columns:1.8fr 1fr 2.5fr 80px;gap:.8rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.04)">
@@ -2116,10 +2116,10 @@ function afficherRapport(r) {
     }).join('');
   }
 
-  // Risques PCA
-  if (el('pca-risques-wrap') && (r.risques || []).length) {
-    el('pca-risques-wrap').style.display = 'block';
-    el('pca-risques-list').innerHTML = r.risques.map(rv => {
+  // Risques carbone
+  if (el('carbone-risques-wrap') && (r.risques || []).length) {
+    el('carbone-risques-wrap').style.display = 'block';
+    el('carbone-risques-list').innerHTML = r.risques.map(rv => {
       const gc = rv.gravite === 'critique'  ? '#ef5350'
                : rv.gravite === 'important' ? '#ff9800'
                : rv.gravite === 'modere'    ? '#C8A84B' : '#60a5fa';
@@ -2136,10 +2136,10 @@ function afficherRapport(r) {
     }).join('');
   }
 
-  // Travaux PCA
-  if (el('pca-travaux-wrap') && (r.travaux || []).length) {
-    el('pca-travaux-wrap').style.display = 'block';
-    el('pca-travaux-list').innerHTML = r.travaux.map(t => {
+  // Leviers réduction carbone
+  if (el('carbone-travaux-wrap') && (r.travaux || []).length) {
+    el('carbone-travaux-wrap').style.display = 'block';
+    el('carbone-travaux-list').innerHTML = r.travaux.map(t => {
       const hc = ['Urgent','Immédiat'].includes(t.priorite) || ['Urgent','Immédiat'].includes(t.horizon) ? '#ef5350'
                : ['Court terme','1-2 ans'].includes(t.priorite) || ['Court terme','1-2 ans'].includes(t.horizon) ? '#E5A93A'
                : '#60a5fa';
@@ -2155,9 +2155,9 @@ function afficherRapport(r) {
     }).join('');
   }
 
-  // Budget PCA
-  if (el('pca-budget-wrap') && r.enveloppe_budgetaire) {
-    el('pca-budget-wrap').style.display = 'block';
+  // Émissions carbone
+  if (el('carbone-budget-wrap') && r.enveloppe_budgetaire) {
+    el('carbone-budget-wrap').style.display = 'block';
     if (el('budget-court')) el('budget-court').textContent = r.enveloppe_budgetaire.court_terme || '—';
     if (el('budget-moyen')) el('budget-moyen').textContent = r.enveloppe_budgetaire.moyen_terme || '—';
     if (el('budget-long'))  el('budget-long').textContent  = r.enveloppe_budgetaire.long_terme  || '—';
