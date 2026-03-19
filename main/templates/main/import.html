@@ -138,17 +138,17 @@
               <input type="radio" name="type_analyse" id="ta-energie" value="energie" checked>
               <label class="analyse-label" for="ta-energie">
                 <span class="a-icon">⚡</span>
-                <span class="a-title">Pré-analyse énergétique</span>
+                <span class="a-title">Validation thermique &amp; énergétique</span>
                 <span class="a-desc">Conformité RT2012 / RE2020 / PEB · Critères, non-conformités, recommandations</span>
               </label>
             </div>
 
             <div class="analyse-card">
-              <input type="radio" name="type_analyse" id="ta-pca" value="pca">
-              <label class="analyse-label" for="ta-pca">
-                <span class="a-icon">🏗️</span>
-                <span class="a-title">Pré-analyse technique (PCA)</span>
-                <span class="a-desc">État enveloppe, systèmes, risques techniques · Inspirée du PCA immobilier</span>
+              <input type="radio" name="type_analyse" id="ta-carbone" value="carbone">
+              <label class="analyse-label" for="ta-carbone">
+                <span class="a-icon">🌿</span>
+                <span class="a-title">Bilan carbone immobilier</span>
+                <span class="a-desc">Ic énergie, émissions GES, conformité RE2020 · Leviers de réduction carbone</span>
               </label>
             </div>
 
@@ -204,7 +204,7 @@ const normeGroup = normeField ? normeField.closest(".f-group") : null;
 function toggleEnergyFields(){
   const selected = document.querySelector('input[name="type_analyse"]:checked').value;
 
-  if(selected === "pca"){
+  if(selected === "carbone"){
     climateGroup.style.display = "none";
     normeGroup.style.display = "none";
 
