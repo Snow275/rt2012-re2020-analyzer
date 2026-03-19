@@ -51,7 +51,7 @@ const TRACKING_TR = {
   fr: {
     "header.label":       "Validation ind\u00e9pendante \u00b7 ConformExpert",
     "header.received":    "Re\u00e7u le",
-    "header.mission.pca": "Pr\u00e9-analyse technique",
+    "header.mission.carbone": "Pr\u00e9-analyse technique",
     "header.mission.complet": "Analyse compl\u00e8te",
     "header.mission.validation": "Validation",
     "header.mission.default": "Validation thermique",
@@ -82,7 +82,7 @@ const TRACKING_TR = {
     "info.copy":          "Copier",
     "info.copied":        "\u2713 Copi\u00e9 !",
     "result.title":       "R\u00e9sultat de la validation",
-    "result.verdict.pca": "\u00c9tat technique global",
+    "result.verdict.carbone": "\u00c9tat technique global",
     "result.verdict":     "Verdict",
     "result.analyzing":   "En cours d\u2019analyse",
     "result.conform":     "\u2713 Conforme",
@@ -115,15 +115,15 @@ const TRACKING_TR = {
     "trust.desc":         "ConformExpert est un tiers ind\u00e9pendant \u2014 notre analyse n\u2019est pas li\u00e9e au bureau d\u2019\u00e9tudes ayant produit le rapport thermique.",
     "devis.title":        "Devis accept\u00e9 \u2014 la validation a d\u00e9marr\u00e9\u00a0!",
     "devis.desc":         "Un email de confirmation vous a \u00e9t\u00e9 envoy\u00e9. Revenez sur cette page pour suivre l\u2019avancement.",
-    "mission.pca":        "Pr\u00e9-analyse technique (PCA)",
+    "mission.carbone":        "Pr\u00e9-analyse technique (Bilan carbone)",
     "mission.complet":    "Analyse compl\u00e8te",
     "mission.default":    "Validation thermique"
   },
   en: {
     "header.label":       "Independent validation \u00b7 ConformExpert",
     "header.received":    "Received on",
-    "header.mission.pca": "Technical pre-analysis",
-    "header.mission.complet": "Full analysis",
+    "header.mission.carbone": "Technical pre-analysis",
+    "header.mission.carbone": "Carbon assessment",
     "header.mission.validation": "Validation",
     "header.mission.default": "Thermal validation",
     "alert.vigilance":    "Attention points detected during automatic analysis",
@@ -153,7 +153,7 @@ const TRACKING_TR = {
     "info.copy":          "Copy",
     "info.copied":        "\u2713 Copied!",
     "result.title":       "Validation result",
-    "result.verdict.pca": "Overall technical status",
+    "result.verdict.carbone": "Overall technical status",
     "result.verdict":     "Verdict",
     "result.analyzing":   "Analysis in progress",
     "result.conform":     "\u2713 Compliant",
@@ -186,8 +186,8 @@ const TRACKING_TR = {
     "trust.desc":         "ConformExpert is an independent third party \u2014 our analysis is not linked to the firm that produced the thermal report.",
     "devis.title":        "Quote accepted \u2014 validation has started!",
     "devis.desc":         "A confirmation email has been sent to you. Come back to this page to track progress.",
-    "mission.pca":        "Technical pre-analysis (PCA)",
-    "mission.complet":    "Full analysis",
+    "mission.carbone":        "Technical pre-analysis (Bilan carbone)",
+    "mission.carbone":    "Carbon assessment",
     "mission.default":    "Thermal validation"
   }
 };
@@ -326,12 +326,12 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
       <div class="info-row">
         <span class="info-label" data-ti18n="info.mission">Mission</span>
         <span class="info-val">
-          {% if document.type_analyse == 'pca' %}<span data-ti18n="mission.pca">Pré-analyse (PCA)</span>
-          {% elif document.type_analyse == 'complet' %}<span data-ti18n="mission.complet">Analyse complète</span>
+          {% if document.type_analyse == 'carbone' %}<span data-ti18n="mission.carbone">Bilan carbone immobilier</span>
+          
           {% else %}<span data-ti18n="mission.default">Validation thermique</span>{% endif %}
         </span>
       </div>
-      {% if document.norme and document.type_analyse != 'pca' %}
+      {% if document.norme and document.type_analyse != 'carbone' %}
       <div class="info-row"><span class="info-label" data-ti18n="info.norme">Norme</span><span style="font-size:.82rem;color:var(--white);font-weight:500">{{ document.norme }}</span></div>
       {% endif %}
       {% if document.logiciel_detecte %}
@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
         {% endif %}
         <div style="flex:1">
           <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">
-            {% if document.type_analyse == 'pca' %}<span data-ti18n="result.verdict.pca">État technique</span>{% else %}<span data-ti18n="result.verdict">Verdict</span> {{ document.norme }}{% endif %}
+            {% if document.type_analyse == 'carbone' %}<span data-ti18n="result.verdict.carbone">État technique</span>{% else %}<span data-ti18n="result.verdict">Verdict</span> {{ document.norme }}{% endif %}
           </div>
           {% if document.is_conform is None %}
             <span style="color:var(--muted);font-size:.85rem" data-ti18n="result.analyzing">En cours</span>
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
       {% if document.dpe_conso_ep %}<div class="info-row"><span class="info-label" data-ti18n="result.conso">Conso. EP</span><span class="info-val">{{ document.dpe_conso_ep }} kWh/m².an</span></div>{% endif %}
       {% endif %}
       <p style="font-size:.75rem;color:var(--gray-1);line-height:1.6;margin:.8rem 0 0" data-ti18n="result.desc">
-        Le rapport complet contient l'avis indépendant, les anomalies détectées et les recommandations.
+        Le rapport contient l'avis indépendant de ConformExpert, les émissions analysées et les leviers de réduction.
       </p>
     </div>
     {% else %}
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
       <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.3">Croisement consommations réelles</span></div>
       <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.4">Avis indépendant de fiabilité</span></div>
       <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.5">Recommandations et plan d'action</span></div>
-      {% if document.type_analyse == 'pca' or document.type_analyse == 'complet' %}
+      {% if document.type_analyse == 'carbone' %}
       <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.6">État technique des composants</span></div>
       <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.7">Plan de travaux priorisé</span></div>
       {% endif %}
