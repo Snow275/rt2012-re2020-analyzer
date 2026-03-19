@@ -74,9 +74,8 @@ class Document(models.Model):
         ('LENOZ',    'LENOZ'),
     )
     TYPE_ANALYSE_CHOICES = (
-        ('energie', 'Pré-analyse énergétique'),
-        ('pca',     'Pré-analyse technique (PCA)'),
-        ('complet', 'Analyse complète'),
+        ('energie', 'Validation thermique & énergétique'),
+        ('carbone', 'Bilan carbone immobilier'),
     )
 
     # ── Nouveau : type de rapport détecté automatiquement ──────────────
@@ -175,37 +174,6 @@ class Document(models.Model):
     dpe_date_visite     = models.CharField(max_length=20, blank=True, default='')
     dpe_diagnostiqueur  = models.CharField(max_length=255, blank=True, default='')
 
-    # ── Champs observations expert (PCA) ──────────────────────────────
-    obs_toiture_etat      = models.CharField(max_length=20, blank=True, default='')
-    obs_toiture_age       = models.IntegerField(null=True, blank=True)
-    obs_toiture_notes     = models.TextField(blank=True, default='')
-    obs_facade_etat       = models.CharField(max_length=20, blank=True, default='')
-    obs_facade_isolation  = models.CharField(max_length=20, blank=True, default='')
-    obs_facade_notes      = models.TextField(blank=True, default='')
-    obs_menuiseries_type  = models.CharField(max_length=20, blank=True, default='')
-    obs_menuiseries_etat  = models.CharField(max_length=20, blank=True, default='')
-    obs_menuiseries_notes = models.TextField(blank=True, default='')
-    obs_chauffage_type    = models.CharField(max_length=20, blank=True, default='')
-    obs_chauffage_age     = models.IntegerField(null=True, blank=True)
-    obs_chauffage_etat    = models.CharField(max_length=20, blank=True, default='')
-    obs_plomberie_etat    = models.CharField(max_length=20, blank=True, default='')
-    obs_ecs_age           = models.IntegerField(null=True, blank=True)
-    obs_elec_etat         = models.CharField(max_length=20, blank=True, default='')
-    obs_vmc_type          = models.CharField(max_length=20, blank=True, default='')
-    obs_vmc_etat          = models.CharField(max_length=20, blank=True, default='')
-    obs_humidite          = models.CharField(max_length=20, blank=True, default='')
-    obs_fissures          = models.CharField(max_length=20, blank=True, default='')
-    obs_risques_notes     = models.TextField(blank=True, default='')
-    obs_cout_toiture      = models.FloatField(null=True, blank=True)
-    obs_cout_isolation    = models.FloatField(null=True, blank=True)
-    obs_cout_chauffage    = models.FloatField(null=True, blank=True)
-    obs_cout_menuiseries  = models.FloatField(null=True, blank=True)
-    obs_cout_plomberie    = models.FloatField(null=True, blank=True)
-    obs_cout_autres       = models.FloatField(null=True, blank=True)
-    obs_conso_kwh         = models.FloatField(null=True, blank=True)
-    obs_cout_energie      = models.FloatField(null=True, blank=True)
-    obs_classe_dpe        = models.CharField(max_length=1, blank=True, default='')
-    obs_potentiel_economies = models.CharField(max_length=20, blank=True, default='')
 
     def __str__(self):
         return self.name
