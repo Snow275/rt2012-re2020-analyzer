@@ -132,14 +132,11 @@
           Pré-analyse énergétique
           {% if count_energie %}<span class="tab-count" style="background:rgba(59,130,246,.15);color:#60a5fa">{{ count_energie }}</span>{% endif %}
         </button>
-        <button class="type-tab" onclick="switchTab('pca',this)">
-          Pré-analyse technique
-          {% if count_pca %}<span class="tab-count" style="background:rgba(168,85,247,.15);color:#c084fc">{{ count_pca }}</span>{% endif %}
+        <button class="type-tab" onclick="switchTab('carbone',this)">
+          Bilan carbone
+          {% if count_carbone %}<span class="tab-count" style="background:rgba(34,197,94,.12);color:#4ade80">{{ count_carbone }}</span>{% endif %}
         </button>
-        <button class="type-tab" onclick="switchTab('complet',this)">
-          Analyse complète
-          {% if count_complet %}<span class="tab-count" style="background:rgba(200,168,75,.15);color:#C8A84B">{{ count_complet }}</span>{% endif %}
-        </button>
+
       </div>
 
       {# TAB Énergie #}
@@ -193,13 +190,13 @@
         </div>
       </div>
 
-      {# TAB PCA #}
-      <div id="tab-pca" class="tab-pane">
+      {# TAB CARBONE #}
+      <div id="tab-carbone" class="tab-pane">
         <div class="kanban">
           <div class="k-col recu">
-            <div class="k-col-hd"><span class="k-col-title">Reçus</span><span class="k-col-count">{{ docs_pca_recu|length }}</span></div>
+            <div class="k-col-hd"><span class="k-col-title">Reçus</span><span class="k-col-count">{{ docs_carbone_recu|length }}</span></div>
             <div class="k-col-body">
-              {% for doc in docs_pca_recu %}
+              {% for doc in docs_carbone_recu %}
               <a href="{% url 'edit_document' doc.id %}" class="k-card">
                 <div class="k-card-name">{{ doc.name }}</div>
                 <div class="k-card-meta"><span>{{ doc.upload_date|date:"d/m" }}</span><span style="font-size:.7rem;color:var(--gray-1)">{{ doc.building_type|default:"—" }}</span></div>
@@ -208,9 +205,9 @@
             </div>
           </div>
           <div class="k-col encours">
-            <div class="k-col-hd"><span class="k-col-title">En cours</span><span class="k-col-count">{{ docs_pca_en_cours|length }}</span></div>
+            <div class="k-col-hd"><span class="k-col-title">En cours</span><span class="k-col-count">{{ docs_carbone_en_cours|length }}</span></div>
             <div class="k-col-body">
-              {% for doc in docs_pca_en_cours %}
+              {% for doc in docs_carbone_en_cours %}
               <a href="{% url 'edit_document' doc.id %}" class="k-card">
                 <div class="k-card-name">{{ doc.name }}</div>
                 <div class="k-card-meta"><span>{{ doc.upload_date|date:"d/m" }}</span><span style="font-size:.7rem;color:var(--gray-1)">{{ doc.building_type|default:"—" }}</span></div>
@@ -219,9 +216,9 @@
             </div>
           </div>
           <div class="k-col termine">
-            <div class="k-col-hd"><span class="k-col-title">Terminés</span><span class="k-col-count">{{ docs_pca_termine|length }}</span></div>
+            <div class="k-col-hd"><span class="k-col-title">Terminés</span><span class="k-col-count">{{ docs_carbone_termine|length }}</span></div>
             <div class="k-col-body">
-              {% for doc in docs_pca_termine %}
+              {% for doc in docs_carbone_termine %}
               <a href="{% url 'edit_document' doc.id %}" class="k-card">
                 <div class="k-card-name">{{ doc.name }}</div>
                 <div class="k-card-meta"><span>{{ doc.upload_date|date:"d/m" }}</span></div>
@@ -233,52 +230,7 @@
       </div>
 
       {# TAB Complet #}
-      <div id="tab-complet" class="tab-pane">
-        <div class="kanban">
-          <div class="k-col recu">
-            <div class="k-col-hd"><span class="k-col-title">Reçus</span><span class="k-col-count">{{ docs_complet_recu|length }}</span></div>
-            <div class="k-col-body">
-              {% for doc in docs_complet_recu %}
-              <a href="{% url 'edit_document' doc.id %}" class="k-card">
-                <div class="k-card-name">{{ doc.name }}</div>
-                <div class="k-card-meta"><span>{{ doc.upload_date|date:"d/m" }}</span><span class="k-card-badge" style="background:rgba(200,168,75,.1);color:#C8A84B">{{ doc.norme }}</span></div>
-              </a>
-              {% empty %}<div class="k-empty">Aucun dossier</div>{% endfor %}
-            </div>
-          </div>
-          <div class="k-col encours">
-            <div class="k-col-hd"><span class="k-col-title">En cours</span><span class="k-col-count">{{ docs_complet_en_cours|length }}</span></div>
-            <div class="k-col-body">
-              {% for doc in docs_complet_en_cours %}
-              <a href="{% url 'edit_document' doc.id %}" class="k-card">
-                <div class="k-card-name">{{ doc.name }}</div>
-                <div class="k-card-meta"><span>{{ doc.upload_date|date:"d/m" }}</span><span class="k-card-badge" style="background:rgba(200,168,75,.1);color:#C8A84B">{{ doc.norme }}</span></div>
-              </a>
-              {% empty %}<div class="k-empty">Aucun dossier</div>{% endfor %}
-            </div>
-          </div>
-          <div class="k-col termine">
-            <div class="k-col-hd"><span class="k-col-title">Terminés</span><span class="k-col-count">{{ docs_complet_termine|length }}</span></div>
-            <div class="k-col-body">
-              {% for doc in docs_complet_termine %}
-              <a href="{% url 'edit_document' doc.id %}" class="k-card">
-                <div class="k-card-name">{{ doc.name }}</div>
-                <div class="k-card-meta">
-                  <span>{{ doc.upload_date|date:"d/m" }}</span>
-                  {% if doc.is_conform is not None %}
-                    {% if doc.is_conform %}<span style="color:#4ade80;font-size:.7rem">✓</span>
-                    {% else %}<span style="color:#f87171;font-size:.7rem">✗</span>{% endif %}
-                  {% endif %}
-                </div>
-              </a>
-              {% empty %}<div class="k-empty">Aucun dossier</div>{% endfor %}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {# ── Sidebar ── #}
+      {# ── Sidebar ── #}
     <div style="display:flex;flex-direction:column;gap:1.4rem" class="fade-up-3">
 
       {# Actions rapides #}
