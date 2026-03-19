@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
   {% endfor %}
 
-  <!-- PCA -->
+  <!-- Bilan Carbone -->
   <div id="carbone" style="margin-bottom:3rem">
     <div class="section-header">
       <span class="section-flag">Bilan Carbone</span>
@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="section-line"></span>
     </div>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.4rem;line-height:1.6">
-      Seuils utilisés pour l'analyse technique du bâtiment : âge des systèmes, risques techniques et paramètres structurels.
+      Référentiels utilisés pour le bilan carbone : seuils Ic énergie RE2020, objectifs décret tertiaire.
     </p>
     <div class="carbone-grid">
       {% for label, val, unit in carbone_seuils %}
