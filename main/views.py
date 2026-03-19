@@ -807,6 +807,9 @@ def tracking(request, token):
 
 @login_required(login_url='/login/')
 def home(request):
+    if not request.user.is_staff:
+        return redirect('landing')
+
     from django.utils import timezone
     from datetime import timedelta
 
