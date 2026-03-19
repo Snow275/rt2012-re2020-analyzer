@@ -565,24 +565,6 @@ def analyze_document(document, data, resultat_complet=None):
     document.save()
 
 
-def analyse_pca(document):
-    """Retourne un dict de risques et score pour une pré-analyse PCA."""
-    risques = []
-    score = 100
-
-    if document.annee_construction and document.annee_construction < 1997:
-        risques.append("Présence potentielle d'amiante (bâtiment construit avant 1997)")
-        score -= 10
-
-    if document.surface_totale and document.surface_totale > 100000:
-        risques.append("Surface du bâtiment atypique – vérification structure recommandée")
-        score -= 5
-
-    if document.nombre_logements and document.nombre_logements > 500:
-        risques.append("Bâtiment de grande capacité – contrôle technique approfondi recommandé")
-        score -= 5
-
-    return {"risques": risques, "score": score}
 
 
 # ──────────────────────────────────────────────────────────────
@@ -683,8 +665,8 @@ def import_document(request):
         data = request.POST.copy()
         type_analyse = data.get("type_analyse")
 
-        # Pour PCA, les champs énergie ne sont pas requis
-        if type_analyse == "pca":
+        # Pour bilan carbone, les champs énergie ne sont pas requis
+        if type_analyse == "carbone":
             data["climate_zone"] = ""
             data["norme"] = ""
 
@@ -817,8 +799,8 @@ def home(request):
 
     # Sous-ensembles par type
     energie_docs = documents.filter(type_analyse="energie")
-    pca_docs     = documents.filter(type_analyse="pca")
-    complet_docs = documents.filter(type_analyse="complet")
+    carbone_docs = documents.filter(type_analyse="carbone")
+    
 
     total_projects  = documents.count()
     compliant_count = sum(1 for doc in documents if doc.is_conform is True)
@@ -838,8 +820,8 @@ def home(request):
     context = {
         'documents':   documents,
         'energie_docs': energie_docs,
-        'pca_docs':    pca_docs,
-        'complet_docs': complet_docs,
+        'carbone_docs': carbone_docs,
+
         'total_projects':  total_projects,
         'compliance_rate': compliance_rate,
         'pending_count':   pending_count,
@@ -850,16 +832,16 @@ def home(request):
         'docs_energie_recu':     energie_docs.filter(status='recu'),
         'docs_energie_en_cours': energie_docs.filter(status='en_cours'),
         'docs_energie_termine':  energie_docs.filter(status='termine'),
-        'docs_pca_recu':     pca_docs.filter(status='recu'),
-        'docs_pca_en_cours': pca_docs.filter(status='en_cours'),
-        'docs_pca_termine':  pca_docs.filter(status='termine'),
-        'docs_complet_recu':     complet_docs.filter(status='recu'),
-        'docs_complet_en_cours': complet_docs.filter(status='en_cours'),
-        'docs_complet_termine':  complet_docs.filter(status='termine'),
+        'docs_carbone_recu':     carbone_docs.filter(status='recu'),
+        'docs_carbone_en_cours': carbone_docs.filter(status='en_cours'),
+        'docs_carbone_termine':  carbone_docs.filter(status='termine'),
+
+
+
         # Compteurs
         'count_energie': energie_docs.count(),
-        'count_pca':     pca_docs.count(),
-        'count_complet': complet_docs.count(),
+        'count_carbone': carbone_docs.count(),
+
     }
     return render(request, 'main/home.html', context)
 
@@ -913,19 +895,11 @@ def settings_view(request):
             normes_data.append((norme_code, NORME_LABELS.get(norme_code, norme_code), fields_seuils))
         seuils_par_pays.append((pays_code, PAYS_LABELS.get(pays_code, pays_code), normes_data))
 
-    pca_seuils = [
-        ("Âge max toiture",           30,    "ans"),
-        ("Âge max chauffage",         25,    "ans"),
-        ("Humidité mur max",           5,    "%"),
-        ("Année interdiction amiante", 1997, ""),
-        ("Surface bâtiment min",       20,   "m²"),
-        ("Surface bâtiment max",  100000,    "m²"),
-        ("Nombre logements max",    1000,    ""),
-    ]
+
 
     return render(request, 'main/settings.html', {
         'seuils_par_pays': seuils_par_pays,
-        'pca_seuils': pca_seuils,
+
     })
 
 
@@ -1882,62 +1856,72 @@ _CHAMPS_NORME = {
 
 
 def _build_system_prompt(type_analyse, ref, document, infos_batiment, source_donnees,
-                          valeurs_str, norme, pca_seuils_str):
+                          valeurs_str, norme, carbone_seuils_str):
     """Construit le system prompt Claude selon le type d'analyse."""
 
     seuils_str = _SEUILS_LABELS.get(norme, "Voir réglementation applicable")
 
-    if type_analyse == 'pca':
-        return f"""Tu es ConformExpert, un tiers expert indépendant spécialisé en diagnostic technique immobilier (PCA - Property Condition Assessment).
-Tu réalises des pré-analyses techniques indépendantes à partir des documents fournis par le client (plans, DDT, carnet d'entretien, rapports de diagnostic, photos).
-Ton rôle est d'évaluer objectivement l'état du bâtiment et d'identifier les risques et travaux à prévoir.
+    if type_analyse == 'carbone':
+        return f"""Tu es ConformExpert, un tiers expert indépendant spécialisé en bilan carbone immobilier.
+Tu réalises des bilans carbone indépendants à partir des documents fournis (rapport thermique, DPE, factures énergie, attestation RE2020, FDES).
+Ton rôle est d'évaluer les émissions de CO2 du bâtiment et d'identifier les leviers de réduction.
 
 Contexte du dossier :
 - Référence : {ref}
 - Projet : {document.name}
 - Client : {document.client_name or 'Non renseigné'}
-- Type de mission : Pré-analyse technique indépendante (PCA)
+- Type de mission : Bilan carbone immobilier indépendant
 - Informations du bâtiment :
 {infos_batiment}
 - Source des documents : {source_donnees}
-- Référentiel technique interne ConformExpert :
-{pca_seuils_str}
+- Référentiels applicables :
+{carbone_seuils_str}
 
 Ta mission d'expert indépendant :
-1. Évaluer l'état de chaque composant du bâtiment (enveloppe, structure, systèmes)
-2. Identifier les risques techniques et réglementaires (amiante, plomb, humidité, vétusté)
-3. Établir un plan de travaux priorisé et chiffré
-4. Donner un avis indépendant sur l'état général et les risques pour le client
+1. Évaluer les émissions de CO2 liées à l'énergie du bâtiment (chauffage, électricité, eau chaude sanitaire)
+2. Analyser les indicateurs Ic énergie et Ic construction si disponibles (RE2020)
+3. Vérifier la conformité au regard du décret tertiaire si applicable
+4. Identifier les postes d'émission prioritaires et les leviers de réduction
+5. Donner un avis indépendant sur la performance carbone du bâtiment
 
 Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication, sans balises.
 
 Structure JSON attendue :
 {{
-  "verdict": "Bon état général" | "État moyen — travaux à prévoir" | "État dégradé — intervention urgente" | "Données insuffisantes",
+  "verdict": "Faible empreinte carbone" | "Empreinte carbone modérée" | "Empreinte carbone élevée" | "Données insuffisantes",
   "score_global": 72,
-  "resume_executif": "Paragraphe de 3-5 phrases résumant l'avis indépendant sur l'état général du bâtiment, les principaux risques et les enjeux pour le client.",
-  "etat_technique": [
+  "resume_executif": "Paragraphe de 3-5 phrases résumant la performance carbone du bâtiment, les principaux postes d'émission et les enjeux.",
+  "emissions": {{
+    "ic_energie": {{"valeur": null, "seuil_re2020": null, "conforme": null, "unite": "kgCO2eq/m².an"}},
+    "ic_construction": {{"valeur": null, "seuil_re2020": null, "conforme": null, "unite": "kgCO2eq/m²"}},
+    "conso_ep": {{"valeur": null, "unite": "kWh ep/m².an"}},
+    "emission_ges": {{"valeur": null, "unite": "kgCO2eq/m².an"}},
+    "classe_dpe": null
+  }},
+  "postes_emission": [
     {{
-      "composant": "Toiture",
-      "etat": "Bon" | "Moyen" | "Mauvais",
-      "observation": "Description précise basée sur les documents fournis.",
-      "risque": "faible" | "modéré" | "élevé",
-      "age_estime": "15 ans",
-      "duree_vie_restante": "10-15 ans"
+      "poste": "Chauffage",
+      "part_estimee": "45%",
+      "niveau": "faible" | "modéré" | "élevé",
+      "observation": "Description basée sur les documents fournis."
     }}
   ],
-  "travaux": [
+  "conformite_reglementaire": [
     {{
-      "horizon": "Immédiat" | "1-3 ans" | "3-5 ans" | "5-10 ans",
-      "titre": "...",
-      "description": "Description détaillée des travaux recommandés.",
-      "cout_estime": "15 000 — 25 000 €",
-      "priorite": "URGENT" | "IMPORTANT" | "PLANIFIABLE",
-      "justification": "Raison pour laquelle ces travaux sont nécessaires."
+      "referentiel": "RE2020 Ic énergie",
+      "statut": "conforme" | "non_conforme" | "non_applicable" | "non_vérifié",
+      "detail": "Explication."
     }}
   ],
-  "enveloppe": {{"synthese": "...", "points_attention": ["Point 1"]}},
-  "systemes": {{"synthese": "...", "points_attention": ["Point 1"]}},
+  "leviers_reduction": [
+    {{
+      "levier": "Isolation thermique",
+      "impact": "faible" | "modéré" | "élevé",
+      "horizon": "Court terme" | "Moyen terme" | "Long terme",
+      "gain_estime": "ex: -15% émissions",
+      "description": "Description de l'action recommandée."
+    }}
+  ],
   "risques": [
     {{
       "titre": "...",
@@ -1947,147 +1931,19 @@ Structure JSON attendue :
       "urgence": "Immédiat" | "Court terme" | "Moyen terme"
     }}
   ],
-  "points_forts": ["Point fort identifié indépendamment"],
-  "enveloppe_budgetaire": {{
-    "court_terme": "0 — 5 000 €",
-    "moyen_terme": "20 000 — 40 000 €",
-    "long_terme": "50 000 — 80 000 €",
-    "total_estime": "70 000 — 125 000 €"
-  }},
+  "points_forts": ["Point fort identifié"],
   "verifications_complementaires": [
-    "Diagnostic amiante recommandé si bâtiment avant 1997",
-    "Expertise structure recommandée si fissures actives"
+    "Audit énergétique réglementaire recommandé si copropriété > 50 lots",
+    "Vérification FDES matériaux si RE2020 applicable"
   ],
-  "avis_independant": "Paragraphe conclusif exprimant clairement l'avis de ConformExpert sur l'état du bâtiment et les risques pour le client.",
-  "mentions_legales": "Ce rapport constitue une pré-analyse technique documentaire indépendante réalisée par ConformExpert. Il ne se substitue pas à un diagnostic technique complet réalisé sur site par un expert certifié."
+  "avis_independant": "Paragraphe conclusif exprimant l'avis de ConformExpert sur la performance carbone du bâtiment.",
+  "mentions_legales": "Ce rapport constitue un bilan carbone documentaire indépendant réalisé par ConformExpert. Il ne se substitue pas à un bilan carbone complet certifié ni à une attestation réglementaire officielle."
 }}
 
 Base ton analyse sur les documents fournis.
 Si des éléments ne sont pas documentés, l'indiquer explicitement plutôt que d'inventer.
 Sois précis, factuel et indépendant."""
 
-    elif type_analyse == 'complet':
-        return f"""Tu es ConformExpert, un tiers expert indépendant qui réalise des validations croisées combinant :
-1. La vérification indépendante du rapport thermique réglementaire fourni par le bureau d'études
-2. La pré-analyse de l'état technique du bâtiment (PCA)
-
-Tu n'es PAS l'auteur du rapport thermique — tu es l'auditeur indépendant qui le vérifie et le complète avec l'état technique.
-
-Contexte du dossier :
-- Référence : {ref}
-- Projet : {document.name}
-- Client : {document.client_name or 'Non renseigné'}
-- Type de mission : Validation complète (Thermique + Technique)
-- Norme applicable : {norme}
-- Logiciel utilisé par le bureau d'études : {getattr(document, 'logiciel_detecte', 'Non détecté')}
-- Informations du bâtiment :
-{infos_batiment}
-- Source des documents : {source_donnees}
-- Valeurs déclarées dans le rapport thermique :
-{valeurs_str}
-- Seuils réglementaires officiels {norme} : {seuils_str}
-
-Ta double mission :
-VOLET THERMIQUE — Valider le rapport du bureau d'études :
-1. Vérifier que les valeurs déclarées respectent les seuils {norme}
-2. Évaluer la cohérence et la plausibilité des valeurs pour ce bâtiment
-3. Identifier les anomalies ou incohérences éventuelles
-4. Croiser avec les consommations réelles des factures
-
-VOLET TECHNIQUE (PCA) — Évaluer l'état du bâtiment :
-1. Analyser l'état de l'enveloppe, des systèmes et des équipements
-2. Identifier les risques (amiante, humidité, vétusté)
-3. Établir un plan de travaux priorisé avec estimations budgétaires
-
-Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication, sans balises.
-
-Structure JSON attendue :
-{{
-  "verdict_energie": "Conforme" | "Non Conforme" | "Données insuffisantes",
-  "verdict_technique": "Bon état général" | "État moyen — travaux à prévoir" | "État dégradé — intervention urgente" | "Données insuffisantes",
-  "fiabilite_rapport": "Élevée" | "Moyenne" | "Faible" | "Non évaluable",
-  "score_global": 68,
-  "resume_executif": "Paragraphe de 4-6 phrases résumant l'avis indépendant sur le rapport thermique ET l'état technique du bâtiment.",
-  "criteres": [
-    {{
-      "nom": "Nom du critère",
-      "valeur": 72.0,
-      "seuil": 50.0,
-      "unite": "kWh ep/m².an",
-      "conforme": false,
-      "ecart_pct": 44.0,
-      "commentaire": "Analyse indépendante — valeur plausible ? cohérente avec le type de bâtiment ?"
-    }}
-  ],
-  "anomalies": [
-    {{
-      "critere": "...",
-      "gravite": "bloquant" | "majeur" | "mineur",
-      "description": "Anomalie ou incohérence détectée dans le rapport thermique.",
-      "recommendation": "Action recommandée."
-    }}
-  ],
-  "etat_technique": [
-    {{
-      "composant": "Toiture",
-      "etat": "Bon" | "Moyen" | "Mauvais",
-      "observation": "...",
-      "risque": "faible" | "modéré" | "élevé"
-    }}
-  ],
-  "travaux": [
-    {{
-      "horizon": "Immédiat" | "1-3 ans" | "3-5 ans" | "5-10 ans",
-      "titre": "...",
-      "description": "...",
-      "cout_estime": "...",
-      "priorite": "URGENT" | "IMPORTANT" | "PLANIFIABLE",
-      "impact_energetique": "Impact sur la performance thermique si applicable."
-    }}
-  ],
-  "non_conformites": [
-    {{
-      "critere": "...",
-      "gravite": "bloquant" | "majeur" | "mineur",
-      "description": "...",
-      "action": "...",
-      "delai": "...",
-      "cout_estime": "..."
-    }}
-  ],
-  "recommandations": [
-    {{
-      "priorite": "URGENT" | "RECOMMANDÉ" | "OPTIONNEL",
-      "titre": "...",
-      "description": "...",
-      "impact_reglementaire": "...",
-      "delai": "..."
-    }}
-  ],
-  "coherence_factures": {{
-    "coherent": true,
-    "commentaire": "Cohérence entre les valeurs du rapport thermique et les consommations réelles."
-  }},
-  "enveloppe": {{"synthese": "...", "points_attention": ["..."]}},
-  "systemes_energetiques": {{
-    "synthese": "...",
-    "equipements": [{{"poste": "Chauffage", "equipement": "...", "performance": "...", "evaluation": "..."}}]
-  }},
-  "risques": [{{"titre": "...", "description": "...", "gravite": "faible" | "modéré" | "élevé", "action": "..."}}],
-  "points_forts": ["..."],
-  "enveloppe_budgetaire": {{
-    "travaux_conformite": "...",
-    "travaux_techniques": "...",
-    "total_estime": "..."
-  }},
-  "verifications_complementaires": ["Vérification recommandée si doutes"],
-  "contexte_reglementaire": "Rappel des exigences {norme} applicables.",
-  "avis_independant": "Paragraphe conclusif exprimant l'avis global de ConformExpert sur le rapport et l'état du bâtiment.",
-  "mentions_legales": "Ce rapport constitue une analyse documentaire indépendante réalisée par ConformExpert. Il ne se substitue pas à une attestation officielle de conformité ni à un diagnostic technique complet réalisé sur site."
-}}
-
-Si une valeur thermique n'est pas disponible, omets ce critère.
-Sois précis, factuel et indépendant."""
 
     else:  # 'energie' (défaut)
         return f"""Tu es ConformExpert, un tiers expert indépendant spécialisé dans la validation de rapports thermiques réglementaires.
@@ -2251,19 +2107,11 @@ def generer_rapport_ia(request, doc_id):
     annee        = getattr(document, 'annee_construction', None)
     logements    = getattr(document, 'nombre_logements', None)
 
-    PCA_SEUILS = {
-        "age_toiture_max": 30, "age_chauffage_max": 25, "humidite_mur_max": 5,
-        "annee_amiante": 1997, "surface_max": 100000, "logements_max": 1000,
-    }
-    pca_seuils_str = (
-        f"\n    Seuils techniques internes (PCA) :\n"
-        f"    - Âge max toiture recommandé : {PCA_SEUILS['age_toiture_max']} ans\n"
-        f"    - Âge max système chauffage : {PCA_SEUILS['age_chauffage_max']} ans\n"
-        f"    - Humidité mur tolérée : {PCA_SEUILS['humidite_mur_max']} %\n"
-        f"    - Risque amiante si bâtiment construit avant : {PCA_SEUILS['annee_amiante']}\n"
-        f"    - Surface bâtiment considérée atypique au-delà de : {PCA_SEUILS['surface_max']} m²\n"
-        f"    - Nombre logements élevé au-delà de : {PCA_SEUILS['logements_max']}\n"
-    )
+    carbone_seuils_str = "
+    Référentiels bilan carbone :
+    - RE2020 Ic énergie seuil max : 0 kgCO2eq/m².an
+    - Décret tertiaire : réduction 40% en 2030, 50% en 2040, 60% en 2050
+"
 
     infos_batiment = (
         f"- Type : {document.get_building_type_display()}\n"
@@ -2345,7 +2193,7 @@ def generer_rapport_ia(request, doc_id):
     # ── 4. System prompt ──────────────────────────────────────
     system_prompt = _build_system_prompt(
         type_analyse, ref, document, infos_batiment,
-        source_donnees_enrichie, valeurs_str, norme, pca_seuils_str,
+        source_donnees_enrichie, valeurs_str, norme, carbone_seuils_str,
     )
 
     # ── 6. Message utilisateur ────────────────────────────────
@@ -2521,8 +2369,6 @@ def rapport_ia_client(request, token):
         except Exception:
             rapport = None
 
-    if document.type_analyse == "pca" and not rapport:
-        rapport = analyse_pca(document)
 
     factures_data = []
     try:
