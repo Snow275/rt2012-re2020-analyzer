@@ -134,7 +134,7 @@ def send_mail_analyse_terminee(document):
             'client_name': document.client_name or '',
             'tracking_url': f"{SITE_URL}/suivi/{document.tracking_token}/",
             'rapport_items': [
-                "Analyse complète des critères RT2012 / RE2020",
+                "Analyse des critères thermiques et énergétiques",
                 "Conclusion de conformité détaillée",
                 "Recommandations éventuelles",
                 "Rapport PDF téléchargeable",
@@ -895,11 +895,21 @@ def settings_view(request):
             normes_data.append((norme_code, NORME_LABELS.get(norme_code, norme_code), fields_seuils))
         seuils_par_pays.append((pays_code, PAYS_LABELS.get(pays_code, pays_code), normes_data))
 
-
+    carbone_seuils = [
+        ("Ic énergie RE2020 — seuil max (maison individuelle)",  4,    "kgCO2eq/m².an"),
+        ("Ic énergie RE2020 — seuil max (logement collectif)",   6.5,  "kgCO2eq/m².an"),
+        ("Ic construction RE2020 — seuil max (mi-vie 2025)",   640,    "kgCO2eq/m²"),
+        ("Ic construction RE2020 — seuil max (mi-vie 2028)",   590,    "kgCO2eq/m²"),
+        ("Réduction conso. décret tertiaire 2030",              40,    "%"),
+        ("Réduction conso. décret tertiaire 2040",              50,    "%"),
+        ("Réduction conso. décret tertiaire 2050",              60,    "%"),
+        ("Émissions GES DPE — seuil passoire (classe F)",      70,    "kgCO2eq/m².an"),
+        ("Émissions GES DPE — seuil passoire (classe G)",     100,    "kgCO2eq/m².an"),
+    ]
 
     return render(request, 'main/settings.html', {
         'seuils_par_pays': seuils_par_pays,
-
+        'carbone_seuils': carbone_seuils,
     })
 
 
