@@ -1161,7 +1161,6 @@ select.f-input option { background: #0c1929; }
           {% elif document.type_analyse == 'carbone' %}
             Bilan carbone immobilier — {{ document.get_building_type_display }} · {{ document.get_pays_display }}
           {% else %}
-            Analyse complète — <strong style="color:var(--white)">{{ document.norme }}</strong> · {{ document.get_building_type_display }}
           {% endif %}
         </p>
       </div>
@@ -1270,7 +1269,7 @@ select.f-input option { background: #0c1929; }
       <!-- CARBONE : état technique + risques + travaux + budget -->
       {% if document.type_analyse == 'carbone' or document.type_analyse == 'carbone' %}
 
-      <!-- Stats PCA -->
+      <!-- Stats Bilan Carbone -->
       <div id="carbone-stats-wrap" style="display:none;margin-bottom:1.2rem">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem">
           <div class="stat-box">
@@ -1303,19 +1302,19 @@ select.f-input option { background: #0c1929; }
         </div>
       </div>
 
-      <!-- Risques PCA -->
+      <!-- Risques Bilan Carbone -->
       <div id="carbone-risques-wrap" style="margin-bottom:1.2rem;display:none">
         <h4 class="section-cap section-cap--red">Risques carbone</h4>
         <div id="carbone-risques-list" style="display:flex;flex-direction:column;gap:.7rem"></div>
       </div>
 
-      <!-- Travaux PCA -->
+      <!-- Leviers réduction Bilan Carbone -->
       <div id="carbone-travaux-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
         <h4 class="section-cap section-cap--blue">🔧 Plan de travaux</h4>
         <div id="carbone-travaux-list" style="display:flex;flex-direction:column;gap:.55rem"></div>
       </div>
 
-      <!-- Budget PCA -->
+      <!-- Émissions Bilan Carbone -->
       <div id="carbone-budget-wrap" class="card card--pad" style="padding:1.4rem;margin-bottom:1.2rem;display:none">
         <h4 class="section-cap section-cap--gold">Enveloppe budgétaire</h4>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:.9rem">
