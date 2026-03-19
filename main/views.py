@@ -2117,11 +2117,16 @@ def generer_rapport_ia(request, doc_id):
     annee        = getattr(document, 'annee_construction', None)
     logements    = getattr(document, 'nombre_logements', None)
 
-    carbone_seuils_str = "
-    Référentiels bilan carbone :
-    - RE2020 Ic énergie seuil max : 0 kgCO2eq/m².an
-    - Décret tertiaire : réduction 40% en 2030, 50% en 2040, 60% en 2050
-"
+    carbone_seuils_str = (
+    "\n    Référentiels bilan carbone :\n"
+    "    - RE2020 Ic énergie seuil max maison : 4 kgCO2eq/m².an\n"
+    "    - RE2020 Ic énergie seuil max collectif : 6.5 kgCO2eq/m².an\n"
+    "    - RE2020 Ic construction seuil mi-vie 2025 : 640 kgCO2eq/m²\n"
+    "    - RE2020 Ic construction seuil mi-vie 2028 : 590 kgCO2eq/m²\n"
+    "    - Décret tertiaire : réduction 40% en 2030, 50% en 2040, 60% en 2050\n"
+    "    - DPE passoire classe F : 70 kgCO2eq/m².an\n"
+    "    - DPE passoire classe G : 100 kgCO2eq/m².an\n"
+)
 
     infos_batiment = (
         f"- Type : {document.get_building_type_display()}\n"
