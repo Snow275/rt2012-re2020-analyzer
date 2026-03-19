@@ -172,7 +172,7 @@ footer a{color:var(--gold);text-decoration:none}
   </a>
 
   <ul class="nav-links">
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and user.is_staff %}
       <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Dashboard</a></li>
       <li><a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a></li>
       <li><a href="{% url 'devis_list' %}" {% if request.resolver_match.url_name == 'devis_list' or request.resolver_match.url_name == 'devis_create' or request.resolver_match.url_name == 'devis_edit' %}class="active"{% endif %}>Devis</a></li>
@@ -196,7 +196,7 @@ footer a{color:var(--gold);text-decoration:none}
 <!-- ████ MOBILE MENU ████ -->
 <div class="nav-mobile-overlay" id="navMobileMenu">
   <button class="nav-mobile-close" id="navMobileClose" aria-label="Fermer">✕</button>
-  {% if user.is_authenticated %}
+  {% if user.is_authenticated and user.is_staff %}
     <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Dashboard</a>
     <a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}class="active"{% endif %}>Historique</a>
     <a href="{% url 'devis_list' %}" {% if request.resolver_match.url_name == 'devis_list' or request.resolver_match.url_name == 'devis_create' or request.resolver_match.url_name == 'devis_edit' %}class="active"{% endif %}>Devis</a>
