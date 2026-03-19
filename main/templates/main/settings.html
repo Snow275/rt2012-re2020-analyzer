@@ -263,13 +263,13 @@
   }
   @media (max-width: 640px) { .seuils-grid { grid-template-columns: 1fr; } }
 
-  /* ── Section PCA ───────────────────────────────────────────── */
-  .pca-grid {
+  /* ── Section Bilan Carbone ─────────────────────────────────── */
+  .carbone-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: .7rem;
   }
-  .pca-item {
+  .carbone-item {
     background: var(--navy-2);
     border: 1px solid rgba(255,255,255,.05);
     border-radius: 10px;
@@ -279,7 +279,7 @@
     align-items: center;
     transition: border-color .2s;
   }
-  .pca-item:hover { border-color: rgba(200,168,75,.15); }
+  .carbone-item:hover { border-color: rgba(200,168,75,.15); }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
     {% for pays_code, pays_label, normes in seuils_par_pays %}
     <a class="nav-pill" href="#pays-{{ pays_code|lower }}">{{ pays_label|slice:"3:" }}</a>
     {% endfor %}
-    <a class="nav-pill" href="#pca">PCA</a>
+    <a class="nav-pill" href="#carbone">Carbone</a>
   </div>
 </div>
 
@@ -387,18 +387,18 @@ document.addEventListener('DOMContentLoaded', function() {
   {% endfor %}
 
   <!-- PCA -->
-  <div id="pca" style="margin-bottom:3rem">
+  <div id="carbone" style="margin-bottom:3rem">
     <div class="section-header">
-      <span class="section-flag">PCA</span>
+      <span class="section-flag">Bilan Carbone</span>
       <span class="section-title">Analyse technique</span>
       <span class="section-line"></span>
     </div>
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.4rem;line-height:1.6">
       Seuils utilisés pour l'analyse technique du bâtiment : âge des systèmes, risques techniques et paramètres structurels.
     </p>
-    <div class="pca-grid">
-      {% for label, val, unit in pca_seuils %}
-      <div class="pca-item">
+    <div class="carbone-grid">
+      {% for label, val, unit in carbone_seuils %}
+      <div class="carbone-item">
         <span style="font-size:.8rem;color:var(--gray-2)">
           {{ label }}
           {% if unit %}<span style="font-size:.68rem;color:var(--muted);margin-left:.3rem">{{ unit }}</span>{% endif %}
