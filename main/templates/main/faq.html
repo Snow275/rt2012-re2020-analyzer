@@ -2,6 +2,39 @@
 {% block title %}FAQ — Questions fréquentes{% endblock %}
 
 {% block content %}
+<script>
+// ── i18n faq ────────────────────────────────────────────────
+const FAQ_TR = {
+  fr: {
+    "page.label":   "Support",
+    "page.h1":      "Questions fréquentes",
+    "page.sub":     "Tout ce que vous devez savoir sur nos services de validation thermique et bilan carbone.",
+    "cta.h3":       "Vous ne trouvez pas la réponse ?",
+    "cta.p":        "Notre équipe répond sous 48h ouvrées à toute question sur vos dossiers ou nos services.",
+    "cta.contact":  "Contacter l'équipe",
+    "cta.deposit":  "Déposer un dossier"
+  },
+  en: {
+    "page.label":   "Support",
+    "page.h1":      "Frequently asked questions",
+    "page.sub":     "Everything you need to know about our thermal validation and carbon assessment services.",
+    "cta.h3":       "Can't find the answer?",
+    "cta.p":        "Our team replies within 48 business hours to any question about your files or our services.",
+    "cta.contact":  "Contact the team",
+    "cta.deposit":  "Submit a file"
+  }
+};
+
+function applyFaqLang() {
+  const lang = localStorage.getItem('ce_lang') || 'fr';
+  const tr = FAQ_TR[lang] || FAQ_TR['fr'];
+  document.querySelectorAll('[data-fq18n]').forEach(el => {
+    const key = el.getAttribute('data-fq18n');
+    if (tr[key] !== undefined) el.innerHTML = tr[key];
+  });
+}
+document.addEventListener('DOMContentLoaded', applyFaqLang);
+</script>
 <style>
 .faq-wrap { max-width: 780px; margin: 0 auto; }
 
@@ -56,9 +89,9 @@
 
 <div class="page-header">
   <div class="ph-inner">
-    <span class="s-label">Support</span>
-    <h1>Questions fréquentes</h1>
-    <p>Tout ce que vous devez savoir sur nos services de validation thermique et bilan carbone.</p>
+    <span class="s-label" data-fq18n="page.label">Support</span>
+    <h1 data-fq18n="page.h1">Questions fréquentes</h1>
+    <p data-fq18n="page.sub">Tout ce que vous devez savoir sur nos services de validation thermique et bilan carbone.</p>
   </div>
 </div>
 
@@ -80,13 +113,11 @@
     <!-- CTA bas de page -->
     <div class="card" style="padding:2.5rem;text-align:center;margin-top:3rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
       <div style="font-size:1.8rem;margin-bottom:.8rem">💬</div>
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:.5rem">Vous ne trouvez pas la réponse ?</h3>
-      <p style="font-size:.88rem;color:var(--gray-2);font-weight:300;margin-bottom:1.4rem;line-height:1.7">
-        Notre équipe répond sous 48h ouvrées à toute question sur vos dossiers ou nos services.
-      </p>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:.5rem" data-fq18n="cta.h3">Vous ne trouvez pas la réponse ?</h3>
+      <p style="font-size:.88rem;color:var(--gray-2);font-weight:300;margin-bottom:1.4rem;line-height:1.7" data-fq18n="cta.p">Notre équipe répond sous 48h ouvrées à toute question sur vos dossiers ou nos services.</p>
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
-        <a href="{% url 'contact' %}" class="btn btn-gold">Contacter l'équipe</a>
-        <a href="{% url 'import' %}" class="btn btn-ghost">Déposer un dossier</a>
+        <a href="{% url 'contact' %}" class="btn btn-gold" data-fq18n="cta.contact">Contacter l'équipe</a>
+        <a href="{% url 'import' %}" class="btn btn-ghost" data-fq18n="cta.deposit">Déposer un dossier</a>
       </div>
     </div>
 
