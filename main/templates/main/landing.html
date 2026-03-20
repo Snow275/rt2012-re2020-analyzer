@@ -1441,19 +1441,35 @@ footer {
 
 <script>
 (function() {
-  var messages = [
-    { title: "Dossier traité aujourd'hui",      msg: "Climawin RE2020 · 3 anomalies détectées" },
-    { title: "Rapport livré ce matin",           msg: "RT2012 · Bbio hors seuil détecté" },
-    { title: "Validation terminée",              msg: "PEB Belgique · Conforme avec réserves" },
-    { title: "Anomalie détectée",                msg: "DH saisi à 140h au lieu de 1 400h" },
-    { title: "Dossier clôturé",                  msg: "Pléiades RE2020 · Score confiance 94%" },
-    { title: "Croisement factures effectué",     msg: "Écart de 63 kWh/m²/an avec le modèle" },
-    { title: "Rapport envoyé au client",         msg: "CNEB Canada · 2 points de vigilance" },
-    { title: "Vérification en cours",            msg: "Climawin RT2012 · Étanchéité à l'air" },
-    { title: "Dossier accepté",                  msg: "DPE officiel · Classe D contestée" },
-    { title: "Analyse terminée",                 msg: "LENOZ Luxembourg · Certification validée" },
-  ];
-  var r = messages[Math.floor(Math.random() * messages.length)];
+  var lang = localStorage.getItem('ce_lang') || 'fr';
+  var messages = {
+    fr: [
+      { title: "Dossier traité aujourd'hui",      msg: "Climawin RE2020 · 3 anomalies détectées" },
+      { title: "Rapport livré ce matin",           msg: "RT2012 · Bbio hors seuil détecté" },
+      { title: "Validation terminée",              msg: "PEB Belgique · Conforme avec réserves" },
+      { title: "Anomalie détectée",                msg: "DH saisi à 140h au lieu de 1 400h" },
+      { title: "Dossier clôturé",                  msg: "Pléiades RE2020 · Score confiance 94%" },
+      { title: "Croisement factures effectué",     msg: "Écart de 63 kWh/m²/an avec le modèle" },
+      { title: "Rapport envoyé au client",         msg: "CNEB Canada · 2 points de vigilance" },
+      { title: "Vérification en cours",            msg: "Climawin RT2012 · Étanchéité à l'air" },
+      { title: "Dossier accepté",                  msg: "DPE officiel · Classe D contestée" },
+      { title: "Analyse terminée",                 msg: "LENOZ Luxembourg · Certification validée" },
+    ],
+    en: [
+      { title: "File processed today",            msg: "Climawin RE2020 · 3 anomalies detected" },
+      { title: "Report delivered this morning",   msg: "RT2012 · Bbio above threshold detected" },
+      { title: "Validation complete",             msg: "PEB Belgium · Compliant with reservations" },
+      { title: "Anomaly detected",                msg: "DH entered as 140h instead of 1,400h" },
+      { title: "File closed",                     msg: "Pléiades RE2020 · Confidence score 94%" },
+      { title: "Bills cross-check done",          msg: "Gap of 63 kWh/m²/yr vs model" },
+      { title: "Report sent to client",           msg: "CNEB Canada · 2 watchpoints" },
+      { title: "Verification in progress",        msg: "Climawin RT2012 · Airtightness" },
+      { title: "File accepted",                   msg: "Official DPE · Class D contested" },
+      { title: "Analysis complete",               msg: "LENOZ Luxembourg · Certification validated" },
+    ]
+  };
+  var pool = messages[lang] || messages['fr'];
+  var r = pool[Math.floor(Math.random() * pool.length)];
   document.getElementById('spToastTitle').textContent = r.title;
   document.getElementById('spToastMsg').textContent   = r.msg;
 })();
@@ -1470,7 +1486,7 @@ footer {
     <li><a href="#comment" data-i18n="nav.process">Processus</a></li>
     <li><a href="#profils" data-i18n="nav.profils">Profils</a></li>
     <li><a href="#suivi" data-i18n="nav.suivi">Suivi</a></li>
-    <li><a href="{% url 'import' %}" class="nav-cta">Déposer un dossier</a></li>
+    <li><a href="{% url 'import' %}" class="nav-cta" data-i18n="nav.cta">Déposer un dossier</a></li>
     {% if user.is_authenticated and user.is_staff %}
     <li style="margin-left:.5rem"><a href="{% url 'home' %}" style="font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gray-2)'">Dashboard</a></li>
     {% endif %}
@@ -1492,7 +1508,7 @@ footer {
   <a href="#profils" class="mobile-link" data-i18n="nav.profils">Profils</a>
   <a href="#suivi" class="mobile-link" data-i18n="nav.suivi">Suivi dossier</a>
   <a href="#faq" class="mobile-link">FAQ</a>
-  <a href="{% url 'import' %}" class="nav-cta mobile-link">Déposer un dossier</a>
+  <a href="{% url 'import' %}" class="nav-cta mobile-link" data-i18n="nav.cta">Déposer un dossier</a>
   {% if user.is_authenticated and user.is_staff %}
   <a href="{% url 'home' %}" class="mobile-link">Dashboard</a>
   {% endif %}
@@ -1527,10 +1543,7 @@ footer {
       <span data-i18n="hero.badge">Tiers indépendant · Thermique &amp; Technique</span>
     </div>
 
-    <h1 class="anim-2">
-      Vos rapports thermiques et techniques,<br>
-      <em>vérifiés par un tiers.</em>
-    </h1>
+    <h1 class="anim-2" data-i18n="hero.h1">Vos rapports thermiques et techniques,<br><em>vérifiés par un tiers.</em></h1>
 
     <p class="hero-desc anim-3" data-i18n="hero.desc">
       ConformExpert n'est pas un bureau d'études. Nous sommes le regard externe qui contrôle vos rapports Climawin, Pléiades et DPE — seuils réglementaires, cohérence des valeurs, croisement avec les consommations réelles. Nous réalisons également des pré-analyses techniques (Bilan carbone) sur l'état de l'enveloppe et des systèmes du bâtiment.
@@ -1548,10 +1561,10 @@ footer {
 
     <div class="hero-btns anim-4">
       <a href="{% url 'import' %}" class="btn-gold">
-        Déposer mon dossier
+        <span data-i18n="hero.btn1">Déposer mon dossier</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
-      <a href="#validation" class="btn-ghost">Voir ce qu'on vérifie</a>
+      <a href="#validation" class="btn-ghost" data-i18n="hero.btn2">Voir ce qu'on vérifie</a>
     </div>
 
     <div class="hero-stats anim-4">
@@ -1602,29 +1615,29 @@ footer {
       <div class="process-row">
         <div class="pr-num" style="border-color:rgba(200,168,75,.4);color:var(--gold-lt)">+</div>
         <div class="pr-content">
-          <strong>Bilan carbone immobilier</strong>
-          <span>État de l'enveloppe, systèmes, risques techniques — sur demande</span>
+          <strong data-i18n="hcard.extra.title">Bilan carbone immobilier</strong>
+          <span data-i18n="hcard.extra.desc">État de l'enveloppe, systèmes, risques techniques — sur demande</span>
         </div>
       </div>
     </div>
     <div class="hcard-footer">
       <div class="hcard-footer-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
-      <p>Délai garanti : <strong>10 jours ouvrés</strong> après réception du dossier complet.</p>
+      <p data-i18n="hcard.footer">Délai garanti : <strong>10 jours ouvrés</strong> après réception du dossier complet.</p>
     </div>
   </div>
 </section>
 
 <!-- ████ TRUST BAR ████ -->
 <div class="trust-bar">
-  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> <strong>Validation 100% indépendante</strong></div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> <strong data-i18n="trust.1i">Validation 100% indépendante</strong></div>
   <div class="tb-sep"></div>
-  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> <strong>Thermique</strong> · RT2012 · RE2020 · DPE</div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> <span data-i18n="trust.2i"><strong>Thermique</strong> · RT2012 · RE2020 · DPE</span></div>
   <div class="tb-sep"></div>
-  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> <strong>Technique</strong> · Bilan carbone · Enveloppe · Systèmes</div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> <span data-i18n="trust.3i"><strong>Technique</strong> · Bilan carbone · Enveloppe · Systèmes</span></div>
   <div class="tb-sep"></div>
   <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> <strong>PEB</strong> (Belgique) · CNEB (Canada) · LENOZ (Lux.)</div>
   <div class="tb-sep"></div>
-  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Livraison en <strong>10 jours</strong></div>
+  <div class="tb-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> <span data-i18n="trust.5i">Livraison en <strong>10 jours</strong></span></div>
 </div>
 
 <!-- ████ VALIDATION ████ -->
@@ -1727,7 +1740,7 @@ footer {
       </div>
       <div class="doc-item-card reveal">
         <div>
-          <strong>Factures énergie</strong>
+          <strong data-i18n="doc.factures.title">Factures énergie</strong>
           <span data-i18n="doc.factures">Gaz, électricité — pour le croisement avec les consommations modélisées</span>
           <span class="doc-item-norm">Croisement</span>
         </div>
@@ -1816,7 +1829,7 @@ footer {
           <span>Cas d'usage principal</span>
           <strong data-i18n="profil.p2.usage">Croisement DPE + factures</strong>
         </div>
-        <a href="{% url 'import' %}">Déposer un dossier <span>→</span></a>
+        <a href="{% url 'import' %}" data-i18n="profil.deposit">Déposer un dossier <span>→</span></a>
       </div>
 
       <div class="profil-card reveal">
@@ -1834,7 +1847,7 @@ footer {
           <span>Cas d'usage principal</span>
           <strong data-i18n="profil.p3.usage">Audit avant remise client</strong>
         </div>
-        <a href="{% url 'import' %}">Déposer un dossier <span>→</span></a>
+        <a href="{% url 'import' %}" data-i18n="profil.deposit">Déposer un dossier <span>→</span></a>
       </div>
 
       <div class="profil-card reveal">
@@ -1852,7 +1865,7 @@ footer {
           <span>Cas d'usage principal</span>
           <strong data-i18n="profil.p4.usage">Validation DPE transaction</strong>
         </div>
-        <a href="{% url 'import' %}">Déposer un dossier <span>→</span></a>
+        <a href="{% url 'import' %}" data-i18n="profil.deposit">Déposer un dossier <span>→</span></a>
       </div>
     </div>
   </div>
@@ -1900,8 +1913,8 @@ footer {
         <div class="sm-content">
           <div class="sm-status-row">
             <div>
-              <h4>Résidence Les Acacias — Lot B</h4>
-              <span>Reçu le 12 nov. · Délai : 1er déc.</span>
+              <h4 data-i18n="suivi.mock.project">Résidence Les Acacias — Lot B</h4>
+              <span data-i18n="suivi.mock.date">Reçu le 12 nov. · Délai : 1er déc.</span>
             </div>
             <span class="status-badge en-cours" data-i18n="suivi.mock.status">En cours</span>
           </div>
@@ -1971,7 +1984,7 @@ footer {
           <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:var(--navy);flex-shrink:0">TM</div>
           <div>
             <div style="font-weight:600;font-size:.88rem">Thomas M.</div>
-            <div style="font-size:.78rem;color:var(--gray-1)">Maître d'œuvre, Lyon</div>
+            <div style="font-size:.78rem;color:var(--gray-1)" data-i18n="testi.t1.role">Maître d'œuvre, Lyon</div>
             <div class="testi-verified">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               Dossier vérifié
@@ -1989,7 +2002,7 @@ footer {
           <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:var(--navy);flex-shrink:0">SB</div>
           <div>
             <div style="font-weight:600;font-size:.88rem">Sophie B.</div>
-            <div style="font-size:.78rem;color:var(--gray-1)">Investisseur, Paris</div>
+            <div style="font-size:.78rem;color:var(--gray-1)" data-i18n="testi.t2.role">Investisseur, Paris</div>
             <div class="testi-verified">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               Dossier vérifié
@@ -2007,7 +2020,7 @@ footer {
           <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:var(--navy);flex-shrink:0">KD</div>
           <div>
             <div style="font-weight:600;font-size:.88rem">Karim D.</div>
-            <div style="font-size:.78rem;color:var(--gray-1)">Bureau d'études thermiques, Bordeaux</div>
+            <div style="font-size:.78rem;color:var(--gray-1)" data-i18n="testi.t3.role">Bureau d'études thermiques, Bordeaux</div>
             <div class="testi-verified">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               Dossier vérifié
@@ -2021,7 +2034,7 @@ footer {
 
 <!-- ████ CTA FINAL ████ -->
 <div class="cta-section reveal">
-  <span class="s-label" style="display:block;text-align:center;margin-bottom:1rem">Prêt à valider ?</span>
+  <span class="s-label" style="display:block;text-align:center;margin-bottom:1rem" data-i18n="cta.label">Prêt à valider ?</span>
   <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:700;line-height:1.2;margin-bottom:.6rem">
     <span data-i18n="cta.title">Déposez votre dossier.<br><em>Nous faisons le reste.</em></span>
   </h2>
@@ -2032,7 +2045,7 @@ footer {
   <div class="cta-stats">
     <div class="cta-stat"><strong>100%</strong><span data-i18n="cta.stat1">INDÉPENDANT</span></div>
     <div class="cta-stat"><strong>10j</strong><span data-i18n="cta.stat2">DÉLAI GARANTI</span></div>
-    <div class="cta-stat"><strong>RT / RE 2012·2020</strong><span>ET DPE</span></div>
+    <div class="cta-stat"><strong>RT / RE 2012·2020</strong><span data-i18n="cta.stat4">ET DPE</span></div>
     <div class="cta-stat"><strong>+5</strong><span data-i18n="cta.stat3">NORMES COUVERTES</span></div>
   </div>
 
@@ -2067,8 +2080,8 @@ footer {
         <ul>
           <li><a href="#comment" data-i18n="footer.link4">Notre processus</a></li>
           <li><a href="#suivi" data-i18n="footer.link5">Suivi dossier</a></li>
-          <li><a href="{% url 'faq' %}">FAQ</a></li>
-          <li><a href="{% url 'import' %}">Déposer un dossier</a></li>
+          <li><a href="{% url 'faq' %}" data-i18n="footer.faq">FAQ</a></li>
+          <li><a href="{% url 'import' %}" data-i18n="footer.deposit">Déposer un dossier</a></li>
           <li><a href="{% url 'contact' %}">Contact</a></li>
         </ul>
       </div>
@@ -2264,6 +2277,22 @@ const TRANSLATIONS = {
     "footer.link5":         "Suivi dossier",
     "footer.copy":          "\u00a9 2026 ConformExpert \u2014 Tous droits r\u00e9serv\u00e9s",
     "footer.legal":         "Mentions l\u00e9gales &amp; CGV",
+    "hcard.extra.title":    "Bilan carbone immobilier",
+    "hcard.extra.desc":     "\u00c9tat de l'enveloppe, syst\u00e8mes, risques techniques \u2014 sur demande",
+    "doc.factures.title":   "Factures \u00e9nergie",
+    "cta.label":            "Pr\u00eat \u00e0 valider\u00a0?",
+    "cta.stat4":            "ET DPE",
+    "suivi.mock.project":   "R\u00e9sidence Les Acacias \u2014 Lot B",
+    "suivi.mock.date":      "Re\u00e7u le 12 nov. \u00b7 D\u00e9lai\u00a0: 1er d\u00e9c.",
+    "testi.verified":       "Dossier v\u00e9rifi\u00e9",
+    "footer.faq":           "FAQ",
+    "trust.1i":             "Validation 100% ind\u00e9pendante",
+    "trust.2i":             "Thermique \u00b7 RT2012 \u00b7 RE2020 \u00b7 DPE",
+    "trust.3i":             "Technique \u00b7 Bilan carbone \u00b7 Enveloppe \u00b7 Syst\u00e8mes",
+    "trust.5i":             "Livraison en <strong>10 jours</strong>",
+    "testi.t1.role":        "Ma\u00eetre d'\u0153uvre, Lyon",
+    "testi.t2.role":        "Investisseur, Paris",
+    "testi.t3.role":        "Bureau d'\u00e9tudes thermiques, Bordeaux",
     "footer.deposit":       "D\u00e9poser un dossier"
   },
   en: {
@@ -2410,6 +2439,22 @@ const TRANSLATIONS = {
     "footer.link5":         "File tracking",
     "footer.copy":          "\u00a9 2026 ConformExpert \u2014 All rights reserved",
     "footer.legal":         "Legal notice & T&Cs",
+    "hcard.extra.title":    "Carbon assessment",
+    "hcard.extra.desc":     "Envelope condition, systems, technical risks — on request",
+    "doc.factures.title":   "Energy bills",
+    "cta.label":            "Ready to validate?",
+    "cta.stat4":            "AND DPE",
+    "suivi.mock.project":   "Les Acacias Residence — Block B",
+    "suivi.mock.date":      "Received Nov 12 · Deadline: Dec 1",
+    "testi.verified":       "File verified",
+    "footer.faq":           "FAQ",
+    "trust.1i":             "100% independent validation",
+    "trust.2i":             "Thermal \u00b7 RT2012 \u00b7 RE2020 \u00b7 DPE",
+    "trust.3i":             "Technical \u00b7 Carbon \u00b7 Envelope \u00b7 Systems",
+    "trust.5i":             "Delivery in <strong>10 days</strong>",
+    "testi.t1.role":        "Project manager, Lyon",
+    "testi.t2.role":        "Investor, Paris",
+    "testi.t3.role":        "Thermal engineering firm, Bordeaux",
     "footer.deposit":       "Submit a file"
   }
 };
