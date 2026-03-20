@@ -1432,309 +1432,124 @@ select.f-input option { background: #0c1929; }
       <!-- Header -->
       <div class="obs-header">
         <div>
-          <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin:0 0 .2rem">🔍 Observations expert</p>
-          <p style="font-size:.83rem;color:var(--gray-1);margin:0">Ces données sont injectées dans le prompt IA pour enrichir le rapport généré.</p>
+          <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#4ade80;margin:0 0 .2rem">🌿 Observations carbone</p>
+          <p style="font-size:.83rem;color:var(--gray-1);margin:0">Ces notes sont injectées dans le prompt IA pour enrichir le bilan carbone généré.</p>
         </div>
         <button type="submit" class="btn btn-gold">Enregistrer</button>
       </div>
 
       <div class="grid-2col">
 
-        <!-- COLONNE GAUCHE : Enveloppe du bâtiment -->
+        <!-- COLONNE GAUCHE -->
         <div style="display:flex;flex-direction:column;gap:1.2rem">
 
-          <!-- Toiture -->
+          <!-- Données énergétiques connues -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--purple section-title--sm">🏠 Toiture</h3>
+            <h3 class="section-title section-title--sm" style="color:#4ade80">⚡ Données énergétiques</h3>
             <div style="display:flex;flex-direction:column;gap:.7rem">
-              <div>
-                <label class="label-caps">État général</label>
-                <select name="obs_toiture_etat" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="bon"     {% if document.obs_toiture_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
-                  <option value="moyen"   {% if document.obs_toiture_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
-                  <option value="mauvais" {% if document.obs_toiture_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-                </select>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                <div>
+                  <label class="label-caps">Ic énergie RE2020 (kgCO2eq/m².an)</label>
+                  <input type="number" step="0.01" name="re2020_carbon_emissions"
+                    value="{{ document.re2020_carbon_emissions|default:'' }}" placeholder="ex: 3.2" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Cep,nr (kWh/m².an)</label>
+                  <input type="number" step="0.1" name="re2020_energy_efficiency"
+                    value="{{ document.re2020_energy_efficiency|default:'' }}" placeholder="ex: 85" class="f-input">
+                </div>
               </div>
-              <div>
-                <label class="label-caps">Âge estimé (ans)</label>
-                <input type="number" name="obs_toiture_age" min="0" max="100"
-                  value="{{ document.obs_toiture_age|default:'' }}" placeholder="ex: 15" class="f-input">
-              </div>
-              <div>
-                <label class="label-caps">Observations</label>
-                <textarea name="obs_toiture_notes" rows="2" class="f-input" style="resize:vertical"
-                  placeholder="Fissures, étanchéité, végétation...">{{ document.obs_toiture_notes|default:'' }}</textarea>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                <div>
+                  <label class="label-caps">Conso. énergie primaire (kWh ep/m².an)</label>
+                  <input type="number" step="0.1" name="dpe_conso_ep"
+                    value="{{ document.dpe_conso_ep|default:'' }}" placeholder="ex: 120" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Émissions GES (kgCO2eq/m².an)</label>
+                  <input type="number" step="0.1" name="dpe_emission_ges"
+                    value="{{ document.dpe_emission_ges|default:'' }}" placeholder="ex: 25" class="f-input">
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Façades -->
+          <!-- DPE -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--purple section-title--sm">🧱 Façades & murs</h3>
+            <h3 class="section-title section-title--sm" style="color:#60a5fa">🏠 DPE</h3>
             <div style="display:flex;flex-direction:column;gap:.7rem">
-              <div>
-                <label class="label-caps">État général</label>
-                <select name="obs_facade_etat" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="bon"     {% if document.obs_facade_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
-                  <option value="moyen"   {% if document.obs_facade_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
-                  <option value="mauvais" {% if document.obs_facade_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-                </select>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                <div>
+                  <label class="label-caps">Classe énergie</label>
+                  <select name="dpe_classe_energie" class="f-input">
+                    <option value="">— Non renseigné —</option>
+                    {% for cls in 'ABCDEFG' %}
+                    <option value="{{ cls }}" {% if document.dpe_classe_energie == cls %}selected{% endif %}>{{ cls }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label class="label-caps">Classe GES</label>
+                  <select name="dpe_classe_ges" class="f-input">
+                    <option value="">— Non renseigné —</option>
+                    {% for cls in 'ABCDEFG' %}
+                    <option value="{{ cls }}" {% if document.dpe_classe_ges == cls %}selected{% endif %}>{{ cls }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                <div>
+                  <label class="label-caps">Surface de référence (m²)</label>
+                  <input type="number" step="0.1" name="dpe_surface_ref"
+                    value="{{ document.dpe_surface_ref|default:'' }}" placeholder="ex: 120" class="f-input">
+                </div>
+                <div>
+                  <label class="label-caps">Date de visite</label>
+                  <input type="text" name="dpe_date_visite"
+                    value="{{ document.dpe_date_visite|default:'' }}" placeholder="ex: 15/01/2025" class="f-input">
+                </div>
               </div>
               <div>
-                <label class="label-caps">Isolation existante</label>
-                <select name="obs_facade_isolation" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="ite"      {% if document.obs_facade_isolation == 'ite'      %}selected{% endif %}>ITE (extérieur)</option>
-                  <option value="iti"      {% if document.obs_facade_isolation == 'iti'      %}selected{% endif %}>ITI (intérieur)</option>
-                  <option value="aucune"   {% if document.obs_facade_isolation == 'aucune'   %}selected{% endif %}>Aucune</option>
-                  <option value="inconnue" {% if document.obs_facade_isolation == 'inconnue' %}selected{% endif %}>Inconnue</option>
-                </select>
-              </div>
-              <div>
-                <label class="label-caps">Observations</label>
-                <textarea name="obs_facade_notes" rows="2" class="f-input" style="resize:vertical"
-                  placeholder="Fissures, humidité, décollements...">{{ document.obs_facade_notes|default:'' }}</textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- Menuiseries -->
-          <div class="card card--pad-sm">
-            <h3 class="section-title section-title--purple section-title--sm">🪟 Menuiseries</h3>
-            <div style="display:flex;flex-direction:column;gap:.7rem">
-              <div>
-                <label class="label-caps">Type de vitrage</label>
-                <select name="obs_menuiseries_type" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="simple" {% if document.obs_menuiseries_type == 'simple' %}selected{% endif %}>Simple vitrage</option>
-                  <option value="double" {% if document.obs_menuiseries_type == 'double' %}selected{% endif %}>Double vitrage</option>
-                  <option value="triple" {% if document.obs_menuiseries_type == 'triple' %}selected{% endif %}>Triple vitrage</option>
-                </select>
-              </div>
-              <div>
-                <label class="label-caps">État général</label>
-                <select name="obs_menuiseries_etat" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="bon"     {% if document.obs_menuiseries_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
-                  <option value="moyen"   {% if document.obs_menuiseries_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
-                  <option value="mauvais" {% if document.obs_menuiseries_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-                </select>
-              </div>
-              <div>
-                <label class="label-caps">Observations</label>
-                <textarea name="obs_menuiseries_notes" rows="2" class="f-input" style="resize:vertical"
-                  placeholder="Condensation, joints défaillants, cadres...">{{ document.obs_menuiseries_notes|default:'' }}</textarea>
+                <label class="label-caps">Diagnostiqueur</label>
+                <input type="text" name="dpe_diagnostiqueur"
+                  value="{{ document.dpe_diagnostiqueur|default:'' }}" placeholder="Nom / organisme" class="f-input">
               </div>
             </div>
           </div>
 
         </div><!-- /col gauche -->
 
-        <!-- COLONNE DROITE : Systèmes + Risques -->
+        <!-- COLONNE DROITE -->
         <div style="display:flex;flex-direction:column;gap:1.2rem">
 
-          <!-- Chauffage -->
+          <!-- RT2012 si applicable -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--purple section-title--sm">🔥 Chauffage</h3>
-            <div style="display:flex;flex-direction:column;gap:.7rem">
-              <div>
-                <label class="label-caps">Type de système</label>
-                <select name="obs_chauffage_type" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="gaz"         {% if document.obs_chauffage_type == 'gaz'         %}selected{% endif %}>Chaudière gaz</option>
-                  <option value="fioul"        {% if document.obs_chauffage_type == 'fioul'       %}selected{% endif %}>Chaudière fioul</option>
-                  <option value="pac_air_eau"  {% if document.obs_chauffage_type == 'pac_air_eau' %}selected{% endif %}>PAC air/eau</option>
-                  <option value="pac_air_air"  {% if document.obs_chauffage_type == 'pac_air_air' %}selected{% endif %}>PAC air/air</option>
-                  <option value="electrique"   {% if document.obs_chauffage_type == 'electrique'  %}selected{% endif %}>Électrique direct</option>
-                  <option value="bois"         {% if document.obs_chauffage_type == 'bois'        %}selected{% endif %}>Bois / pellets</option>
-                  <option value="reseau"       {% if document.obs_chauffage_type == 'reseau'      %}selected{% endif %}>Réseau de chaleur</option>
-                </select>
-              </div>
-              <div>
-                <label class="label-caps">Âge estimé (ans)</label>
-                <input type="number" name="obs_chauffage_age" min="0" max="60"
-                  value="{{ document.obs_chauffage_age|default:'' }}" placeholder="ex: 12" class="f-input">
-              </div>
-              <div>
-                <label class="label-caps">État général</label>
-                <select name="obs_chauffage_etat" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="bon"     {% if document.obs_chauffage_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
-                  <option value="moyen"   {% if document.obs_chauffage_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
-                  <option value="mauvais" {% if document.obs_chauffage_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Autres systèmes -->
-          <div class="card card--pad-sm">
-            <h3 class="section-title section-title--purple section-title--sm">⚙️ Autres systèmes</h3>
-            <div style="display:flex;flex-direction:column;gap:.9rem">
-
-              <!-- Plomberie -->
-              <div>
-                <label class="label-caps">💧 Plomberie / ECS</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-                  <select name="obs_plomberie_etat" class="f-input">
-                    <option value="">État —</option>
-                    <option value="bon"     {% if document.obs_plomberie_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
-                    <option value="moyen"   {% if document.obs_plomberie_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
-                    <option value="mauvais" {% if document.obs_plomberie_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-                  </select>
-                  <input type="number" name="obs_ecs_age" min="0" max="60"
-                    value="{{ document.obs_ecs_age|default:'' }}" placeholder="Âge ECS (ans)" class="f-input">
-                </div>
-              </div>
-
-              <!-- Électricité -->
-              <div>
-                <label class="label-caps">Installation électrique</label>
-                <select name="obs_elec_etat" class="f-input">
-                  <option value="">État —</option>
-                  <option value="bon"     {% if document.obs_elec_etat == 'bon'     %}selected{% endif %}>✅ Bon — tableau récent</option>
-                  <option value="moyen"   {% if document.obs_elec_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen — à vérifier</option>
-                  <option value="mauvais" {% if document.obs_elec_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais — mise aux normes requise</option>
-                </select>
-              </div>
-
-              <!-- VMC -->
-              <div>
-                <label class="label-caps">💨 Ventilation (VMC)</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-                  <select name="obs_vmc_type" class="f-input">
-                    <option value="">Type —</option>
-                    <option value="simple_flux" {% if document.obs_vmc_type == 'simple_flux' %}selected{% endif %}>Simple flux</option>
-                    <option value="double_flux" {% if document.obs_vmc_type == 'double_flux' %}selected{% endif %}>Double flux</option>
-                    <option value="aucune"      {% if document.obs_vmc_type == 'aucune'      %}selected{% endif %}>Aucune</option>
-                  </select>
-                  <select name="obs_vmc_etat" class="f-input">
-                    <option value="">État —</option>
-                    <option value="bon"     {% if document.obs_vmc_etat == 'bon'     %}selected{% endif %}>✅ Bon</option>
-                    <option value="moyen"   {% if document.obs_vmc_etat == 'moyen'   %}selected{% endif %}>⚠️ Moyen</option>
-                    <option value="mauvais" {% if document.obs_vmc_etat == 'mauvais' %}selected{% endif %}>❌ Mauvais</option>
-                  </select>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Risques carbone -->
-          <div class="card card--pad-sm">
-            <h3 class="section-title section-title--sm" style="color:#ef5350">Risques carbone</h3>
-            <div style="display:flex;flex-direction:column;gap:.7rem">
-              {% if document.annee_construction and document.annee_construction < 1997 %}
-              <div class="amiante-warn">
-                Bâtiment construit avant 1997 — risque amiante détecté automatiquement
-              </div>
-              {% endif %}
-              <div>
-                <label class="label-caps">Humidité / infiltrations</label>
-                <select name="obs_humidite" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="aucune"     {% if document.obs_humidite == 'aucune'     %}selected{% endif %}>Aucune constatée</option>
-                  <option value="ponctuelle" {% if document.obs_humidite == 'ponctuelle' %}selected{% endif %}>Ponctuelle / localisée</option>
-                  <option value="importante" {% if document.obs_humidite == 'importante' %}selected{% endif %}>Importante — traitement requis</option>
-                </select>
-              </div>
-              <div>
-                <label class="label-caps">Fissures structurelles</label>
-                <select name="obs_fissures" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="aucune"        {% if document.obs_fissures == 'aucune'        %}selected{% endif %}>Aucune</option>
-                  <option value="superficielles" {% if document.obs_fissures == 'superficielles' %}selected{% endif %}>Superficielles (esthétique)</option>
-                  <option value="actives"        {% if document.obs_fissures == 'actives'        %}selected{% endif %}>Actives — expertise requise</option>
-                </select>
-              </div>
-              <div>
-                <label class="label-caps">Autres risques (libre)</label>
-                <textarea name="obs_risques_notes" rows="3" class="f-input" style="resize:vertical"
-                  placeholder="Plomb, amiante confirmé, termites, affaissement...">{{ document.obs_risques_notes|default:'' }}</textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- Estimation travaux -->
-          <div class="card card--pad-sm">
-            <h3 class="section-title section-title--sm">💶 Estimation travaux expert</h3>
+            <h3 class="section-title section-title--sm" style="color:var(--gold)">📊 Indicateurs thermiques (si RT2012)</h3>
             <div style="display:flex;flex-direction:column;gap:.7rem">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
                 <div>
-                  <label class="label-caps">Toiture (€)</label>
-                  <input type="number" name="obs_cout_toiture" min="0"
-                    value="{{ document.obs_cout_toiture|default:'' }}" placeholder="ex: 25000" class="f-input">
+                  <label class="label-caps">Bbio</label>
+                  <input type="number" step="0.1" name="rt2012_bbio"
+                    value="{{ document.rt2012_bbio|default:'' }}" placeholder="ex: 42.5" class="f-input">
                 </div>
                 <div>
-                  <label class="label-caps">Isolation (€)</label>
-                  <input type="number" name="obs_cout_isolation" min="0"
-                    value="{{ document.obs_cout_isolation|default:'' }}" placeholder="ex: 40000" class="f-input">
+                  <label class="label-caps">Cep (kWh ep/m².an)</label>
+                  <input type="number" step="0.1" name="rt2012_cep"
+                    value="{{ document.rt2012_cep|default:'' }}" placeholder="ex: 48" class="f-input">
                 </div>
-                <div>
-                  <label class="label-caps">Chauffage (€)</label>
-                  <input type="number" name="obs_cout_chauffage" min="0"
-                    value="{{ document.obs_cout_chauffage|default:'' }}" placeholder="ex: 18000" class="f-input">
-                </div>
-                <div>
-                  <label class="label-caps">Menuiseries (€)</label>
-                  <input type="number" name="obs_cout_menuiseries" min="0"
-                    value="{{ document.obs_cout_menuiseries|default:'' }}" placeholder="ex: 12000" class="f-input">
-                </div>
-                <div>
-                  <label class="label-caps">Plomberie / ECS (€)</label>
-                  <input type="number" name="obs_cout_plomberie" min="0"
-                    value="{{ document.obs_cout_plomberie|default:'' }}" placeholder="ex: 8000" class="f-input">
-                </div>
-                <div>
-                  <label class="label-caps">Autres travaux (€)</label>
-                  <input type="number" name="obs_cout_autres" min="0"
-                    value="{{ document.obs_cout_autres|default:'' }}" placeholder="ex: 5000" class="f-input">
-                </div>
-              </div>
-              <div class="total-row">
-                <span>Total estimé</span>
-                <span id="obs-total-travaux">—</span>
               </div>
             </div>
           </div>
 
-          <!-- Données énergétiques -->
+          <!-- Notes libres -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--sm">Données énergétiques</h3>
-            <div style="display:flex;flex-direction:column;gap:.7rem">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
-                <div>
-                  <label class="label-caps">Consommation actuelle (kWh/an)</label>
-                  <input type="number" name="obs_conso_kwh" min="0"
-                    value="{{ document.obs_conso_kwh|default:'' }}" placeholder="ex: 85000" class="f-input">
-                </div>
-                <div>
-                  <label class="label-caps">Coût énergie annuel (€)</label>
-                  <input type="number" name="obs_cout_energie" min="0"
-                    value="{{ document.obs_cout_energie|default:'' }}" placeholder="ex: 7200" class="f-input">
-                </div>
-              </div>
-              <div>
-                <label class="label-caps">Classe DPE actuelle</label>
-                <select name="obs_classe_dpe" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  {% for cls in 'ABCDEFG' %}
-                  <option value="{{ cls }}" {% if document.obs_classe_dpe == cls %}selected{% endif %}>{{ cls }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div>
-                <label class="label-caps">Potentiel d'économies estimé</label>
-                <select name="obs_potentiel_economies" class="f-input">
-                  <option value="">— Non renseigné —</option>
-                  <option value="faible"     {% if document.obs_potentiel_economies == 'faible'     %}selected{% endif %}>Faible (moins de 15%)</option>
-                  <option value="moyen"      {% if document.obs_potentiel_economies == 'moyen'      %}selected{% endif %}>Moyen (15–35%)</option>
-                  <option value="eleve"      {% if document.obs_potentiel_economies == 'eleve'      %}selected{% endif %}>Élevé (35–60%)</option>
-                  <option value="tres_eleve" {% if document.obs_potentiel_economies == 'tres_eleve' %}selected{% endif %}>Très élevé (plus de 60%)</option>
-                </select>
-              </div>
+            <h3 class="section-title section-title--sm" style="color:#c084fc">📝 Notes & contexte</h3>
+            <div>
+              <label class="label-caps">Observations pour l'IA</label>
+              <textarea name="admin_notes" rows="8" class="f-input" style="resize:vertical"
+                placeholder="Contexte du bâtiment, particularités énergétiques, informations complémentaires à transmettre à l'IA...">{{ document.admin_notes|default:'' }}</textarea>
+              <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem">Ces notes sont directement injectées dans le prompt de génération du bilan carbone.</p>
             </div>
           </div>
 
@@ -2550,16 +2365,7 @@ function recalcCmp() {
 
 // ── Total travaux estimés (observations) ─────────────────
 (function () {
-  const CHAMPS = ['obs_cout_toiture','obs_cout_isolation','obs_cout_chauffage',
-                  'obs_cout_menuiseries','obs_cout_plomberie','obs_cout_autres'];
-  function calcTotal() {
-    const el = document.getElementById('obs-total-travaux');
-    if (!el) return;
-    let total = 0;
-    CHAMPS.forEach(name => {
-      const input = document.querySelector('[name="' + name + '"]');
-      if (input && input.value) total += parseFloat(input.value) || 0;
-    });
+  );
     el.textContent = total > 0 ? total.toLocaleString('fr', { minimumFractionDigits: 0 }) + ' €' : '—';
   }
   document.addEventListener('DOMContentLoaded', function () {
