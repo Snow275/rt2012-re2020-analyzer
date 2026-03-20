@@ -1,0 +1,437 @@
+{% load static %}
+
+<style>
+:root {
+  --green:     #4ade80;
+  --green-d:   #22c55e;
+  --orange:    #fb923c;
+  --red:       #ef5350;
+  --blue:      #60a5fa;
+  --gold:      #C8A84B;
+  --navy2:     #162438;
+  --navy3:     #1D3050;
+  --white:     #FFFFFF;
+  --gray1:     #8896A4;
+  --gray2:     #C2CDD6;
+  --muted:     #68798A;
+}
+
+.cb-hero {
+  background: linear-gradient(135deg, rgba(29,48,80,.95) 0%, rgba(22,36,56,.98) 100%);
+  border: 1px solid rgba(74,222,128,.2);
+  border-radius: 16px;
+  padding: 2rem 2.4rem;
+  margin-bottom: 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.cb-hero::before {
+  content: '';
+  position: absolute; right: -80px; top: -80px;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, rgba(74,222,128,.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cb-hero-info { flex: 1; }
+.cb-hero h1 { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; margin-bottom:.3rem; line-height:1.25; }
+.cb-hero-meta { display:flex; flex-wrap:wrap; gap:.5rem .9rem; margin-top:.7rem; }
+.cb-meta-pill { font-size:.72rem; color:var(--gray1); display:flex; align-items:center; gap:.3rem; }
+.cb-meta-pill strong { color:var(--gray2); }
+
+.cb-score-ring { position:relative; width:110px; height:110px; flex-shrink:0; }
+.cb-score-ring svg { transform:rotate(-90deg); }
+.cb-score-ring .score-val { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Playfair Display',serif; }
+
+.cb-verdict { display:inline-flex; align-items:center; gap:.5rem; padding:.45rem 1rem; border-radius:99px; font-size:.78rem; font-weight:600; margin-top:.8rem; }
+.cb-conform { background:rgba(74,222,128,.12); color:var(--green); border:1px solid rgba(74,222,128,.25); }
+.cb-nonconf { background:rgba(239,83,80,.12);  color:var(--red);   border:1px solid rgba(239,83,80,.25); }
+.cb-neutre  { background:rgba(255,255,255,.06); color:var(--gray1); border:1px solid rgba(255,255,255,.1); }
+
+.cb-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.6rem; }
+.cb-kpi { background:var(--navy3); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.1rem 1.2rem; text-align:center; position:relative; }
+.cb-kpi-val { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; line-height:1; margin-bottom:.3rem; }
+.cb-kpi-lbl { font-size:.7rem; color:var(--gray1); text-transform:uppercase; letter-spacing:.06em; }
+.cb-kpi-unit { font-size:.65rem; color:var(--muted); margin-top:.2rem; }
+.cb-kpi-badge { position:absolute; top:.6rem; right:.7rem; font-size:.6rem; font-weight:700; text-transform:uppercase; padding:.1rem .4rem; border-radius:4px; }
+.badge-ok  { background:rgba(74,222,128,.12); color:var(--green); }
+.badge-nok { background:rgba(239,83,80,.12);  color:var(--red); }
+.badge-na  { background:rgba(255,255,255,.06); color:var(--gray1); }
+
+.cb-section-hd { display:flex; align-items:center; gap:.7rem; margin-bottom:1.1rem; padding-bottom:.7rem; border-bottom:1px solid rgba(255,255,255,.05); }
+.cb-section-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.95rem; flex-shrink:0; }
+.cb-section-hd h3 { font-family:'Playfair Display',serif; font-size:1rem; font-weight:600; margin:0; }
+.cb-section-hd span { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--gray1); }
+
+.poste-row { display:grid; grid-template-columns:1.6fr 80px 2fr 90px; gap:.8rem; align-items:center; padding:.85rem 1rem; border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s; }
+.poste-row:hover { background:rgba(255,255,255,.015); }
+.poste-row:last-child { border-bottom:none; }
+.poste-row-head { font-size:.67rem; text-transform:uppercase; letter-spacing:.08em; color:var(--gray1); padding:.5rem 1rem .6rem; border-bottom:1px solid rgba(255,255,255,.07); background:rgba(0,0,0,.15); display:grid; grid-template-columns:1.6fr 80px 2fr 90px; gap:.8rem; border-radius:8px 8px 0 0; }
+.niveau-bar { height:6px; border-radius:99px; background:rgba(255,255,255,.07); overflow:hidden; width:100%; }
+.niveau-fill { height:100%; border-radius:99px; }
+.niveau-pill { font-size:.7rem; font-weight:600; padding:.18rem .65rem; border-radius:99px; white-space:nowrap; text-align:center; }
+.niveau-faible { background:rgba(74,222,128,.12); color:var(--green); border:1px solid rgba(74,222,128,.2); }
+.niveau-modere { background:rgba(229,169,58,.12); color:#E5A93A;      border:1px solid rgba(229,169,58,.2); }
+.niveau-eleve  { background:rgba(239,83,80,.12);  color:var(--red);   border:1px solid rgba(239,83,80,.2); }
+
+.conf-row { display:flex; align-items:center; justify-content:space-between; padding:.8rem 1.1rem; border-bottom:1px solid rgba(255,255,255,.04); gap:1rem; }
+.conf-row:last-child { border-bottom:none; }
+.conf-statut { font-size:.72rem; font-weight:700; text-transform:uppercase; padding:.2rem .65rem; border-radius:99px; white-space:nowrap; }
+.conf-ok  { background:rgba(74,222,128,.12); color:var(--green); border:1px solid rgba(74,222,128,.2); }
+.conf-nok { background:rgba(239,83,80,.12);  color:var(--red);   border:1px solid rgba(239,83,80,.2); }
+.conf-na  { background:rgba(255,255,255,.06); color:var(--gray1); border:1px solid rgba(255,255,255,.08); }
+.conf-nv  { background:rgba(229,169,58,.1);  color:#E5A93A;      border:1px solid rgba(229,169,58,.2); }
+
+.levier-item { display:flex; align-items:flex-start; gap:.9rem; padding:.9rem 1rem; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); border-radius:9px; margin-bottom:.5rem; }
+.levier-horizon { margin-bottom:1.4rem; }
+.levier-horizon-label { display:flex; align-items:center; gap:.7rem; margin-bottom:.7rem; }
+.levier-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.levier-title { font-size:.8rem; font-weight:600; color:var(--white); }
+.levier-gain { font-size:.78rem; color:var(--green); margin-left:auto; font-weight:600; }
+.levier-num { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex-shrink:0; margin-top:.05rem; }
+.levier-impact { font-size:.65rem; font-weight:700; text-transform:uppercase; padding:.1rem .45rem; border-radius:4px; white-space:nowrap; }
+.impact-eleve  { background:rgba(74,222,128,.12); color:var(--green); }
+.impact-modere { background:rgba(229,169,58,.1);  color:#E5A93A; }
+.impact-faible { background:rgba(96,165,250,.1);  color:var(--blue); }
+
+.risque-card { border-radius:12px; border:1px solid; border-left-width:4px; padding:1.1rem 1.3rem; margin-bottom:.9rem; }
+.risque-card.eleve  { border-color:rgba(239,83,80,.25);  background:rgba(239,83,80,.05);  border-left-color:var(--red); }
+.risque-card.modere { border-color:rgba(229,169,58,.2);  background:rgba(229,169,58,.04); border-left-color:#E5A93A; }
+.risque-card.faible { border-color:rgba(96,165,250,.15); background:rgba(96,165,250,.03); border-left-color:var(--blue); }
+.risque-badge { display:inline-block; font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; padding:.15rem .55rem; border-radius:5px; }
+.rb-eleve  { background:rgba(239,83,80,.15);  color:var(--red); }
+.rb-modere { background:rgba(229,169,58,.12); color:#E5A93A; }
+.rb-faible { background:rgba(96,165,250,.1);  color:var(--blue); }
+
+.point-fort { display:flex; align-items:flex-start; gap:.8rem; padding:.65rem 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.point-fort:last-child { border-bottom:none; }
+.pf-check { width:18px; height:18px; border-radius:50%; background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.25); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:.05rem; }
+
+.verif-item { display:flex; align-items:flex-start; gap:.7rem; padding:.6rem 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:.84rem; color:var(--gray2); }
+.verif-item:last-child { border-bottom:none; }
+
+.cb-avis { background:linear-gradient(135deg,rgba(74,222,128,.05),rgba(29,48,80,.5)); border:1px solid rgba(74,222,128,.15); border-left:4px solid var(--green); border-radius:12px; padding:1.4rem 1.6rem; margin-bottom:1.4rem; }
+
+@media(max-width:640px) {
+  .cb-hero { flex-direction:column; gap:1.2rem; }
+  .cb-kpis { grid-template-columns:1fr 1fr; }
+  .poste-row, .poste-row-head { grid-template-columns:1fr 60px; }
+  .poste-row > *:nth-child(3), .poste-row-head > *:nth-child(3) { display:none; }
+}
+@media print {
+  .cb-hero { background:#f8f8f8 !important; border-color:#ddd !important; }
+  .cb-kpi, .levier-item, .risque-card { background:#fafafa !important; border-color:#ddd !important; }
+}
+</style>
+
+
+{% if rapport %}
+
+{# ── HERO ── #}
+<div class="cb-hero">
+  {% if rapport.score_global %}
+  <div class="cb-score-ring">
+    {% with s=rapport.score_global %}
+    <svg width="110" height="110" viewBox="0 0 110 110">
+      <circle cx="55" cy="55" r="45" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8"/>
+      <circle cx="55" cy="55" r="45" fill="none"
+        stroke="{% if s >= 70 %}#4ade80{% elif s >= 40 %}#E5A93A{% else %}#ef5350{% endif %}"
+        stroke-width="8" stroke-linecap="round"
+        stroke-dasharray="283"
+        style="stroke-dashoffset: calc(283px - (283px * {{ s }} / 100))"/>
+    </svg>
+    <div class="score-val">
+      <span style="font-size:1.7rem;font-weight:700;color:{% if s >= 70 %}#4ade80{% elif s >= 40 %}#E5A93A{% else %}#ef5350{% endif %}">{{ s }}</span>
+      <span style="font-size:.62rem;color:var(--gray1);margin-top:.1rem">/100</span>
+    </div>
+    {% endwith %}
+  </div>
+  {% endif %}
+
+  <div class="cb-hero-info">
+    <h1>🌿 Bilan carbone immobilier</h1>
+    <div style="font-size:.84rem;color:var(--gray2)">{{ document.name }}</div>
+    {% if rapport.verdict %}
+    <div class="cb-verdict {% if 'Faible' in rapport.verdict %}cb-conform{% elif 'élevée' in rapport.verdict or 'Élevée' in rapport.verdict %}cb-nonconf{% else %}cb-neutre{% endif %}">
+      {% if 'Faible' in rapport.verdict %}🟢{% elif 'élevée' in rapport.verdict or 'Élevée' in rapport.verdict %}🔴{% else %}🟡{% endif %}
+      {{ rapport.verdict }}
+    </div>
+    {% endif %}
+    <div class="cb-hero-meta">
+      <div class="cb-meta-pill">🏗️ <strong>{{ document.get_building_type_display }}</strong></div>
+      {% if document.surface_totale %}<div class="cb-meta-pill">📐 <strong>{{ document.surface_totale }} m²</strong></div>{% endif %}
+      {% if document.annee_construction %}<div class="cb-meta-pill">📅 <strong>{{ document.annee_construction }}</strong></div>{% endif %}
+      <div class="cb-meta-pill">🌍 <strong>{{ document.get_pays_display }}</strong></div>
+    </div>
+  </div>
+</div>
+
+
+{# ── RÉSUMÉ EXÉCUTIF ── #}
+{% if rapport.resume_executif %}
+<div class="card" style="padding:1.5rem 1.8rem;margin-bottom:1.4rem;border-left:3px solid var(--green)">
+  <div class="cb-section-hd" style="border-bottom:none;margin-bottom:.6rem">
+    <div class="cb-section-icon" style="background:rgba(74,222,128,.1)">📋</div>
+    <div><h3 style="color:var(--green)">Résumé exécutif</h3></div>
+  </div>
+  <p style="font-size:.88rem;color:var(--gray2);line-height:1.75;margin:0">{{ rapport.resume_executif }}</p>
+</div>
+{% endif %}
+
+
+{# ── KPI ÉMISSIONS ── #}
+{% if rapport.emissions %}
+<div class="cb-kpis">
+  <div class="cb-kpi">
+    {% if rapport.emissions.ic_energie.conforme is not None %}
+    <span class="cb-kpi-badge {% if rapport.emissions.ic_energie.conforme %}badge-ok{% else %}badge-nok{% endif %}">
+      {% if rapport.emissions.ic_energie.conforme %}✓ RE2020{% else %}✗ RE2020{% endif %}
+    </span>
+    {% endif %}
+    <div class="cb-kpi-val" style="color:{% if rapport.emissions.ic_energie.conforme %}var(--green){% elif rapport.emissions.ic_energie.conforme == False %}var(--red){% else %}var(--gold){% endif %}">
+      {{ rapport.emissions.ic_energie.valeur|default:"—" }}
+    </div>
+    <div class="cb-kpi-lbl">Ic énergie</div>
+    <div class="cb-kpi-unit">kgCO2eq/m².an</div>
+  </div>
+  <div class="cb-kpi">
+    {% if rapport.emissions.ic_construction.conforme is not None %}
+    <span class="cb-kpi-badge {% if rapport.emissions.ic_construction.conforme %}badge-ok{% else %}badge-nok{% endif %}">
+      {% if rapport.emissions.ic_construction.conforme %}✓ RE2020{% else %}✗ RE2020{% endif %}
+    </span>
+    {% endif %}
+    <div class="cb-kpi-val" style="color:var(--gold)">{{ rapport.emissions.ic_construction.valeur|default:"—" }}</div>
+    <div class="cb-kpi-lbl">Ic construction</div>
+    <div class="cb-kpi-unit">kgCO2eq/m²</div>
+  </div>
+  <div class="cb-kpi">
+    <div class="cb-kpi-val" style="color:var(--blue)">{{ rapport.emissions.conso_ep.valeur|default:"—" }}</div>
+    <div class="cb-kpi-lbl">Conso. énergie primaire</div>
+    <div class="cb-kpi-unit">kWh ep/m².an</div>
+  </div>
+  <div class="cb-kpi">
+    {% if rapport.emissions.classe_dpe %}<span class="cb-kpi-badge badge-na">DPE</span>{% endif %}
+    <div class="cb-kpi-val" style="color:{% if rapport.emissions.classe_dpe == 'A' %}#27C93F{% elif rapport.emissions.classe_dpe == 'B' %}#4ade80{% elif rapport.emissions.classe_dpe == 'C' %}#a3e635{% elif rapport.emissions.classe_dpe == 'D' %}#facc15{% elif rapport.emissions.classe_dpe == 'E' %}#fb923c{% elif rapport.emissions.classe_dpe == 'F' %}#f87171{% else %}#ef5350{% endif %}">
+      {{ rapport.emissions.classe_dpe|default:"—" }}
+    </div>
+    <div class="cb-kpi-lbl">Classe DPE</div>
+    <div class="cb-kpi-unit">{{ rapport.emissions.emission_ges.valeur|default:"" }}{% if rapport.emissions.emission_ges.valeur %} kgCO2/m².an{% endif %}</div>
+  </div>
+</div>
+{% endif %}
+
+
+{# ── POSTES D'ÉMISSION ── #}
+{% if rapport.postes_emission %}
+<div class="card" style="padding:1.6rem 1.8rem 0;margin-bottom:1.4rem">
+  <div class="cb-section-hd">
+    <div class="cb-section-icon" style="background:rgba(74,222,128,.1)">🏭</div>
+    <div>
+      <h3 style="color:var(--green)">Postes d'émission carbone</h3>
+      <span>Analyse par source d'émission</span>
+    </div>
+  </div>
+  <div style="border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.06);margin-bottom:1.6rem">
+    <div class="poste-row-head">
+      <span>Poste</span><span>Part</span><span>Niveau</span><span style="text-align:right">Impact</span>
+    </div>
+    {% for p in rapport.postes_emission %}
+    <div class="poste-row">
+      <div>
+        <div style="font-size:.86rem;font-weight:500;color:var(--white)">{{ p.poste }}</div>
+        {% if p.observation %}<div style="font-size:.75rem;color:var(--gray1);margin-top:.15rem;line-height:1.4">{{ p.observation }}</div>{% endif %}
+      </div>
+      <div style="font-size:.84rem;color:var(--gold);font-weight:600;text-align:center">{{ p.part_estimee|default:"—" }}</div>
+      <div>
+        <div class="niveau-bar">
+          <div class="niveau-fill" style="width:{% if p.niveau == 'élevé' %}85{% elif p.niveau == 'modéré' %}50{% else %}20{% endif %}%;background:{% if p.niveau == 'élevé' %}var(--red){% elif p.niveau == 'modéré' %}#E5A93A{% else %}var(--green){% endif %}"></div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <span class="niveau-pill {% if p.niveau == 'élevé' %}niveau-eleve{% elif p.niveau == 'modéré' %}niveau-modere{% else %}niveau-faible{% endif %}">{{ p.niveau|default:"—" }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+
+{# ── CONFORMITÉ RÉGLEMENTAIRE ── #}
+{% if rapport.conformite_reglementaire %}
+<div class="card" style="padding:1.6rem 1.8rem 0;margin-bottom:1.4rem">
+  <div class="cb-section-hd">
+    <div class="cb-section-icon" style="background:rgba(96,165,250,.1)">📜</div>
+    <div>
+      <h3 style="color:var(--blue)">Conformité réglementaire</h3>
+      <span>RE2020 · Décret tertiaire · DPE</span>
+    </div>
+  </div>
+  {% for c in rapport.conformite_reglementaire %}
+  <div class="conf-row">
+    <div style="flex:1">
+      <div style="font-size:.86rem;font-weight:500;color:var(--white);margin-bottom:.2rem">{{ c.referentiel }}</div>
+      {% if c.detail %}<div style="font-size:.78rem;color:var(--gray1);line-height:1.4">{{ c.detail }}</div>{% endif %}
+    </div>
+    <span class="conf-statut {% if c.statut == 'conforme' %}conf-ok{% elif c.statut == 'non_conforme' %}conf-nok{% elif c.statut == 'non_applicable' %}conf-na{% else %}conf-nv{% endif %}">
+      {% if c.statut == 'conforme' %}✓ Conforme{% elif c.statut == 'non_conforme' %}✗ Non conforme{% elif c.statut == 'non_applicable' %}N/A{% else %}Non vérifié{% endif %}
+    </span>
+  </div>
+  {% endfor %}
+  <div style="height:1.6rem"></div>
+</div>
+{% endif %}
+
+
+{# ── LEVIERS DE RÉDUCTION ── #}
+{% if rapport.leviers_reduction %}
+<div class="card" style="padding:1.6rem 1.8rem;margin-bottom:1.4rem">
+  <div class="cb-section-hd">
+    <div class="cb-section-icon" style="background:rgba(74,222,128,.1)">💡</div>
+    <div>
+      <h3 style="color:var(--green)">Leviers de réduction carbone</h3>
+      <span>Priorisés par horizon et impact</span>
+    </div>
+  </div>
+
+  {% for l in rapport.leviers_reduction %}{% if l.horizon == 'Court terme' %}
+  {% if forloop.first %}<div class="levier-horizon"><div class="levier-horizon-label"><div class="levier-dot" style="background:var(--green)"></div><span class="levier-title">Court terme</span></div>{% endif %}
+  <div class="levier-item">
+    <div class="levier-num" style="background:rgba(74,222,128,.12);color:var(--green)">{{ forloop.counter }}</div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap">
+        <span style="font-size:.88rem;font-weight:600;color:var(--white)">{{ l.levier }}</span>
+        {% if l.impact %}<span class="levier-impact {% if l.impact == 'élevé' %}impact-eleve{% elif l.impact == 'modéré' %}impact-modere{% else %}impact-faible{% endif %}">Impact {{ l.impact }}</span>{% endif %}
+      </div>
+      {% if l.description %}<div style="font-size:.79rem;color:var(--gray1);line-height:1.5">{{ l.description }}</div>{% endif %}
+    </div>
+    {% if l.gain_estime %}<span class="levier-gain">{{ l.gain_estime }}</span>{% endif %}
+  </div>
+  {% if forloop.last %}</div>{% endif %}
+  {% endif %}{% endfor %}
+
+  {% for l in rapport.leviers_reduction %}{% if l.horizon == 'Moyen terme' %}
+  {% if forloop.first %}<div class="levier-horizon"><div class="levier-horizon-label"><div class="levier-dot" style="background:#E5A93A"></div><span class="levier-title">Moyen terme</span></div>{% endif %}
+  <div class="levier-item">
+    <div class="levier-num" style="background:rgba(229,169,58,.12);color:#E5A93A">{{ forloop.counter }}</div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap">
+        <span style="font-size:.88rem;font-weight:600;color:var(--white)">{{ l.levier }}</span>
+        {% if l.impact %}<span class="levier-impact {% if l.impact == 'élevé' %}impact-eleve{% elif l.impact == 'modéré' %}impact-modere{% else %}impact-faible{% endif %}">Impact {{ l.impact }}</span>{% endif %}
+      </div>
+      {% if l.description %}<div style="font-size:.79rem;color:var(--gray1);line-height:1.5">{{ l.description }}</div>{% endif %}
+    </div>
+    {% if l.gain_estime %}<span class="levier-gain">{{ l.gain_estime }}</span>{% endif %}
+  </div>
+  {% if forloop.last %}</div>{% endif %}
+  {% endif %}{% endfor %}
+
+  {% for l in rapport.leviers_reduction %}{% if l.horizon == 'Long terme' %}
+  {% if forloop.first %}<div class="levier-horizon" style="margin-bottom:0"><div class="levier-horizon-label"><div class="levier-dot" style="background:var(--blue)"></div><span class="levier-title">Long terme</span></div>{% endif %}
+  <div class="levier-item">
+    <div class="levier-num" style="background:rgba(96,165,250,.1);color:var(--blue)">{{ forloop.counter }}</div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap">
+        <span style="font-size:.88rem;font-weight:600;color:var(--white)">{{ l.levier }}</span>
+        {% if l.impact %}<span class="levier-impact {% if l.impact == 'élevé' %}impact-eleve{% elif l.impact == 'modéré' %}impact-modere{% else %}impact-faible{% endif %}">Impact {{ l.impact }}</span>{% endif %}
+      </div>
+      {% if l.description %}<div style="font-size:.79rem;color:var(--gray1);line-height:1.5">{{ l.description }}</div>{% endif %}
+    </div>
+    {% if l.gain_estime %}<span class="levier-gain">{{ l.gain_estime }}</span>{% endif %}
+  </div>
+  {% if forloop.last %}</div>{% endif %}
+  {% endif %}{% endfor %}
+
+</div>
+{% endif %}
+
+
+{# ── RISQUES ── #}
+{% if rapport.risques %}
+<div style="margin-bottom:1.4rem">
+  <div class="cb-section-hd" style="border-bottom:none;margin-bottom:.9rem">
+    <div class="cb-section-icon" style="background:rgba(239,83,80,.1)">⚠️</div>
+    <div>
+      <h3 style="color:var(--red)">Risques identifiés</h3>
+      <span>{{ rapport.risques|length }} risque{{ rapport.risques|length|pluralize }} détecté{{ rapport.risques|length|pluralize }}</span>
+    </div>
+  </div>
+  {% for r in rapport.risques %}
+  <div class="risque-card {% if r.gravite == 'élevé' %}eleve{% elif r.gravite == 'modéré' %}modere{% else %}faible{% endif %}">
+    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap">
+      <span class="risque-badge rb-{% if r.gravite == 'élevé' %}eleve{% elif r.gravite == 'modéré' %}modere{% else %}faible{% endif %}">{{ r.gravite|default:"modéré" }}</span>
+      <strong style="font-size:.9rem;color:var(--white)">{{ r.titre }}</strong>
+      {% if r.urgence %}<span style="font-size:.72rem;color:var(--gray1);margin-left:auto">🕐 {{ r.urgence }}</span>{% endif %}
+    </div>
+    <p style="font-size:.83rem;color:var(--gray2);line-height:1.6;margin:0 0 .4rem">{{ r.description }}</p>
+    {% if r.action %}<p style="font-size:.8rem;color:var(--gold);margin:0">→ {{ r.action }}</p>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+
+{# ── POINTS FORTS ── #}
+{% if rapport.points_forts %}
+<div class="card" style="padding:1.6rem 1.8rem;margin-bottom:1.4rem">
+  <div class="cb-section-hd">
+    <div class="cb-section-icon" style="background:rgba(74,222,128,.1)">✅</div>
+    <div><h3 style="color:var(--green)">Points forts — Performance carbone</h3></div>
+  </div>
+  {% for p in rapport.points_forts %}
+  <div class="point-fort">
+    <div class="pf-check">
+      <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><polyline points="1,3.5 3.5,6 8,1" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <span style="font-size:.86rem;color:var(--gray2);line-height:1.5">{{ p }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+
+{# ── VÉRIFICATIONS COMPLÉMENTAIRES ── #}
+{% if rapport.verifications_complementaires %}
+<div class="card" style="padding:1.6rem 1.8rem;margin-bottom:1.4rem">
+  <div class="cb-section-hd">
+    <div class="cb-section-icon" style="background:rgba(229,169,58,.1)">🔍</div>
+    <div><h3 style="color:#E5A93A">Vérifications complémentaires</h3></div>
+  </div>
+  {% for v in rapport.verifications_complementaires %}
+  <div class="verif-item">
+    <span style="color:#E5A93A;font-size:.8rem;flex-shrink:0">→</span>{{ v }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+
+{# ── AVIS INDÉPENDANT ── #}
+{% if rapport.avis_independant %}
+<div class="cb-avis">
+  <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem">
+    <span style="font-size:1.1rem">🌿</span>
+    <span style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--green);font-weight:600">Avis indépendant ConformExpert</span>
+  </div>
+  <p style="font-size:.9rem;color:var(--gray2);line-height:1.8;margin:0;font-style:italic">{{ rapport.avis_independant }}</p>
+</div>
+{% endif %}
+
+
+{# ── MENTIONS LÉGALES ── #}
+{% if rapport.mentions_legales %}
+<div style="padding:.9rem 1.2rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:8px;font-size:.72rem;color:var(--muted);line-height:1.65;margin-bottom:1.2rem">
+  <strong style="color:var(--gray1)">Mentions légales — </strong>{{ rapport.mentions_legales }}
+</div>
+{% endif %}
+
+
+{% else %}
+<div style="text-align:center;padding:4rem 2rem;background:rgba(74,222,128,.03);border:1px solid rgba(74,222,128,.1);border-radius:14px">
+  <div style="font-size:2.8rem;margin-bottom:1rem">🌿</div>
+  <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--green);margin-bottom:.5rem">Bilan carbone en cours de préparation</div>
+  <p style="font-size:.84rem;color:var(--gray1);line-height:1.7">Le bilan carbone n'a pas encore été généré pour ce dossier.<br>Il sera disponible ici dès validation par notre équipe.</p>
+</div>
+{% endif %}
