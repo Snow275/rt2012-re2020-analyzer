@@ -610,31 +610,64 @@ def mentions_legales(request):
 def faq(request):
     faq_items = [
         {
+            "question": "ConformExpert peut-il contredire le rapport de mon bureau d'études ?",
+            "answer": (
+                "Oui — c'est précisément notre rôle. ConformExpert est un tiers indépendant. "
+                "Si nous détectons une valeur incohérente, un seuil non respecté ou une hypothèse discutable, "
+                "nous le signalons explicitement dans notre rapport de validation, avec le niveau de criticité correspondant. "
+                "Nous ne sommes liés à aucun bureau d'études."
+            ),
+        },
+        {
+            "question": "Quels fichiers dois-je fournir ?",
+            "answer": (
+                "Le rapport thermique ou énergétique de votre bureau d'études en PDF ou XML (Climawin, Pléiades, DPE, PEB, CNEB…). "
+                "Si disponibles, les factures énergie permettent le croisement avec les consommations modélisées. "
+                "Pour un bilan carbone : DPE, attestation RE2020, factures énergie. "
+                "Plus le dossier est complet, plus la validation est précise."
+            ),
+        },
+        {
+            "question": "Le rapport de validation a-t-il une valeur légale ?",
+            "answer": (
+                "Notre rapport de validation est un avis d'expert indépendant. Il peut être utilisé en support d'une négociation, "
+                "d'un recours amiable ou d'une procédure judiciaire, comme élément de preuve attestant d'une incohérence "
+                "ou d'une non-conformité identifiée. Il ne se substitue pas à un acte réglementaire officiel."
+            ),
+        },
+        {
+            "question": "Puis-je déposer un dossier sans avoir de rapport complet ?",
+            "answer": (
+                "Oui — nous pouvons travailler sur un rapport partiel ou en cours de finalisation. "
+                "Contactez-nous avant le dépôt pour évaluer ensemble ce qui est nécessaire à une validation complète ou partielle."
+            ),
+        },
+        {
+            "question": "Intervenez-vous sur des projets hors de France ?",
+            "answer": (
+                "Oui. ConformExpert traite les dossiers PEB (Belgique), CNEB (Canada) et LENOZ (Luxembourg) "
+                "en plus des normes françaises RT2012 et RE2020. Pour d'autres normes, contactez-nous pour évaluer la faisabilité."
+            ),
+        },
+        {
             "question": "Quelle est la différence entre RT2012 et RE2020 ?",
             "answer": (
                 "La RT2012 encadre la consommation énergétique via Bbio, Cep et Tic. "
                 "La RE2020, en vigueur depuis janvier 2022, va plus loin : elle intègre le bilan carbone "
-                "sur le cycle de vie du bâtiment et renforce les exigences de confort d'été."
-            ),
-        },
-        {
-            "question": "Quels documents dois-je fournir ?",
-            "answer": (
-                "Pour une analyse complète : notice ou étude thermique réglementaire, attestations RT2012 ou RE2020, "
-                "plans architecturaux PDF, DPE si disponible, CCTP. Plus le dossier est complet, plus l'analyse est précise."
+                "sur le cycle de vie du bâtiment (Ic énergie, Ic construction) et renforce les exigences de confort d'été."
             ),
         },
         {
             "question": "Quel est le délai de livraison ?",
             "answer": (
-                "Nous garantissons la livraison du rapport sous 15 jours ouvrés après réception d'un dossier complet. "
-                "Ce délai est affiché sur votre lien de suivi dès la réception."
+                "Nous garantissons la livraison du rapport sous 10 jours ouvrés après réception d'un dossier complet. "
+                "Ce délai est affiché sur votre lien de suivi dès la réception du dossier."
             ),
         },
         {
             "question": "Comment fonctionne le lien de suivi ?",
             "answer": (
-                "Après dépôt, vous recevez un lien unique. Il vous permet de suivre l'avancement en temps réel "
+                "Après dépôt, vous recevez un lien unique personnalisé. Il vous permet de suivre l'avancement en temps réel "
                 "et de télécharger le rapport dès sa livraison. Aucune création de compte n'est nécessaire."
             ),
         },
@@ -646,10 +679,12 @@ def faq(request):
             ),
         },
         {
-            "question": "Proposez-vous des visites sur site ?",
+            "question": "Qu'est-ce qu'un bilan carbone immobilier ?",
             "answer": (
-                "Oui, sur demande et en complément de l'analyse documentaire. "
-                "La visite est disponible en option pour les dossiers collectifs ou tertiaires."
+                "Le bilan carbone immobilier évalue les émissions de CO2 liées à l'usage du bâtiment "
+                "(chauffage, électricité, eau chaude) et, si applicable, à sa construction (matériaux). "
+                "Nous analysons les indicateurs Ic énergie et Ic construction (RE2020), la classe DPE, "
+                "les émissions GES, et identifions les leviers de réduction."
             ),
         },
     ]
@@ -2222,60 +2257,7 @@ def generer_rapport_ia(request, doc_id):
                 "source": {"type": "base64", "media_type": "application/pdf", "data": b64},
             })
         headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
-        if type_analyse == 'carbone':
-            mission_text = f"""
-Tu es ConformExpert, un tiers expert indépendant mandaté pour réaliser le bilan carbone de ce bâtiment.
-
-Lis attentivement le(s) document(s) PDF joint(s) — DPE, rapport thermique, attestation RE2020, factures.
-Ton rôle est d'évaluer les émissions carbone de manière indépendante.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INFORMATIONS DU DOSSIER
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Bâtiment :
-{infos_batiment}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DONNÉES CARBONE SAISIES (admin)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{valeurs_str}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VALEURS EXTRAITES AUTOMATIQUEMENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{extraction_valeurs_str}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NOTES DE L'EXPERT (admin)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{observations_expert}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FACTURES ÉNERGÉTIQUES RÉELLES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{factures_str if factures_data else "Aucune facture déposée pour ce dossier."}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TA MISSION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Lire les documents PDF et extraire toutes les données carbone disponibles
-2. Identifier les indicateurs Ic énergie, Ic construction, émissions GES, classe DPE
-3. Vérifier la conformité RE2020 et décret tertiaire si applicable
-4. Identifier les postes d'émission prioritaires
-5. Proposer des leviers de réduction concrets avec gain estimé
-6. Croiser les données modèle avec les factures réelles si disponibles
-7. Formuler un avis indépendant sur la performance carbone du bâtiment
-
-RÈGLES ABSOLUES
-- Ne jamais inventer de valeurs
-- Si une donnée est absente, l'indiquer explicitement
-- Baser l'analyse sur les documents fournis
-
-Génère le bilan carbone en respectant le format JSON défini dans les instructions système.
-"""
-        else:
-            mission_text = f"""
+        user_content.append({"type": "text", "text": f"""
 Tu es ConformExpert, un tiers expert indépendant mandaté pour valider ce rapport thermique.
 
 Lis attentivement le(s) document(s) PDF joint(s) — il s'agit du rapport thermique produit par le bureau d'études.
@@ -2332,8 +2314,7 @@ RÈGLES ABSOLUES
 - Adopter le point de vue d'un auditeur externe, pas d'un co-auteur
 
 Génère le rapport de validation complet en respectant le format JSON défini dans les instructions système.
-"""
-        user_content.append({"type": "text", "text": mission_text})
+"""})
     else:
         # Fallback sans PDF — injecter TOUTES les données disponibles
         user_content.append({"type": "text", "text": f"""
