@@ -1,48 +1,116 @@
 {% extends 'main/base.html' %}
-{% block title %}FAQ{% endblock %}
+{% block title %}FAQ — Questions fréquentes{% endblock %}
 
 {% block content %}
+<style>
+.faq-wrap { max-width: 780px; margin: 0 auto; }
+
+.faq-item {
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  cursor: pointer;
+}
+.faq-item:first-child { border-top: 1px solid rgba(255,255,255,.07); }
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 0;
+  font-size: .96rem;
+  font-weight: 500;
+  color: var(--white);
+  gap: 1rem;
+  user-select: none;
+}
+.faq-arrow {
+  color: var(--gold);
+  font-size: .9rem;
+  transition: transform .25s;
+  flex-shrink: 0;
+}
+.faq-answer {
+  font-size: .87rem;
+  color: var(--gray-2);
+  line-height: 1.8;
+  font-weight: 300;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s ease, padding .3s;
+}
+.faq-item.open .faq-answer { max-height: 300px; padding-bottom: 1.2rem; }
+.faq-item.open .faq-arrow  { transform: rotate(180deg); }
+.faq-item.open .faq-question { color: var(--gold); }
+
+.faq-category {
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--gold);
+  font-weight: 500;
+  margin: 2.5rem 0 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid rgba(200,168,75,.15);
+}
+.faq-category:first-child { margin-top: 0; }
+</style>
+
 <div class="page-header">
   <div class="ph-inner">
-    <span class="s-label">FAQ</span>
+    <span class="s-label">Support</span>
     <h1>Questions fréquentes</h1>
-    <p>Tout ce que vous devez savoir sur nos analyses RT2012 / RE2020.</p>
+    <p>Tout ce que vous devez savoir sur nos services de validation thermique et bilan carbone.</p>
   </div>
 </div>
 
 <div class="container">
-  <div style="max-width:760px;margin:0 auto">
+  <div class="faq-wrap">
+
+    <div class="faq-category">Nos services</div>
 
     {% for item in faq_items %}
-    <div class="card" style="margin-bottom:1rem;overflow:hidden;cursor:pointer" onclick="toggleFaq(this)">
-      <div style="padding:1.4rem 1.8rem;display:flex;justify-content:space-between;align-items:center;gap:1rem">
-        <h3 style="font-size:.95rem;font-weight:500;color:var(--white);line-height:1.4">{{ item.question }}</h3>
-        <span style="color:var(--gold);font-size:1.1rem;flex-shrink:0;transition:transform .3s" class="faq-arrow">▾</span>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question">
+        <span>{{ item.question }}</span>
+        <span class="faq-arrow">▾</span>
       </div>
-      <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
-        <div style="padding:0 1.8rem 1.4rem;font-size:.88rem;color:var(--gray-2);font-weight:300;line-height:1.8;border-top:1px solid rgba(255,255,255,.05)">
-          <div style="padding-top:1rem">{{ item.answer }}</div>
-        </div>
-      </div>
+      <div class="faq-answer">{{ item.answer }}</div>
     </div>
     {% endfor %}
 
-    <div class="card" style="padding:2rem;text-align:center;margin-top:2rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
-      <p style="font-size:.9rem;color:var(--gray-2);font-weight:300;margin-bottom:1rem">Vous ne trouvez pas la réponse à votre question ?</p>
-      <a href="{% url 'contact' %}" class="btn btn-gold">Contacter l'expert</a>
+    <!-- CTA bas de page -->
+    <div class="card" style="padding:2.5rem;text-align:center;margin-top:3rem;background:rgba(200,168,75,.04);border-color:rgba(200,168,75,.15)">
+      <div style="font-size:1.8rem;margin-bottom:.8rem">💬</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:.5rem">Vous ne trouvez pas la réponse ?</h3>
+      <p style="font-size:.88rem;color:var(--gray-2);font-weight:300;margin-bottom:1.4rem;line-height:1.7">
+        Notre équipe répond sous 48h ouvrées à toute question sur vos dossiers ou nos services.
+      </p>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <a href="{% url 'contact' %}" class="btn btn-gold">Contacter l'équipe</a>
+        <a href="{% url 'import' %}" class="btn btn-ghost">Déposer un dossier</a>
+      </div>
     </div>
+
   </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-function toggleFaq(card) {
-  const answer = card.querySelector('.faq-answer');
-  const arrow = card.querySelector('.faq-arrow');
-  const isOpen = answer.style.maxHeight && answer.style.maxHeight !== '0px';
-  answer.style.maxHeight = isOpen ? '0px' : answer.scrollHeight + 'px';
-  arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+function toggleFaq(item) {
+  const answer = item.querySelector('.faq-answer');
+  const arrow  = item.querySelector('.faq-arrow');
+  const isOpen = item.classList.contains('open');
+
+  // Ferme tous les autres
+  document.querySelectorAll('.faq-item.open').forEach(el => {
+    el.classList.remove('open');
+    el.querySelector('.faq-answer').style.maxHeight = '0px';
+  });
+
+  if (!isOpen) {
+    item.classList.add('open');
+    answer.style.maxHeight = answer.scrollHeight + 'px';
+  }
 }
 </script>
 {% endblock %}
