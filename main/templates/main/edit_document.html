@@ -1704,10 +1704,11 @@ select.f-input option { background: #0c1929; }
 <!-- ══════════════════════════════════════════════════════
      JAVASCRIPT
 ══════════════════════════════════════════════════════ -->
+<script id="rapport-ia-data" type="application/json">{{ document.rapport_ia_json|default:"null" }}</script>
 <script>
 const DOC_ID          = {{ document.id }};
 const TYPE_ANALYSE    = "{{ document.type_analyse }}";
-const RAPPORT_SAUVEGARDE = {{ document.rapport_ia_json|default:"null"|safe }};
+const RAPPORT_SAUVEGARDE = JSON.parse(document.getElementById('rapport-ia-data').textContent);
 let rapportDejaRendu  = false;
 let facInitDone       = false;
 let facMode           = 'conso';
