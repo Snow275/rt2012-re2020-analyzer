@@ -2222,7 +2222,60 @@ def generer_rapport_ia(request, doc_id):
                 "source": {"type": "base64", "media_type": "application/pdf", "data": b64},
             })
         headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
-        user_content.append({"type": "text", "text": f"""
+        if type_analyse == 'carbone':
+            mission_text = f"""
+Tu es ConformExpert, un tiers expert indépendant mandaté pour réaliser le bilan carbone de ce bâtiment.
+
+Lis attentivement le(s) document(s) PDF joint(s) — DPE, rapport thermique, attestation RE2020, factures.
+Ton rôle est d'évaluer les émissions carbone de manière indépendante.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INFORMATIONS DU DOSSIER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bâtiment :
+{infos_batiment}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DONNÉES CARBONE SAISIES (admin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{valeurs_str}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALEURS EXTRAITES AUTOMATIQUEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{extraction_valeurs_str}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NOTES DE L'EXPERT (admin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{observations_expert}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FACTURES ÉNERGÉTIQUES RÉELLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{factures_str if factures_data else "Aucune facture déposée pour ce dossier."}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TA MISSION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Lire les documents PDF et extraire toutes les données carbone disponibles
+2. Identifier les indicateurs Ic énergie, Ic construction, émissions GES, classe DPE
+3. Vérifier la conformité RE2020 et décret tertiaire si applicable
+4. Identifier les postes d'émission prioritaires
+5. Proposer des leviers de réduction concrets avec gain estimé
+6. Croiser les données modèle avec les factures réelles si disponibles
+7. Formuler un avis indépendant sur la performance carbone du bâtiment
+
+RÈGLES ABSOLUES
+- Ne jamais inventer de valeurs
+- Si une donnée est absente, l'indiquer explicitement
+- Baser l'analyse sur les documents fournis
+
+Génère le bilan carbone en respectant le format JSON défini dans les instructions système.
+"""
+        else:
+            mission_text = f"""
 Tu es ConformExpert, un tiers expert indépendant mandaté pour valider ce rapport thermique.
 
 Lis attentivement le(s) document(s) PDF joint(s) — il s'agit du rapport thermique produit par le bureau d'études.
@@ -2279,7 +2332,8 @@ RÈGLES ABSOLUES
 - Adopter le point de vue d'un auditeur externe, pas d'un co-auteur
 
 Génère le rapport de validation complet en respectant le format JSON défini dans les instructions système.
-"""})
+"""
+        user_content.append({"type": "text", "text": mission_text})
     else:
         # Fallback sans PDF — injecter TOUTES les données disponibles
         user_content.append({"type": "text", "text": f"""
