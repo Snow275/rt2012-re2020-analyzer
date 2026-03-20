@@ -2,6 +2,79 @@
 {% block title %}Déposer un dossier{% endblock %}
 
 {% block content %}
+<script>
+// ── i18n import ─────────────────────────────────────────────
+const IMPORT_TR = {
+  fr: {
+    "page.label":       "Dépôt de dossier",
+    "page.h1":          "Soumettre un dossier pour analyse",
+    "page.sub":         "Délai garanti : 10 jours ouvrés après acceptation du devis",
+    "form.title":       "Formulaire de dépôt",
+    "form.sub":         "Vos données sont traitées de manière confidentielle · Réponse sous 24h",
+    "s1.title":         "Informations client",
+    "s2.title":         "Informations du bâtiment",
+    "s3.title":         "Type d'analyse souhaitée",
+    "s4.title":         "Documents à analyser",
+    "label.project":    "Nom du projet",
+    "label.client":     "Nom du client",
+    "label.email":      "Email client",
+    "label.building":   "Type de bâtiment",
+    "label.pays":       "Pays du projet",
+    "label.zone":       "Zone climatique",
+    "label.norme":      "Norme applicable",
+    "label.surface":    "Surface totale (m²)",
+    "label.annee":      "Année de construction",
+    "label.logements":  "Nombre de logements / unités",
+    "analyse.e.title":  "Validation thermique & énergétique",
+    "analyse.e.desc":   "Conformité RT2012 / RE2020 / PEB · Critères, non-conformités, recommandations",
+    "analyse.c.title":  "Bilan carbone immobilier",
+    "analyse.c.desc":   "Ic énergie, émissions GES, conformité RE2020 · Leviers de réduction carbone",
+    "upload.click":     "Glissez vos fichiers ici ou <span style=\"color:var(--gold);text-decoration:underline;cursor:pointer\" onclick=\"document.getElementById('file-input').click()\">cliquez pour sélectionner</span>",
+    "upload.hint":      "PDF, DWG, Word, Excel · Max 20 Mo par fichier · Plusieurs fichiers acceptés",
+    "submit.btn":       "Envoyer mon dossier →",
+    "submit.note":      "🔒 Données confidentielles · Réponse sous 24h"
+  },
+  en: {
+    "page.label":       "File submission",
+    "page.h1":          "Submit a file for analysis",
+    "page.sub":         "Guaranteed turnaround: 10 business days after quote acceptance",
+    "form.title":       "Submission form",
+    "form.sub":         "Your data is handled confidentially · Response within 24h",
+    "s1.title":         "Client information",
+    "s2.title":         "Building information",
+    "s3.title":         "Analysis type",
+    "s4.title":         "Documents to analyse",
+    "label.project":    "Project name",
+    "label.client":     "Client name",
+    "label.email":      "Client email",
+    "label.building":   "Building type",
+    "label.pays":       "Project country",
+    "label.zone":       "Climate zone",
+    "label.norme":      "Applicable standard",
+    "label.surface":    "Total floor area (m²)",
+    "label.annee":      "Year of construction",
+    "label.logements":  "Number of units / dwellings",
+    "analyse.e.title":  "Thermal & energy validation",
+    "analyse.e.desc":   "RT2012 / RE2020 / PEB compliance · Criteria, non-compliances, recommendations",
+    "analyse.c.title":  "Building carbon assessment",
+    "analyse.c.desc":   "Ic energy, GHG emissions, RE2020 compliance · Carbon reduction levers",
+    "upload.click":     "Drag your files here or <span style=\"color:var(--gold);text-decoration:underline;cursor:pointer\" onclick=\"document.getElementById('file-input').click()\">click to select</span>",
+    "upload.hint":      "PDF, DWG, Word, Excel · Max 20 MB per file · Multiple files accepted",
+    "submit.btn":       "Send my file →",
+    "submit.note":      "🔒 Confidential data · Response within 24h"
+  }
+};
+
+function applyImportLang() {
+  const lang = localStorage.getItem('ce_lang') || 'fr';
+  const tr = IMPORT_TR[lang] || IMPORT_TR['fr'];
+  document.querySelectorAll('[data-im18n]').forEach(el => {
+    const key = el.getAttribute('data-im18n');
+    if (tr[key] !== undefined) el.innerHTML = tr[key];
+  });
+}
+document.addEventListener('DOMContentLoaded', applyImportLang);
+</script>
 <style>
 .import-wrap { max-width:780px;margin:0 auto;padding:2.5rem 1.5rem 4rem }
 .form-card { background:var(--navy-3);border:1px solid rgba(200,168,75,.15);border-radius:14px;overflow:hidden }
@@ -48,9 +121,9 @@
 
 <div class="page-header">
   <div class="ph-inner">
-    <span class="s-label">Dépôt de dossier</span>
-    <h1>Soumettre un dossier pour analyse</h1>
-    <p>Délai garanti : 10 jours ouvrés après acceptation du devis</p>
+    <span class="s-label" data-im18n="page.label">Dépôt de dossier</span>
+    <h1 data-im18n="page.h1">Soumettre un dossier pour analyse</h1>
+    <p data-im18n="page.sub">Délai garanti : 10 jours ouvrés après acceptation du devis</p>
   </div>
 </div>
 
@@ -58,8 +131,8 @@
   <div class="form-card fade-up">
 
     <div class="form-hd">
-      <h2>Formulaire de dépôt</h2>
-      <p>Vos données sont traitées de manière confidentielle · Réponse sous 24h</p>
+      <h2 data-im18n="form.title">Formulaire de dépôt</h2>
+      <p data-im18n="form.sub">Vos données sont traitées de manière confidentielle · Réponse sous 24h</p>
     </div>
 
     <div class="form-body">
@@ -68,78 +141,78 @@
 
         <!-- SECTION 1 : Contact -->
         <div class="f-section">
-          <div class="f-section-title">Informations client</div>
+          <div class="f-section-title" data-im18n="s1.title">Informations client</div>
           <div class="f-row">
             <div class="f-group">
-              <label>Nom du projet <span class="req">*</span></label>
+              <label><span data-im18n="label.project">Nom du projet</span> <span class="req">*</span></label>
               {{ form.name }}
               {% if form.name.errors %}<span class="form-error">{{ form.name.errors.0 }}</span>{% endif %}
             </div>
             <div class="f-group">
-              <label>Nom du client</label>
+              <label data-im18n="label.client">Nom du client</label>
               {{ form.client_name }}
             </div>
           </div>
           <div class="f-group" style="margin-top:1rem">
-            <label>Email client</label>
+            <label data-im18n="label.email">Email client</label>
             {{ form.client_email }}
           </div>
         </div>
 
         <!-- SECTION 2 : Bâtiment -->
         <div class="f-section">
-          <div class="f-section-title">Informations du bâtiment</div>
+          <div class="f-section-title" data-im18n="s2.title">Informations du bâtiment</div>
           <div class="f-row">
             <div class="f-group">
-              <label>Type de bâtiment <span class="req">*</span></label>
+              <label><span data-im18n="label.building">Type de bâtiment</span> <span class="req">*</span></label>
               {{ form.building_type }}
               {% if form.building_type.errors %}<span class="form-error">{{ form.building_type.errors.0 }}</span>{% endif %}
             </div>
             <div class="f-group">
-              <label>Pays du projet <span class="req">*</span></label>
+              <label><span data-im18n="label.pays">Pays du projet</span> <span class="req">*</span></label>
               {{ form.pays }}
               {% if form.pays.errors %}<span class="form-error">{{ form.pays.errors.0 }}</span>{% endif %}
             </div>
           </div>
           <div class="f-row" style="margin-top:1rem">
             <div class="f-group">
-              <label>Zone climatique <span class="req">*</span></label>
+              <label><span data-im18n="label.zone">Zone climatique</span> <span class="req">*</span></label>
               {{ form.climate_zone }}
               {% if form.climate_zone.errors %}<span class="form-error">{{ form.climate_zone.errors.0 }}</span>{% endif %}
             </div>
             <div class="f-group">
-              <label>Norme applicable <span class="req">*</span></label>
+              <label><span data-im18n="label.norme">Norme applicable</span> <span class="req">*</span></label>
               {{ form.norme }}
               {% if form.norme.errors %}<span class="form-error">{{ form.norme.errors.0 }}</span>{% endif %}
             </div>
           </div>
           <div class="f-row" style="margin-top:1rem">
             <div class="f-group">
-              <label>Surface totale (m²)</label>
+              <label data-im18n="label.surface">Surface totale (m²)</label>
               {{ form.surface_totale }}
             </div>
             <div class="f-group">
-              <label>Année de construction</label>
+              <label data-im18n="label.annee">Année de construction</label>
               {{ form.annee_construction }}
             </div>
           </div>
           <div class="f-group" style="margin-top:1rem">
-            <label>Nombre de logements / unités</label>
+            <label data-im18n="label.logements">Nombre de logements / unités</label>
             {{ form.nombre_logements }}
           </div>
         </div>
 
         <!-- SECTION 3 : Type d'analyse -->
         <div class="f-section">
-          <div class="f-section-title">Type d'analyse souhaitée <span class="req">*</span></div>
+          <div class="f-section-title"><span data-im18n="s3.title">Type d'analyse souhaitée</span> <span class="req">*</span></div>
           <div class="analyse-grid" style="grid-template-columns:1fr 1fr">
 
             <div class="analyse-card">
               <input type="radio" name="type_analyse" id="ta-energie" value="energie" checked>
               <label class="analyse-label" for="ta-energie">
                 <span class="a-icon">⚡</span>
-                <span class="a-title">Validation thermique &amp; énergétique</span>
-                <span class="a-desc">Conformité RT2012 / RE2020 / PEB · Critères, non-conformités, recommandations</span>
+                <span class="a-title" data-im18n="analyse.e.title">Validation thermique &amp; énergétique</span>
+                <span class="a-desc" data-im18n="analyse.e.desc">Conformité RT2012 / RE2020 / PEB · Critères, non-conformités, recommandations</span>
               </label>
             </div>
 
@@ -147,8 +220,8 @@
               <input type="radio" name="type_analyse" id="ta-carbone" value="carbone">
               <label class="analyse-label" for="ta-carbone">
                 <span class="a-icon">🌿</span>
-                <span class="a-title">Bilan carbone immobilier</span>
-                <span class="a-desc">Ic énergie, émissions GES, conformité RE2020 · Leviers de réduction carbone</span>
+                <span class="a-title" data-im18n="analyse.c.title">Bilan carbone immobilier</span>
+                <span class="a-desc" data-im18n="analyse.c.desc">Ic énergie, émissions GES, conformité RE2020 · Leviers de réduction carbone</span>
               </label>
             </div>
 
@@ -157,13 +230,13 @@
 
         <!-- SECTION 4 : Documents -->
         <div class="f-section">
-          <div class="f-section-title">Documents à analyser <span class="req">*</span></div>
+          <div class="f-section-title"><span data-im18n="s4.title">Documents à analyser</span> <span class="req">*</span></div>
 
           <div id="upload-zone">
             <input type="file" id="file-input" name="uploads" multiple accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" style="display:none">
             <div style="font-size:2rem;color:var(--gold);margin-bottom:.6rem;opacity:.7">📁</div>
-            <p style="font-size:.85rem;color:var(--gray-2);font-weight:300;margin-bottom:.25rem">Glissez vos fichiers ici ou <span style="color:var(--gold);text-decoration:underline;cursor:pointer" onclick="document.getElementById('file-input').click()">cliquez pour sélectionner</span></p>
-            <span style="font-size:.72rem;color:var(--muted)">PDF, DWG, Word, Excel · Max 20 Mo par fichier · Plusieurs fichiers acceptés</span>
+            <p style="font-size:.85rem;color:var(--gray-2);font-weight:300;margin-bottom:.25rem" data-im18n="upload.click">Glissez vos fichiers ici ou <span style="color:var(--gold);text-decoration:underline;cursor:pointer" onclick="document.getElementById('file-input').click()">cliquez pour sélectionner</span></p>
+            <span style="font-size:.72rem;color:var(--muted)" data-im18n="upload.hint">PDF, DWG, Word, Excel · Max 20 Mo par fichier · Plusieurs fichiers acceptés</span>
           </div>
 
           <div id="file-list"></div>
@@ -177,9 +250,9 @@
         </div>
 
         <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;font-size:.92rem;padding:.95rem">
-          Envoyer mon dossier →
+          <span data-im18n="submit.btn">Envoyer mon dossier →</span>
         </button>
-        <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:.7rem">🔒 Données confidentielles · Réponse sous 24h</p>
+        <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:.7rem" data-im18n="submit.note">🔒 Données confidentielles · Réponse sous 24h</p>
 
       </form>
     </div>
