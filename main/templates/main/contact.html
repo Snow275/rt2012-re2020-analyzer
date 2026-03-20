@@ -1,3 +1,7 @@
+{% extends 'main/base.html' %}
+{% block title %}{% if LANGUAGE == 'en' %}Contact{% else %}Contact{% endif %}{% endblock %}
+
+{% block content %}
 <style>
 /* Fix labels — override base.html uppercase */
 .form-group label {
@@ -31,10 +35,6 @@
 }
 @media (max-width: 768px) { .tooltip-text { width: 180px; } }
 </style>
-{% extends 'main/base.html' %}
-{% block title %}{% if LANGUAGE == 'en' %}Contact{% else %}Contact{% endif %}{% endblock %}
-
-{% block content %}
 
 <script>
 // ── i18n contact ────────────────────────────────────────────
@@ -204,3 +204,12 @@ document.addEventListener('DOMContentLoaded', applyContactLang);
             {% if form.message.errors %}<span class="form-error">{{ form.message.errors.0 }}</span>{% endif %}
           </div>
           <button type="submit" class="btn btn-gold" style="width:100%;justify-content:cente
+r" data-ci18n="form.submit">Envoyer le message →</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
