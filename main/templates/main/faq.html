@@ -1,5 +1,5 @@
 {% extends 'main/base.html' %}
-{% block title %}FAQ — Questions fréquentes{% endblock %}
+{% block title %}FAQ{% endblock %}
 
 {% block content %}
 <script>
@@ -12,7 +12,8 @@ const FAQ_TR = {
     "cta.h3":       "Vous ne trouvez pas la réponse ?",
     "cta.p":        "Notre équipe répond sous 48h ouvrées à toute question sur vos dossiers ou nos services.",
     "cta.contact":  "Contacter l'équipe",
-    "cta.deposit":  "Déposer un dossier"
+    "cta.deposit":  "Déposer un dossier",
+    "cat.services":  "Nos services"
   },
   en: {
     "page.label":   "Support",
@@ -21,7 +22,8 @@ const FAQ_TR = {
     "cta.h3":       "Can't find the answer?",
     "cta.p":        "Our team replies within 48 business hours to any question about your files or our services.",
     "cta.contact":  "Contact the team",
-    "cta.deposit":  "Submit a file"
+    "cta.deposit":  "Submit a file",
+    "cat.services":  "Our services"
   }
 };
 
@@ -98,7 +100,7 @@ document.addEventListener('DOMContentLoaded', applyFaqLang);
 <div class="container">
   <div class="faq-wrap">
 
-    <div class="faq-category">Nos services</div>
+    <div class="faq-category" data-fq18n="cat.services">Nos services</div>
 
     {% for item in faq_items %}
     <div class="faq-item" onclick="toggleFaq(this)">
