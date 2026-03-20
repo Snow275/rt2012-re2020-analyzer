@@ -2366,8 +2366,17 @@ function recalcCmp() {
 
 // ── Total travaux estimés (observations) ─────────────────
 (function () {
-  );
-    el.textContent = total > 0 ? total.toLocaleString('fr', { minimumFractionDigits: 0 }) + ' €' : '—';
+  const CHAMPS = ['travaux_isolation', 'travaux_menuiseries', 'travaux_chauffage', 'travaux_ventilation', 'travaux_autres'];
+  function calcTotal() {
+    let total = 0;
+    CHAMPS.forEach(name => {
+      const input = document.querySelector('[name="' + name + '"]');
+      if (input) total += parseFloat(input.value) || 0;
+    });
+    const el = document.getElementById('total-travaux');
+    if (el) {
+      el.textContent = total > 0 ? total.toLocaleString('fr', { minimumFractionDigits: 0 }) + ' €' : '—';
+    }
   }
   document.addEventListener('DOMContentLoaded', function () {
     CHAMPS.forEach(name => {
