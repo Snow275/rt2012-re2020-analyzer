@@ -1618,7 +1618,7 @@ select.f-input option { background: #0c1929; }
         {% if not facture.analyse_ok %}
         <button class="fac-btn fac-btn--analyse" onclick="analyserUne({{ facture.id }})">✨ Analyser</button>
         {% else %}<div></div>{% endif %}
-        <button class="fac-btn fac-btn--del" onclick="supprimerFacture({{ facture.id }}, this)">🗑</button>
+        <button class="fac-btn fac-btn--del" onclick="supprimerFac({{ facture.id }})">🗑</button>
       </div>
       {% endfor %}
     </div>
