@@ -1833,266 +1833,343 @@ async function genererRapportIA(force) {
 }
 
 // ── Rendu du rapport ──────────────────────────────────────
+const TYPE_ANALYSE = "{{ document.type_analyse }}";
+
 function afficherRapport(r) {
   const el = id => document.getElementById(id);
+  const show = id => { const e = el(id); if (e) e.style.display = 'block'; };
+  const hide = id => { const e = el(id); if (e) e.style.display = 'none'; };
 
-  // Verdict — supporte RT/RE (verdict) et carbone (verdict)
-  const verdictRaw  = r.verdict || r.verdict_technique || r.verdict_energie || '—';
-  const conf = ['Conforme','Bon état général','Bon état'].some(v => verdictRaw.startsWith(v));
-  const ins  = verdictRaw.includes('insuffisantes') || verdictRaw.includes('insuffisant');
-  const vc   = conf
-    ? { bg: 'rgba(39,201,63,.06)',   border: 'rgba(39,201,63,.25)',  color: '#27c93f', icon: '✅' }
-    : ins
-    ? { bg: 'rgba(136,136,153,.06)', border: 'rgba(136,136,153,.2)', color: '#888899', icon: '⏳' }
-    : { bg: 'rgba(229,57,53,.06)',   border: 'rgba(229,57,53,.25)',  color: '#ef5350', icon: '❌' };
+  // ── Verdict ──────────────────────────────────────────────
+  const verdictRaw = r.verdict || r.verdict_technique || r.verdict_energie || '—';
+  const isConf = ['Conforme','Faible empreinte','Bon état'].some(v => verdictRaw.startsWith(v));
+  const isIns  = verdictRaw.includes('insuffisantes') || verdictRaw.includes('insuffisant');
+  const vc = isConf
+    ? { bg:'rgba(39,201,63,.06)',  border:'rgba(39,201,63,.25)',  color:'#27c93f', icon:'✅' }
+    : isIns
+    ? { bg:'rgba(136,136,153,.06)',border:'rgba(136,136,153,.2)', color:'#888899', icon:'⏳' }
+    : { bg:'rgba(229,57,53,.06)',  border:'rgba(229,57,53,.25)',  color:'#ef5350', icon:'❌' };
 
   const vb = el('verdict-banner');
-  vb.style.background  = vc.bg;
-  vb.style.borderColor = vc.border;
+  if (vb) { vb.style.background = vc.bg; vb.style.borderColor = vc.border; }
 
-  // Score global
   const scoreHtml = r.score_global != null
     ? `<div style="text-align:right">
         <div style="font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Score</div>
         <div style="font-size:2rem;font-weight:700;font-family:'Playfair Display',serif;color:${vc.color}">${r.score_global}<span style="font-size:.85rem;color:var(--gray-1)">/100</span></div>
-      </div>`
-    : '';
+      </div>` : '';
 
-  // Fiabilité rapport
+  if (el('verdict-text')) { el('verdict-text').style.color = vc.color; el('verdict-text').textContent = verdictRaw; }
+  if (el('verdict-icon')) el('verdict-icon').innerHTML = scoreHtml || vc.icon;
+
+  // ── Résumé exécutif ──────────────────────────────────────
   const fibColor = r.fiabilite_rapport === 'Élevée' ? '#27c93f' : r.fiabilite_rapport === 'Moyenne' ? '#E5A93A' : r.fiabilite_rapport ? '#ef5350' : null;
-  const fibHtml  = fibColor
-    ? `<span style="font-size:.72rem;padding:.2rem .65rem;border-radius:99px;background:${fibColor}22;border:1px solid ${fibColor}44;color:${fibColor};margin-top:.4rem;display:inline-block">Fiabilité rapport : ${r.fiabilite_rapport}</span>`
-    : '';
+  const fibHtml  = fibColor ? `<span style="font-size:.72rem;padding:.2rem .65rem;border-radius:99px;background:${fibColor}22;border:1px solid ${fibColor}44;color:${fibColor};margin-top:.4rem;display:inline-block">Fiabilité : ${r.fiabilite_rapport}</span>` : '';
+  if (el('resume-executif')) el('resume-executif').innerHTML = (r.resume_executif || '—').replace(/\n/g,'<br>') + (fibHtml ? '<br><br>' + fibHtml : '');
 
-  el('verdict-text').style.color = vc.color;
-  el('verdict-text').textContent = verdictRaw;
-  el('verdict-icon').innerHTML   = scoreHtml || vc.icon;
+  // ══════════════════════════════════════════════════════
+  //  BILAN CARBONE
+  // ══════════════════════════════════════════════════════
+  if (TYPE_ANALYSE === 'carbone') {
 
-  const resumeEl = el('resume-executif');
-  resumeEl.innerHTML = (r.resume_executif || '—').replace(/\n/g, '<br>') + (fibHtml ? '<br><br>' + fibHtml : '');
+    // KPI box : conformes RE2020 + risques
+    const confRE = (r.conformite_reglementaire || []).filter(c => c.statut === 'conforme').length;
+    const nbRisques = (r.risques || []).length;
+    if (el('kpi-conforme'))    el('kpi-conforme').querySelector('.kpi-box__val').textContent    = confRE;
+    if (el('kpi-nonconforme')) el('kpi-nonconforme').querySelector('.kpi-box__val').textContent = nbRisques;
 
-  const criteres = r.criteres || [];
-  const nbOk     = criteres.filter(c => c.conforme).length;
-  const nbKo     = criteres.filter(c => !c.conforme).length;
-  el('kpi-conforme').querySelector('.kpi-box__val').textContent    = nbOk || ((r.etat_technique || []).filter(e => e.etat === 'Bon').length);
-  el('kpi-nonconforme').querySelector('.kpi-box__val').textContent = nbKo || ((r.risques || []).length);
-
-  el('mini-bars').innerHTML = criteres.map(c => {
-    const pct   = c.valeur && c.seuil ? Math.min((c.valeur / c.seuil) * 100, 150) : 50;
-    const color = c.conforme ? '#27c93f' : '#ef5350';
-    return `<div style="display:flex;align-items:center;gap:.5rem">
-      <span style="width:75px;font-size:.7rem;color:var(--gray-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nom}</span>
-      <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;height:5px;overflow:hidden">
-        <div style="width:${Math.min(pct, 100)}%;height:100%;background:${color};border-radius:10px"></div>
-      </div>
-      <span style="font-size:.7rem;color:${color};width:16px">${c.conforme ? '✓' : '✗'}</span>
-    </div>`;
-  }).join('');
-
-  // Tableau critères
-  if (el('criteres-tbody')) {
-    el('criteres-tbody').innerHTML = criteres.map((c, i) => {
-      const color = c.conforme ? '#27c93f' : '#ef5350';
-      const badge = c.conforme
-        ? `<span style="background:rgba(39,201,63,.12);color:#27c93f;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✓ Conforme</span>`
-        : `<span style="background:rgba(229,57,53,.12);color:#ef5350;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✗ Non conforme</span>`;
-      return `<tr style="background:${i % 2 === 0 ? 'rgba(255,255,255,.01)' : 'transparent'};border-bottom:1px solid rgba(255,255,255,.04)">
-        <td style="padding:.65rem 1rem;color:var(--white);font-weight:500">${c.nom}</td>
-        <td style="padding:.65rem 1rem;text-align:center;color:${color};font-weight:700">${c.valeur ?? '—'} <span style="font-size:.68rem;color:var(--muted)">${c.unite || ''}</span></td>
-        <td style="padding:.65rem 1rem;text-align:center;color:var(--gray-1)">≤ ${c.seuil ?? '—'}</td>
-        <td style="padding:.65rem 1rem;text-align:center">${badge}</td>
-        <td style="padding:.65rem 1rem;color:var(--gray-2);font-size:.79rem">${c.commentaire || ''}</td>
-      </tr>`;
-    }).join('');
-  }
-
-  // Stats + postes émission carbone
-  if (el('carbone-stats-wrap') && (r.etat_technique || []).length) {
-    el('carbone-stats-wrap').style.display = 'block';
-    const nbBons = (r.etat_technique || []).filter(e => e.etat === 'Bon').length;
-    el('carbone-nb-composants').textContent = (r.etat_technique || []).length;
-    el('carbone-nb-bons').textContent       = nbBons;
-    el('carbone-nb-risques').textContent    = (r.risques  || []).length;
-    el('carbone-nb-travaux').textContent    = (r.travaux  || []).length;
-  }
-
-  if (el('carbone-etat-wrap') && (r.etat_technique || []).length) {
-    el('carbone-etat-wrap').style.display = 'block';
-    el('carbone-etat-list').innerHTML = r.etat_technique.map(e => {
-      const ec  = e.etat === 'Bon' ? '#27c93f' : e.etat === 'Moyen' ? '#E5A93A' : '#ef5350';
-      const pct = e.etat === 'Bon' ? '88'      : e.etat === 'Moyen' ? '52'      : '22';
-      return `<div style="display:grid;grid-template-columns:1.8fr 1fr 2.5fr 80px;gap:.8rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.04)">
-        <span style="color:var(--white);font-size:.84rem;font-weight:500">${e.composant}</span>
-        <span style="display:inline-block;font-size:.7rem;font-weight:600;padding:.16rem .6rem;border-radius:99px;background:${ec}22;color:${ec};border:1px solid ${ec}44">${e.etat}</span>
-        <span style="font-size:.78rem;color:var(--gray-1);line-height:1.4">${e.observation || '—'}</span>
-        <div>
-          <div style="height:5px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden">
-            <div style="width:${pct}%;height:100%;background:${ec};border-radius:99px"></div>
+    // Mini-bars : postes d'émission
+    if (el('mini-bars')) {
+      el('mini-bars').innerHTML = (r.postes_emission || []).map(p => {
+        const pct   = p.niveau === 'élevé' ? 85 : p.niveau === 'modéré' ? 50 : 20;
+        const color = p.niveau === 'élevé' ? '#ef5350' : p.niveau === 'modéré' ? '#E5A93A' : '#27c93f';
+        return `<div style="display:flex;align-items:center;gap:.5rem">
+          <span style="width:95px;font-size:.7rem;color:var(--gray-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.poste}</span>
+          <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;height:5px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${color};border-radius:10px"></div>
           </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
+          <span style="font-size:.7rem;color:var(--gold);width:35px;text-align:right">${p.part_estimee || ''}</span>
+        </div>`;
+      }).join('');
+    }
 
-  // Risques carbone
-  if (el('carbone-risques-wrap') && (r.risques || []).length) {
-    el('carbone-risques-wrap').style.display = 'block';
-    el('carbone-risques-list').innerHTML = r.risques.map(rv => {
-      const gc = rv.gravite === 'critique'  ? '#ef5350'
-               : rv.gravite === 'important' ? '#ff9800'
-               : rv.gravite === 'modere'    ? '#C8A84B' : '#60a5fa';
-      const gb = rv.gravite === 'critique'  ? 'rgba(239,83,80,.06)'
-               : rv.gravite === 'important' ? 'rgba(255,152,0,.05)'
-               : rv.gravite === 'modere'    ? 'rgba(200,168,75,.04)' : 'rgba(96,165,250,.04)';
-      return `<div style="padding:1rem 1.2rem;border-radius:9px;border:1px solid ${gc}44;background:${gb};border-left:3px solid ${gc}">
-        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem">
-          <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.12rem .5rem;border-radius:5px;background:${gc}22;color:${gc}">${rv.gravite || ''}</span>
-          <strong style="font-size:.86rem;color:var(--white)">${rv.titre}</strong>
-        </div>
-        <p style="font-size:.8rem;color:var(--gray-2);line-height:1.55;margin:0">${rv.description || ''}</p>
-      </div>`;
-    }).join('');
-  }
+    // Stats carbone : KPIs émissions
+    if (el('carbone-stats-wrap')) {
+      const em = r.emissions || {};
+      const postes = r.postes_emission || [];
+      if (postes.length || em.ic_energie) {
+        show('carbone-stats-wrap');
+        if (el('carbone-nb-composants')) el('carbone-nb-composants').textContent = postes.length || '—';
+        if (el('carbone-nb-bons'))       el('carbone-nb-bons').textContent       = em.ic_energie?.valeur != null ? em.ic_energie.valeur : '—';
+        if (el('carbone-nb-risques'))    el('carbone-nb-risques').textContent    = nbRisques;
+        if (el('carbone-nb-travaux'))    el('carbone-nb-travaux').textContent    = (r.leviers_reduction || []).length;
+        // Relabeller les stat-box pour le carbone
+        const lbls = document.querySelectorAll('#carbone-stats-wrap .stat-box__lbl');
+        if (lbls[0]) lbls[0].textContent = 'Postes';
+        if (lbls[1]) lbls[1].textContent = 'Ic énergie';
+        if (lbls[2]) lbls[2].textContent = 'Risques';
+        if (lbls[3]) lbls[3].textContent = 'Leviers';
+      }
+    }
 
-  // Leviers réduction carbone
-  if (el('carbone-travaux-wrap') && (r.travaux || []).length) {
-    el('carbone-travaux-wrap').style.display = 'block';
-    el('carbone-travaux-list').innerHTML = r.travaux.map(t => {
-      const hc = ['Urgent','Immédiat'].includes(t.priorite) || ['Urgent','Immédiat'].includes(t.horizon) ? '#ef5350'
-               : ['Court terme','1-2 ans'].includes(t.priorite) || ['Court terme','1-2 ans'].includes(t.horizon) ? '#E5A93A'
-               : '#60a5fa';
-      const horizon = t.horizon || t.priorite || '—';
-      return `<div style="display:flex;align-items:center;gap:.9rem;padding:.7rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)">
-        <span style="font-size:.67rem;padding:.18rem .55rem;border-radius:99px;background:${hc}22;color:${hc};border:1px solid ${hc}44;white-space:nowrap;flex-shrink:0">${horizon}</span>
-        <div style="flex:1">
-          <span style="color:var(--white);font-size:.83rem;font-weight:500">${t.titre}</span>
-          ${t.description ? `<p style="font-size:.76rem;color:var(--gray-1);margin:.15rem 0 0;line-height:1.4">${t.description}</p>` : ''}
-        </div>
-        ${t.cout_estime ? `<span style="color:var(--gold);font-size:.8rem;font-weight:600;white-space:nowrap;flex-shrink:0">${t.cout_estime}</span>` : ''}
-      </div>`;
-    }).join('');
-  }
+    // Postes d'émission → section "état technique"
+    if (el('carbone-etat-wrap') && (r.postes_emission || []).length) {
+      show('carbone-etat-wrap');
+      el('carbone-etat-wrap').querySelector('h4').textContent = '🏭 Postes d\'émission carbone';
+      // Relabeller les colonnes
+      const hdrs = el('carbone-etat-wrap').querySelector('[style*="grid-template-columns"]');
+      if (hdrs) hdrs.innerHTML = '<span>Poste</span><span>Impact</span><span>Observation</span><span>Part</span>';
+      el('carbone-etat-list').innerHTML = r.postes_emission.map(p => {
+        const ec  = p.niveau === 'élevé' ? '#ef5350' : p.niveau === 'modéré' ? '#E5A93A' : '#27c93f';
+        const pct = p.niveau === 'élevé' ? '85' : p.niveau === 'modéré' ? '50' : '20';
+        return `<div style="display:grid;grid-template-columns:1.8fr 1fr 2.5fr 80px;gap:.8rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.04)">
+          <span style="color:var(--white);font-size:.84rem;font-weight:500">${p.poste}</span>
+          <span style="display:inline-block;font-size:.7rem;font-weight:600;padding:.16rem .6rem;border-radius:99px;background:${ec}22;color:${ec};border:1px solid ${ec}44">${p.niveau || '—'}</span>
+          <span style="font-size:.78rem;color:var(--gray-1);line-height:1.4">${p.observation || '—'}</span>
+          <div>
+            <div style="height:5px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:${ec};border-radius:99px"></div>
+            </div>
+            <div style="font-size:.65rem;color:var(--gold);text-align:center;margin-top:.2rem">${p.part_estimee || ''}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
 
-  // Émissions carbone
-  if (el('carbone-budget-wrap') && r.enveloppe_budgetaire) {
-    el('carbone-budget-wrap').style.display = 'block';
-    if (el('budget-court')) el('budget-court').textContent = r.enveloppe_budgetaire.court_terme || '—';
-    if (el('budget-moyen')) el('budget-moyen').textContent = r.enveloppe_budgetaire.moyen_terme || '—';
-    if (el('budget-long'))  el('budget-long').textContent  = r.enveloppe_budgetaire.long_terme  || '—';
-    if (el('budget-total')) el('budget-total').textContent = r.enveloppe_budgetaire.total_estime || '—';
-  }
+    // Conformité réglementaire → section "risques carbone"
+    if (el('carbone-risques-wrap') && (r.conformite_reglementaire || []).length) {
+      show('carbone-risques-wrap');
+      el('carbone-risques-wrap').querySelector('h4').textContent = '📜 Conformité réglementaire';
+      el('carbone-risques-list').innerHTML = r.conformite_reglementaire.map(c => {
+        const gc = c.statut === 'conforme' ? '#27c93f' : c.statut === 'non_conforme' ? '#ef5350' : c.statut === 'non_vérifié' ? '#E5A93A' : '#888899';
+        const label = c.statut === 'conforme' ? '✓ Conforme' : c.statut === 'non_conforme' ? '✗ Non conforme' : c.statut === 'non_applicable' ? 'N/A' : 'Non vérifié';
+        return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:.8rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);gap:1rem">
+          <div style="flex:1">
+            <div style="font-size:.86rem;font-weight:500;color:var(--white);margin-bottom:.2rem">${c.referentiel}</div>
+            ${c.detail ? `<div style="font-size:.76rem;color:var(--gray-1);line-height:1.4">${c.detail}</div>` : ''}
+          </div>
+          <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;padding:.2rem .65rem;border-radius:99px;background:${gc}22;color:${gc};border:1px solid ${gc}44;white-space:nowrap;flex-shrink:0">${label}</span>
+        </div>`;
+      }).join('');
+    }
 
-  // Points forts
-  if ((r.points_forts || []).length) {
-    el('points-forts-wrap').style.display = 'block';
-    el('points-forts-list').innerHTML = r.points_forts
-      .map(p => `<li style="font-size:.84rem;color:var(--gray-2)">${p}</li>`)
-      .join('');
-  }
+    // Leviers de réduction → section "travaux"
+    if (el('carbone-travaux-wrap') && (r.leviers_reduction || []).length) {
+      show('carbone-travaux-wrap');
+      el('carbone-travaux-wrap').querySelector('h4').textContent = '💡 Leviers de réduction carbone';
+      el('carbone-travaux-list').innerHTML = r.leviers_reduction.map(l => {
+        const hc = l.horizon === 'Court terme' ? '#4ade80' : l.horizon === 'Moyen terme' ? '#E5A93A' : '#60a5fa';
+        return `<div style="display:flex;align-items:flex-start;gap:.9rem;padding:.8rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)">
+          <span style="font-size:.67rem;padding:.18rem .55rem;border-radius:99px;background:${hc}22;color:${hc};border:1px solid ${hc}44;white-space:nowrap;flex-shrink:0;margin-top:.15rem">${l.horizon || '—'}</span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+              <span style="color:var(--white);font-size:.83rem;font-weight:500">${l.levier}</span>
+              ${l.impact ? `<span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.1rem .4rem;border-radius:4px;background:rgba(74,222,128,.1);color:#4ade80">Impact ${l.impact}</span>` : ''}
+            </div>
+            ${l.description ? `<p style="font-size:.76rem;color:var(--gray-1);margin:.2rem 0 0;line-height:1.4">${l.description}</p>` : ''}
+          </div>
+          ${l.gain_estime ? `<span style="color:#4ade80;font-size:.8rem;font-weight:600;white-space:nowrap;flex-shrink:0">${l.gain_estime}</span>` : ''}
+        </div>`;
+      }).join('');
+    }
 
-  // Non-conformités
-  if ((r.non_conformites || []).length) {
-    el('nonconf-wrap').style.display = 'block';
-    el('nonconf-list').innerHTML = r.non_conformites.map(nc => {
-      const gc = nc.gravite === 'bloquant' ? '#ef5350' : nc.gravite === 'majeur' ? '#ff9800' : '#C8A84B';
-      const gb = nc.gravite === 'bloquant' ? 'rgba(229,57,53,.07)' : nc.gravite === 'majeur' ? 'rgba(255,152,0,.05)' : 'rgba(200,168,75,.05)';
-      return `<div style="padding:1.1rem 1.3rem;border-radius:10px;border:1px solid ${gc}44;background:${gb};border-left:3px solid ${gc}">
-        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.5rem">
-          <span style="background:${gc}22;color:${gc};padding:.12rem .5rem;border-radius:6px;font-size:.68rem;font-weight:700;text-transform:uppercase">${nc.gravite || ''}</span>
-          <strong style="color:var(--white);font-size:.88rem">${nc.critere}</strong>
-        </div>
-        <p style="font-size:.83rem;color:var(--gray-2);margin-bottom:.5rem;line-height:1.5">${nc.description || ''}</p>
-        <div style="display:flex;gap:1.2rem;flex-wrap:wrap">
-          ${nc.action      ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Action : </span>${nc.action}</span>`  : ''}
-          ${nc.delai       ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Délai : </span>${nc.delai}</span>`    : ''}
-          ${nc.cout_estime ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Coût : </span><span style="color:var(--gold)">${nc.cout_estime}</span></span>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-  }
+    // Risques → section "budget" (on réutilise la section)
+    if (el('carbone-budget-wrap') && (r.risques || []).length) {
+      show('carbone-budget-wrap');
+      el('carbone-budget-wrap').querySelector('h4').textContent = '⚠️ Risques identifiés';
+      el('carbone-budget-wrap').querySelector('div[style*="grid-template-columns"]').outerHTML = '';
+      el('carbone-budget-wrap').querySelector('[id^="budget"]')?.parentElement?.remove();
+      el('carbone-budget-wrap').innerHTML = `
+        <h4 class="section-cap section-cap--red" style="margin-bottom:.9rem">⚠️ Risques identifiés</h4>
+        <div style="display:flex;flex-direction:column;gap:.7rem">
+          ${r.risques.map(rv => {
+            const gc = rv.gravite === 'élevé' ? '#ef5350' : rv.gravite === 'modéré' ? '#E5A93A' : '#60a5fa';
+            return `<div style="padding:1rem 1.2rem;border-radius:9px;border:1px solid ${gc}44;background:${gc}11;border-left:3px solid ${gc}">
+              <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;flex-wrap:wrap">
+                <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.12rem .5rem;border-radius:5px;background:${gc}22;color:${gc}">${rv.gravite || ''}</span>
+                <strong style="font-size:.86rem;color:var(--white)">${rv.titre}</strong>
+                ${rv.urgence ? `<span style="font-size:.72rem;color:var(--gray-1);margin-left:auto">🕐 ${rv.urgence}</span>` : ''}
+              </div>
+              <p style="font-size:.8rem;color:var(--gray-2);line-height:1.55;margin:0 0 .3rem">${rv.description || ''}</p>
+              ${rv.action ? `<p style="font-size:.78rem;color:var(--gold);margin:0">→ ${rv.action}</p>` : ''}
+            </div>`;
+          }).join('')}
+        </div>`;
+    }
 
-  // Recommandations
-  if ((r.recommandations || []).length) {
-    el('recos-wrap').style.display = 'block';
-    el('recos-list').innerHTML = r.recommandations.map(rec => {
-      const pc = rec.priorite === 'URGENT' ? '#ef5350' : rec.priorite === 'RECOMMANDÉ' ? '#C8A84B' : '#60a5fa';
-      const pb = rec.priorite === 'URGENT' ? 'rgba(229,57,53,.06)' : rec.priorite === 'RECOMMANDÉ' ? 'rgba(200,168,75,.06)' : 'rgba(96,165,250,.06)';
-      return `<div style="display:flex;gap:1rem;padding:1rem 1.2rem;border-radius:10px;border:1px solid rgba(255,255,255,.05);background:${pb}">
-        <div style="flex-shrink:0"><span style="background:${pc}22;color:${pc};padding:.15rem .55rem;border-radius:6px;font-size:.67rem;font-weight:700;letter-spacing:.04em">${rec.priorite}</span></div>
-        <div style="flex:1">
-          <div style="font-weight:600;color:var(--white);font-size:.88rem;margin-bottom:.3rem">${rec.titre}</div>
-          <p style="font-size:.82rem;color:var(--gray-2);line-height:1.5;margin-bottom:.4rem">${rec.description || ''}</p>
+    // Vérifications complémentaires → anomalies
+    if (el('anomalies-wrap') && (r.verifications_complementaires || []).length) {
+      show('anomalies-wrap');
+      el('anomalies-wrap').querySelector('h4').textContent = '🔍 Vérifications complémentaires';
+      el('anomalies-list').innerHTML = r.verifications_complementaires.map(v =>
+        `<div style="padding:.6rem .9rem;border-radius:7px;border:1px solid rgba(229,169,58,.2);background:rgba(229,169,58,.04);font-size:.83rem;color:var(--gray-2)">
+          <span style="color:#E5A93A;margin-right:.5rem">→</span>${v}
+        </div>`
+      ).join('');
+    }
+
+    // Masquer les sections thermiques inutiles pour carbone
+    hide('nonconf-wrap');
+    hide('recos-wrap');
+    hide('coherence-fac-wrap');
+    const enveloppeRow = el('enveloppe-synthese')?.closest('.card')?.parentElement;
+    if (enveloppeRow) enveloppeRow.style.display = 'none';
+
+  // ══════════════════════════════════════════════════════
+  //  VALIDATION THERMIQUE / ÉNERGIE
+  // ══════════════════════════════════════════════════════
+  } else {
+
+    // KPI critères
+    const criteres = r.criteres || [];
+    const nbOk = criteres.filter(c => c.conforme).length;
+    const nbKo = criteres.filter(c => !c.conforme).length;
+    if (el('kpi-conforme'))    el('kpi-conforme').querySelector('.kpi-box__val').textContent    = nbOk;
+    if (el('kpi-nonconforme')) el('kpi-nonconforme').querySelector('.kpi-box__val').textContent = nbKo;
+
+    // Mini-bars critères
+    if (el('mini-bars')) {
+      el('mini-bars').innerHTML = criteres.map(c => {
+        const pct   = c.valeur && c.seuil ? Math.min((c.valeur / c.seuil) * 100, 150) : 50;
+        const color = c.conforme ? '#27c93f' : '#ef5350';
+        return `<div style="display:flex;align-items:center;gap:.5rem">
+          <span style="width:75px;font-size:.7rem;color:var(--gray-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nom}</span>
+          <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;height:5px;overflow:hidden">
+            <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:10px"></div>
+          </div>
+          <span style="font-size:.7rem;color:${color};width:16px">${c.conforme ? '✓' : '✗'}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // Tableau critères
+    if (el('criteres-tbody')) {
+      el('criteres-tbody').innerHTML = criteres.map((c, i) => {
+        const color = c.conforme ? '#27c93f' : '#ef5350';
+        const badge = c.conforme
+          ? `<span style="background:rgba(39,201,63,.12);color:#27c93f;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✓ Conforme</span>`
+          : `<span style="background:rgba(229,57,53,.12);color:#ef5350;padding:.18rem .55rem;border-radius:10px;font-size:.7rem;font-weight:600">✗ Non conforme</span>`;
+        return `<tr style="background:${i%2===0?'rgba(255,255,255,.01)':'transparent'};border-bottom:1px solid rgba(255,255,255,.04)">
+          <td style="padding:.65rem 1rem;color:var(--white);font-weight:500">${c.nom}</td>
+          <td style="padding:.65rem 1rem;text-align:center;color:${color};font-weight:700">${c.valeur??'—'} <span style="font-size:.68rem;color:var(--muted)">${c.unite||''}</span></td>
+          <td style="padding:.65rem 1rem;text-align:center;color:var(--gray-1)">≤ ${c.seuil??'—'}</td>
+          <td style="padding:.65rem 1rem;text-align:center">${badge}</td>
+          <td style="padding:.65rem 1rem;color:var(--gray-2);font-size:.79rem">${c.commentaire||''}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Non-conformités
+    if ((r.non_conformites || []).length) {
+      show('nonconf-wrap');
+      el('nonconf-list').innerHTML = r.non_conformites.map(nc => {
+        const gc = nc.gravite === 'bloquant' ? '#ef5350' : nc.gravite === 'majeur' ? '#ff9800' : '#C8A84B';
+        const gb = nc.gravite === 'bloquant' ? 'rgba(229,57,53,.07)' : nc.gravite === 'majeur' ? 'rgba(255,152,0,.05)' : 'rgba(200,168,75,.05)';
+        return `<div style="padding:1.1rem 1.3rem;border-radius:10px;border:1px solid ${gc}44;background:${gb};border-left:3px solid ${gc}">
+          <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.5rem">
+            <span style="background:${gc}22;color:${gc};padding:.12rem .5rem;border-radius:6px;font-size:.68rem;font-weight:700;text-transform:uppercase">${nc.gravite||''}</span>
+            <strong style="color:var(--white);font-size:.88rem">${nc.critere}</strong>
+          </div>
+          <p style="font-size:.83rem;color:var(--gray-2);margin-bottom:.5rem;line-height:1.5">${nc.description||''}</p>
           <div style="display:flex;gap:1.2rem;flex-wrap:wrap">
-            ${rec.impact_reglementaire ? `<span style="font-size:.77rem"><span style="color:var(--muted)">Impact : </span>${rec.impact_reglementaire}</span>` : ''}
-            ${rec.delai                ? `<span style="font-size:.77rem"><span style="color:var(--muted)">Délai : </span>${rec.delai}</span>` : ''}
+            ${nc.action      ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Action : </span>${nc.action}</span>` : ''}
+            ${nc.delai       ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Délai : </span>${nc.delai}</span>` : ''}
+            ${nc.cout_estime ? `<span style="font-size:.78rem"><span style="color:var(--muted)">Coût : </span><span style="color:var(--gold)">${nc.cout_estime}</span></span>` : ''}
           </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
+        </div>`;
+      }).join('');
+    }
 
-  // Enveloppe + Systèmes — clés différentes selon type_analyse
-  const enveloppeData  = r.analyse_enveloppe || r.enveloppe || null;
-  const systemesData   = r.systemes_energetiques || r.systemes || null;
-  if (enveloppeData) {
-    el('enveloppe-synthese').textContent = enveloppeData.synthese || '';
-    el('enveloppe-points').innerHTML = (enveloppeData.points_attention || [])
-      .map(p => `<li>${p}</li>`).join('');
-  }
-  if (systemesData) {
-    el('systemes-synthese').textContent = systemesData.synthese || '';
-    el('equipements-table').innerHTML = (systemesData.equipements || []).map(e => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
-        <div>
-          <span style="color:var(--white);font-size:.8rem;font-weight:500">${e.poste}</span>
-          <span style="color:var(--gray-1);font-size:.76rem;margin-left:.4rem">${e.equipement || ''}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:.5rem">
-          ${e.performance ? `<span style="font-size:.72rem;color:var(--muted)">${e.performance}</span>` : ''}
-          <span style="font-size:.7rem;padding:.12rem .45rem;border-radius:5px;background:${e.evaluation === 'Performant' ? 'rgba(39,201,63,.1)' : 'rgba(255,193,7,.08)'};color:${e.evaluation === 'Performant' ? '#27c93f' : '#ffc107'}">${e.evaluation || ''}</span>
-        </div>
-      </div>`).join('');
-  }
+    // Recommandations
+    if ((r.recommandations || []).length) {
+      show('recos-wrap');
+      el('recos-list').innerHTML = r.recommandations.map(rec => {
+        const pc = rec.priorite === 'URGENT' ? '#ef5350' : rec.priorite === 'RECOMMANDÉ' ? '#C8A84B' : '#60a5fa';
+        const pb = rec.priorite === 'URGENT' ? 'rgba(229,57,53,.06)' : rec.priorite === 'RECOMMANDÉ' ? 'rgba(200,168,75,.06)' : 'rgba(96,165,250,.06)';
+        return `<div style="display:flex;gap:1rem;padding:1rem 1.2rem;border-radius:10px;border:1px solid rgba(255,255,255,.05);background:${pb}">
+          <div style="flex-shrink:0"><span style="background:${pc}22;color:${pc};padding:.15rem .55rem;border-radius:6px;font-size:.67rem;font-weight:700;letter-spacing:.04em">${rec.priorite}</span></div>
+          <div style="flex:1">
+            <div style="font-weight:600;color:var(--white);font-size:.88rem;margin-bottom:.3rem">${rec.titre}</div>
+            <p style="font-size:.82rem;color:var(--gray-2);line-height:1.5;margin-bottom:.4rem">${rec.description||''}</p>
+            <div style="display:flex;gap:1.2rem;flex-wrap:wrap">
+              ${rec.impact_reglementaire ? `<span style="font-size:.77rem"><span style="color:var(--muted)">Impact : </span>${rec.impact_reglementaire}</span>` : ''}
+              ${rec.delai                ? `<span style="font-size:.77rem"><span style="color:var(--muted)">Délai : </span>${rec.delai}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
 
-  if (el('contexte-reglementaire')) el('contexte-reglementaire').textContent = r.contexte_reglementaire || '';
+    // Enveloppe + Systèmes
+    const enveloppeData = r.analyse_enveloppe || r.enveloppe || null;
+    const systemesData  = r.systemes_energetiques || r.systemes || null;
+    if (enveloppeData && el('enveloppe-synthese')) {
+      el('enveloppe-synthese').textContent = enveloppeData.synthese || '';
+      if (el('enveloppe-points')) el('enveloppe-points').innerHTML = (enveloppeData.points_attention || []).map(p => `<li>${p}</li>`).join('');
+    }
+    if (systemesData && el('systemes-synthese')) {
+      el('systemes-synthese').textContent = systemesData.synthese || '';
+      if (el('equipements-table')) el('equipements-table').innerHTML = (systemesData.equipements || []).map(e =>
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div><span style="color:var(--white);font-size:.8rem;font-weight:500">${e.poste}</span><span style="color:var(--gray-1);font-size:.76rem;margin-left:.4rem">${e.equipement||''}</span></div>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            ${e.performance ? `<span style="font-size:.72rem;color:var(--muted)">${e.performance}</span>` : ''}
+            <span style="font-size:.7rem;padding:.12rem .45rem;border-radius:5px;background:${e.evaluation==='Performant'?'rgba(39,201,63,.1)':'rgba(255,193,7,.08)'};color:${e.evaluation==='Performant'?'#27c93f':'#ffc107'}">${e.evaluation||''}</span>
+          </div>
+        </div>`).join('');
+    }
 
-  // Anomalies (incohérences détectées dans le rapport BET)
-  const anomalies = r.anomalies || [];
-  if (el('anomalies-wrap')) {
-    if (anomalies.length) {
-      el('anomalies-wrap').style.display = 'block';
+    if (el('contexte-reglementaire')) el('contexte-reglementaire').textContent = r.contexte_reglementaire || '';
+
+    // Anomalies
+    const anomalies = r.anomalies || [];
+    if (anomalies.length && el('anomalies-wrap')) {
+      show('anomalies-wrap');
       el('anomalies-list').innerHTML = anomalies.map(a => {
         const gc = a.gravite === 'bloquant' ? '#ef5350' : a.gravite === 'majeur' ? '#ff9800' : '#E5A93A';
         const gb = a.gravite === 'bloquant' ? 'rgba(229,57,53,.07)' : a.gravite === 'majeur' ? 'rgba(255,152,0,.05)' : 'rgba(229,169,58,.05)';
         return `<div style="padding:.9rem 1.1rem;border-radius:9px;border:1px solid ${gc}44;background:${gb};border-left:3px solid ${gc}">
           <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem">
-            <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.1rem .45rem;border-radius:4px;background:${gc}22;color:${gc}">${a.gravite || ''}</span>
-            <strong style="font-size:.84rem;color:var(--white)">${a.critere || a.titre || ''}</strong>
+            <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;padding:.1rem .45rem;border-radius:4px;background:${gc}22;color:${gc}">${a.gravite||''}</span>
+            <strong style="font-size:.84rem;color:var(--white)">${a.critere||a.titre||''}</strong>
           </div>
-          <p style="font-size:.8rem;color:var(--gray-2);line-height:1.55;margin:0 0 .3rem">${a.description || ''}</p>
+          <p style="font-size:.8rem;color:var(--gray-2);line-height:1.55;margin:0 0 .3rem">${a.description||''}</p>
           ${a.recommendation ? `<div style="font-size:.77rem;color:var(--gray-1)"><span style="color:var(--muted)">Recommandation : </span>${a.recommendation}</div>` : ''}
         </div>`;
       }).join('');
     }
+
+    // Cohérence factures
+    if (el('coherence-fac-wrap') && r.coherence_factures) {
+      show('coherence-fac-wrap');
+      const cf = r.coherence_factures;
+      const cfColor = cf.coherent ? '#27c93f' : '#ef5350';
+      el('coherence-fac-content').innerHTML = `
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
+          <span style="font-size:.9rem;color:${cfColor}">${cf.coherent ? '✓' : '✗'}</span>
+          <span style="font-size:.85rem;font-weight:600;color:${cfColor}">${cf.coherent ? 'Cohérent avec les factures' : 'Incohérence détectée avec les factures'}</span>
+        </div>
+        <p style="font-size:.82rem;color:var(--gray-2);line-height:1.6;margin:0">${cf.commentaire||''}</p>`;
+    }
+
+    // Masquer sections carbone
+    hide('carbone-stats-wrap');
+    hide('carbone-etat-wrap');
+    hide('carbone-risques-wrap');
+    hide('carbone-travaux-wrap');
+    hide('carbone-budget-wrap');
   }
 
-  // Cohérence factures
-  if (el('coherence-fac-wrap') && r.coherence_factures) {
-    el('coherence-fac-wrap').style.display = 'block';
-    const cf = r.coherence_factures;
-    const cfColor = cf.coherent ? '#27c93f' : '#ef5350';
-    const cfIcon  = cf.coherent ? '✓' : '✗';
-    el('coherence-fac-content').innerHTML = `
-      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
-        <span style="font-size:.9rem;color:${cfColor}">${cfIcon}</span>
-        <span style="font-size:.85rem;font-weight:600;color:${cfColor}">${cf.coherent ? 'Cohérent avec les factures' : 'Incohérence détectée avec les factures'}</span>
-      </div>
-      <p style="font-size:.82rem;color:var(--gray-2);line-height:1.6;margin:0">${cf.commentaire || ''}</p>`;
+  // ── Commun aux deux types ────────────────────────────────
+  // Points forts
+  if ((r.points_forts || []).length) {
+    show('points-forts-wrap');
+    if (el('points-forts-list')) el('points-forts-list').innerHTML = r.points_forts.map(p => `<li style="font-size:.84rem;color:var(--gray-2)">${p}</li>`).join('');
   }
 
   // Avis indépendant
-  if (el('avis-independant-wrap') && r.avis_independant) {
-    el('avis-independant-wrap').style.display = 'block';
+  if (r.avis_independant && el('avis-independant-wrap')) {
+    show('avis-independant-wrap');
     el('avis-independant-text').textContent = r.avis_independant;
   }
 
