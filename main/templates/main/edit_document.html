@@ -578,8 +578,6 @@ select.f-input option { background: #0c1929; }
         <span class="badge badge--energie">Pré-analyse énergétique</span>
       {% elif document.type_analyse == 'carbone' %}
         <span class="badge badge--carbone">🌿 Bilan carbone</span>
-      {% elif document.type_analyse == 'carbone' %}
-        <span class="badge badge--carbone">🌿 Bilan carbone</span>
       {% endif %}
     </p>
   </div>
@@ -728,7 +726,7 @@ select.f-input option { background: #0c1929; }
           {% else %}
           <!-- Énergie ou Complet : champs RT2012 / RE2020 -->
 
-          {% if document.norme == 'RT2012' or document.type_analyse == 'carbone' %}
+          {% if document.norme == 'RT2012' %}
           <div class="card card--pad">
             <h3 class="section-title">RT2012 — Valeurs mesurées</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
@@ -745,7 +743,7 @@ select.f-input option { background: #0c1929; }
           </div>
           {% endif %}
 
-          {% if document.norme == 'RE2020' or document.type_analyse == 'carbone' %}
+          {% if document.norme == 'RE2020' %}
           <div class="card card--pad">
             <h3 class="section-title">RE2020 — Valeurs mesurées</h3>
             <div style="display:flex;flex-direction:column;gap:.8rem">
@@ -1124,8 +1122,7 @@ select.f-input option { background: #0c1929; }
               <label class="label-caps">Type d'analyse</label>
               <select name="type_analyse" class="f-input">
                 <option value="energie" {% if document.type_analyse == 'energie' %}selected{% endif %}>Validation thermique &amp; énergétique</option>
-                <option value="carbone" {% if document.type_analyse == 'carbone'     %}selected{% endif %}>Bilan carbone immobilier</option>
-                <option </option>
+                <option value="carbone" {% if document.type_analyse == 'carbone' %}selected{% endif %}>Bilan carbone immobilier</option>
               </select>
             </div>
             <div>
@@ -1270,7 +1267,7 @@ select.f-input option { background: #0c1929; }
       {% endif %}
 
       <!-- CARBONE : état technique + risques + travaux + budget -->
-      {% if document.type_analyse == 'carbone' or document.type_analyse == 'carbone' %}
+      {% if document.type_analyse == 'carbone' %}
 
       <!-- Stats Bilan Carbone -->
       <div id="carbone-stats-wrap" style="display:none;margin-bottom:1.2rem">
@@ -1376,7 +1373,8 @@ select.f-input option { background: #0c1929; }
         </div>
       </div>
 
-      <!-- Enveloppe + Systèmes -->
+      <!-- Enveloppe + Systèmes — uniquement pour l'analyse thermique/énergie -->
+      {% if document.type_analyse != 'carbone' %}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem">
         <div class="card card--pad" style="padding:1.4rem">
           <h4 class="section-cap section-cap--gold">🏗️ Enveloppe thermique</h4>
@@ -1391,7 +1389,6 @@ select.f-input option { background: #0c1929; }
       </div>
 
       <!-- Contexte réglementaire -->
-      {% if document.type_analyse != 'carbone' %}
       <div class="card card--pad" style="padding:1.4rem;margin-bottom:1.4rem">
         <h4 class="section-cap section-cap--gold">📜 Contexte réglementaire</h4>
         <p id="contexte-reglementaire" style="font-size:.84rem;color:var(--gray-2);line-height:1.6;margin:0"></p>
@@ -2052,12 +2049,10 @@ function afficherRapport(r) {
       ).join('');
     }
 
-    // Masquer les sections thermiques inutiles pour carbone
+    // Masquer les sections thermiques (non pertinentes pour le bilan carbone)
     hide('nonconf-wrap');
     hide('recos-wrap');
     hide('coherence-fac-wrap');
-    const enveloppeRow = el('enveloppe-synthese')?.closest('.card')?.parentElement;
-    if (enveloppeRow) enveloppeRow.style.display = 'none';
 
   // ══════════════════════════════════════════════════════
   //  VALIDATION THERMIQUE / ÉNERGIE
@@ -2196,12 +2191,6 @@ function afficherRapport(r) {
         <p style="font-size:.82rem;color:var(--gray-2);line-height:1.6;margin:0">${cf.commentaire||''}</p>`;
     }
 
-    // Masquer sections carbone
-    hide('carbone-stats-wrap');
-    hide('carbone-etat-wrap');
-    hide('carbone-risques-wrap');
-    hide('carbone-travaux-wrap');
-    hide('carbone-budget-wrap');
   }
 
   // ── Commun aux deux types ────────────────────────────────
