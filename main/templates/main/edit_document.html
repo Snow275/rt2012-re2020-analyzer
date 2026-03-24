@@ -601,7 +601,7 @@ select.f-input option { background: #0c1929; }
     <button onclick="showTab('documents')"    id="tab-documents"    class="tab-btn">Documents</button>
     <button onclick="showTab('emails')"       id="tab-emails"       class="tab-btn">Communication</button>
     <button onclick="showTab('rapport-ia')"   id="tab-rapport-ia"   class="tab-btn">Rapport IA</button>
-    <button onclick="showTab('observations')" id="tab-observations" class="tab-btn">Observations</button>
+    <button onclick="showTab('observations')" id="tab-observations" class="tab-btn">{% if document.type_analyse == 'carbone' %}🌿 Observations{% else %}🔍 Observations{% endif %}</button>
     <button onclick="showTab('factures')"     id="tab-factures"     class="tab-btn">Factures</button>
   </div>
 
@@ -1432,11 +1432,19 @@ select.f-input option { background: #0c1929; }
       {% csrf_token %}
       <input type="hidden" name="_obs_save" value="1">
 
-      <!-- Header -->
+      <!-- Header — adaptatif selon le type d'analyse -->
       <div class="obs-header">
         <div>
-          <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#4ade80;margin:0 0 .2rem">🌿 Observations carbone</p>
+          {% if document.type_analyse == 'carbone' %}
+          <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#4ade80;margin:0 0 .2rem">🌿 Observations bilan carbone</p>
           <p style="font-size:.83rem;color:var(--gray-1);margin:0">Ces notes sont injectées dans le prompt IA pour enrichir le bilan carbone généré.</p>
+          {% elif document.type_analyse == 'energie' %}
+          <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 .2rem">⚡ Observations validation thermique</p>
+          <p style="font-size:.83rem;color:var(--gray-1);margin:0">Ces données enrichissent l'analyse de conformité thermique (RT2012 / RE2020 / DPE).</p>
+          {% else %}
+          <p style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin:0 0 .2rem">🔍 Observations expert</p>
+          <p style="font-size:.83rem;color:var(--gray-1);margin:0">Ces données sont injectées dans le prompt IA pour enrichir le rapport généré.</p>
+          {% endif %}
         </div>
         <button type="submit" class="btn btn-gold">Enregistrer</button>
       </div>
@@ -1448,7 +1456,9 @@ select.f-input option { background: #0c1929; }
 
           <!-- Données énergétiques connues -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--sm" style="color:#4ade80">⚡ Données énergétiques</h3>
+            <h3 class="section-title section-title--sm" style="color:{% if document.type_analyse == 'carbone' %}#4ade80{% else %}var(--gold){% endif %}">
+              {% if document.type_analyse == 'carbone' %}⚡ Données énergétiques & carbone{% else %}⚡ Données énergétiques{% endif %}
+            </h3>
             <div style="display:flex;flex-direction:column;gap:.7rem">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
                 <div>
@@ -1547,12 +1557,18 @@ select.f-input option { background: #0c1929; }
 
           <!-- Notes libres -->
           <div class="card card--pad-sm">
-            <h3 class="section-title section-title--sm" style="color:#c084fc">📝 Notes & contexte</h3>
+            <h3 class="section-title section-title--sm" style="color:#c084fc">
+              {% if document.type_analyse == 'carbone' %}📝 Notes bilan carbone{% else %}📝 Notes & contexte{% endif %}
+            </h3>
             <div>
               <label class="label-caps">Observations pour l'IA</label>
               <textarea name="admin_notes" rows="8" class="f-input" style="resize:vertical"
-                placeholder="Contexte du bâtiment, particularités énergétiques, informations complémentaires à transmettre à l'IA...">{{ document.admin_notes|default:'' }}</textarea>
-              <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem">Ces notes sont directement injectées dans le prompt de génération du bilan carbone.</p>
+                placeholder="{% if document.type_analyse == 'carbone' %}Activités, postes d'émission principaux, certifications visées, contexte carbone...{% else %}Contexte thermique, particularités du bâtiment, informations complémentaires pour l'analyse...{% endif %}">{{ document.admin_notes|default:'' }}</textarea>
+              <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem">
+                {% if document.type_analyse == 'carbone' %}Ces notes sont directement injectées dans le prompt de génération du bilan carbone.
+                {% else %}Ces notes enrichissent le rapport IA : contexte du projet, particularités thermiques, informations complémentaires.
+                {% endif %}
+              </p>
             </div>
           </div>
 
