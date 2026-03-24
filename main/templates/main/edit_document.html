@@ -1602,7 +1602,26 @@ select.f-input option { background: #0c1929; }
     <input type="file" id="fac-input" accept=".pdf" multiple style="display:none" onchange="uploadFactures(this.files)">
 
     <!-- Liste des factures -->
-    <div id="fac-liste" style="margin-bottom:1.4rem"></div>
+    <div id="fac-liste" style="margin-bottom:1.4rem">
+      {% for facture in document.factures.all %}
+      <div id="fac-row-{{ facture.id }}" class="fac-row">
+        <div class="fac-dot {% if facture.analyse_ok %}ok{% else %}pending{% endif %}"></div>
+        <div>
+          <div style="font-size:.83rem;color:var(--white);font-weight:500">{{ facture.nom }}</div>
+          <div style="font-size:.72rem;color:var(--gray-1);margin-top:.12rem">
+            {% if facture.type_energie == 'gaz' %}🔥 Gaz naturel{% else %}⚡ Électricité{% endif %}
+            {% if facture.analyse_ok %}<span style="color:#27c93f;margin-left:.4rem">— données extraites</span>
+            {% elif facture.analyse_error %}<span style="color:#ef5350;margin-left:.4rem">— {{ facture.analyse_error }}</span>
+            {% else %}<span style="color:var(--gold);margin-left:.4rem">— en attente d'analyse</span>{% endif %}
+          </div>
+        </div>
+        {% if not facture.analyse_ok %}
+        <button class="fac-btn fac-btn--analyse" onclick="analyserUne({{ facture.id }})">✨ Analyser</button>
+        {% else %}<div></div>{% endif %}
+        <button class="fac-btn fac-btn--del" onclick="supprimerFacture({{ facture.id }}, this)">🗑</button>
+      </div>
+      {% endfor %}
+    </div>
 
     <!-- Résultats agrégés -->
     <div id="fac-resultats" style="display:none">
