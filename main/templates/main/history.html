@@ -1,99 +1,328 @@
 {% extends 'main/base.html' %}
 {% block title %}Historique{% endblock %}
-
 {% block content %}
+
 <style>
-@media (max-width: 768px) {
-  .history-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  /* Sur mobile : cache Ref et Norme pour gagner de la place */
-  .data-table td:nth-child(1),
-  .data-table th:nth-child(1) { display: none; }
-  .data-table td:nth-child(6),
-  .data-table th:nth-child(6) { display: none; }
-  /* Nom projet peut se couper */
-  .data-table td:nth-child(2) strong {
-    display: block;
-    max-width: 120px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  /* Boutons actions plus compacts */
-  .action-btns { gap: .25rem !important; }
-  .action-btns .btn { padding: .25rem .45rem !important; font-size: .75rem !important; }
+/* ── Filtres & recherche ── */
+.hist-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.8rem;
 }
-@media (max-width: 480px) {
-  /* Cache aussi Client sur très petits écrans */
-  .data-table td:nth-child(3),
-  .data-table th:nth-child(3) { display: none; }
+.hist-search {
+  flex: 1;
+  min-width: 200px;
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  padding: .6rem 1rem .6rem 2.4rem;
+  color: var(--white);
+  font-size: .86rem;
+  font-family: inherit;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238896A4' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: .75rem center;
+  transition: border-color .2s;
+}
+.hist-search:focus { border-color: rgba(200,168,75,.4); }
+.hist-filter {
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  padding: .6rem 1rem;
+  color: var(--white);
+  font-size: .82rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+.hist-count {
+  font-size: .78rem;
+  color: var(--gray-1);
+  white-space: nowrap;
+}
+
+/* ── Cards dossiers ── */
+.hist-grid {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.hist-card {
+  background: var(--navy-2);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  display: grid;
+  grid-template-columns: 90px 1fr auto auto auto;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color .15s, background .15s;
+  text-decoration: none;
+}
+.hist-card:hover {
+  border-color: rgba(200,168,75,.2);
+  background: rgba(200,168,75,.03);
+}
+
+/* Référence */
+.hist-ref {
+  font-family: monospace;
+  font-size: .78rem;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* Infos principales */
+.hist-main { min-width: 0; }
+.hist-name {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: .2rem;
+}
+.hist-meta {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+.hist-meta span {
+  font-size: .72rem;
+  color: var(--gray-1);
+}
+.hist-meta .sep { color: rgba(255,255,255,.15); }
+
+/* Type badge */
+.hist-type {
+  font-size: .65rem;
+  font-weight: 600;
+  padding: .18rem .55rem;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.hist-type.energie  { background: rgba(59,130,246,.12); color: #60a5fa; border: 1px solid rgba(59,130,246,.2); }
+.hist-type.carbone  { background: rgba(74,222,128,.1);  color: #4ade80; border: 1px solid rgba(74,222,128,.2); }
+
+/* Statut */
+.hist-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .2rem;
+  min-width: 70px;
+  text-align: center;
+}
+.hist-status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+.hist-status-dot.recu     { background: #8896A4; }
+.hist-status-dot.en_cours { background: #E5A93A; box-shadow: 0 0 6px rgba(229,169,58,.5); }
+.hist-status-dot.termine  { background: #27c93f; box-shadow: 0 0 6px rgba(39,201,63,.4); }
+.hist-status-label {
+  font-size: .65rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--gray-1);
+}
+
+/* Conformité */
+.hist-conform {
+  min-width: 60px;
+  text-align: center;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.hist-conform.ok  { color: #27c93f; }
+.hist-conform.ko  { color: #ef5350; }
+.hist-conform.na  { color: var(--muted); }
+
+/* Actions */
+.hist-actions {
+  display: flex;
+  gap: .35rem;
+  align-items: center;
+}
+.hist-btn {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.03);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, border-color .15s;
+}
+.hist-btn:hover { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.14); }
+.hist-btn.danger { border-color: rgba(229,57,53,.2); background: rgba(229,57,53,.05); }
+.hist-btn.danger:hover { background: rgba(229,57,53,.12); border-color: rgba(229,57,53,.35); }
+
+/* Empty state */
+.hist-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--gray-1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hist-card {
+    grid-template-columns: 1fr auto auto;
+    grid-template-rows: auto auto;
+  }
+  .hist-ref { display: none; }
+  .hist-main { grid-column: 1; }
+  .hist-type-wrap { display: none; }
+  .hist-status { grid-column: 2; grid-row: 1; }
+  .hist-conform { display: none; }
+  .hist-actions { grid-column: 3; grid-row: 1 / 3; }
 }
 </style>
 
 <div class="page-header">
   <div class="ph-inner">
-    <span class="s-label">Historique</span>
-    <h1>Tous les dossiers</h1>
+    <span class="s-label">Administration</span>
+    <h1>Historique des dossiers</h1>
     <p>{{ documents.count }} dossier{% if documents.count > 1 %}s{% endif %} au total</p>
   </div>
 </div>
 
 <div class="container">
+
   {% if not documents %}
-  <div class="card" style="padding:3rem;text-align:center">
-    <div style="font-size:2rem;margin-bottom:1rem">📁</div>
-    <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.8rem">Aucun dossier</h2>
-    <a href="{% url 'import' %}" class="btn btn-gold">Déposer un premier dossier</a>
+  <div class="hist-empty">
+    <div style="font-size:2.5rem;margin-bottom:1rem">📁</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--white);margin-bottom:.5rem">Aucun dossier</div>
+    <p style="font-size:.85rem;margin-bottom:1.5rem">Aucun dossier n'a encore été déposé.</p>
+    <a href="{% url 'import' %}" class="btn btn-gold">Déposer un dossier</a>
   </div>
+
   {% else %}
-  <div class="card fade-up">
-    <div class="history-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Ref</th>
-            <th>Projet</th>
-            <th>Client</th>
-            <th>Date</th>
-            <th>Statut</th>
-            <th>Norme</th>
-            <th>Conformité</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for doc in documents %}
-          <tr>
-            <td><span style="font-family:monospace;font-size:.78rem;color:var(--gold)">DOC-{{ doc.id|stringformat:"04d" }}</span></td>
-            <td><strong style="color:var(--white)">{{ doc.name }}</strong></td>
-            <td>{{ doc.client_name|default:"—" }}</td>
-            <td style="white-space:nowrap">{{ doc.upload_date|date:"d/m/Y" }}</td>
-            <td>
-              {% if doc.status == 'recu' %}<span class="badge badge-gray">Reçu</span>
-              {% elif doc.status == 'en_cours' %}<span class="badge badge-warning">En cours</span>
-              {% elif doc.status == 'termine' %}<span class="badge badge-success">Terminé</span>{% endif %}
-            </td>
-            <td><span class="badge" style="background:rgba(200,168,75,.15);color:var(--gold);font-size:.72rem">{{ doc.norme }}</span></td>
-            <td>
-              {% if doc.is_conform is None %}<span class="text-muted">—</span>
-              {% elif doc.is_conform %}<span class="badge badge-success">✓</span>
-              {% else %}<span class="badge badge-danger">✗</span>{% endif %}
-            </td>
-            <td>
-              <div class="action-btns" style="display:flex;gap:.4rem;flex-wrap:nowrap">
-                <a href="{% url 'tracking' doc.tracking_token %}" class="btn btn-outline btn-sm" title="Suivi client">🔗</a>
-                <a href="{% url 'download_report' doc.id %}" class="btn btn-outline btn-sm" title="Télécharger">📄</a>
-                <form method="post" action="{% url 'delete_document' doc.id %}" style="display:inline" onsubmit="return confirm('Supprimer ce dossier ?')">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">🗑</button>
-                </form>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+
+  <!-- Toolbar -->
+  <div class="hist-toolbar fade-up">
+    <input class="hist-search" type="text" id="hist-search" placeholder="Rechercher un dossier, client…" oninput="filtrerDossiers()">
+    <select class="hist-filter" id="hist-filter-status" onchange="filtrerDossiers()">
+      <option value="">Tous les statuts</option>
+      <option value="recu">Reçu</option>
+      <option value="en_cours">En cours</option>
+      <option value="termine">Terminé</option>
+    </select>
+    <select class="hist-filter" id="hist-filter-type" onchange="filtrerDossiers()">
+      <option value="">Tous les types</option>
+      <option value="energie">Validation thermique</option>
+      <option value="carbone">Bilan carbone</option>
+    </select>
+    <span class="hist-count" id="hist-count">{{ documents.count }} dossier{% if documents.count > 1 %}s{% endif %}</span>
   </div>
+
+  <!-- Liste -->
+  <div class="hist-grid fade-up-2" id="hist-grid">
+    {% for doc in documents %}
+    <div class="hist-card"
+      data-name="{{ doc.name|lower }}"
+      data-client="{{ doc.client_name|lower|default:'' }}"
+      data-status="{{ doc.status }}"
+      data-type="{{ doc.type_analyse|default:'energie' }}"
+      data-ref="doc-{{ doc.id|stringformat:'04d' }}">
+
+      <!-- Référence -->
+      <div class="hist-ref">DOC-{{ doc.id|stringformat:"04d" }}</div>
+
+      <!-- Infos -->
+      <div class="hist-main">
+        <div class="hist-name">{{ doc.name }}</div>
+        <div class="hist-meta">
+          {% if doc.client_name %}<span>{{ doc.client_name }}</span><span class="sep">·</span>{% endif %}
+          <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
+          {% if doc.type_analyse == 'carbone' %}
+          <span class="sep">·</span>
+          <span class="hist-type carbone">🌿 Bilan carbone</span>
+          {% elif doc.norme %}
+          <span class="sep">·</span>
+          <span class="hist-type energie">{{ doc.norme }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Statut -->
+      <div class="hist-status">
+        <div class="hist-status-dot {{ doc.status }}"></div>
+        <div class="hist-status-label">
+          {% if doc.status == 'recu' %}Reçu
+          {% elif doc.status == 'en_cours' %}En cours
+          {% elif doc.status == 'termine' %}Terminé{% endif %}
+        </div>
+      </div>
+
+      <!-- Conformité -->
+      <div class="hist-conform {% if doc.is_conform is None %}na{% elif doc.is_conform %}ok{% else %}ko{% endif %}">
+        {% if doc.is_conform is None %}—
+        {% elif doc.is_conform %}✓
+        {% else %}✗{% endif %}
+      </div>
+
+      <!-- Actions -->
+      <div class="hist-actions">
+        <a href="{% url 'edit_document' doc.id %}" class="hist-btn" title="Éditer">✏️</a>
+        <a href="{% url 'tracking' doc.tracking_token %}" class="hist-btn" title="Lien suivi" target="_blank">🔗</a>
+        <form method="post" action="{% url 'delete_document' doc.id %}" style="display:contents" onsubmit="return confirm('Supprimer ce dossier ?')">
+          {% csrf_token %}
+          <button type="submit" class="hist-btn danger" title="Supprimer">🗑</button>
+        </form>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="hist-empty-filter" style="display:none" class="hist-empty">
+    <div style="font-size:2rem;margin-bottom:.8rem">🔍</div>
+    <div style="color:var(--white);font-size:.95rem">Aucun résultat</div>
+    <p style="font-size:.82rem;margin-top:.4rem">Modifiez vos filtres de recherche.</p>
+  </div>
+
   {% endif %}
 </div>
+
+<script>
+function filtrerDossiers() {
+  const q      = document.getElementById('hist-search').value.toLowerCase().trim();
+  const status = document.getElementById('hist-filter-status').value;
+  const type   = document.getElementById('hist-filter-type').value;
+  const cards  = document.querySelectorAll('#hist-grid .hist-card');
+
+  let visible = 0;
+  cards.forEach(card => {
+    const matchQ = !q ||
+      card.dataset.name.includes(q) ||
+      card.dataset.client.includes(q) ||
+      card.dataset.ref.includes(q);
+    const matchS = !status || card.dataset.status === status;
+    const matchT = !type   || card.dataset.type   === type;
+
+    const show = matchQ && matchS && matchT;
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  const countEl = document.getElementById('hist-count');
+  if (countEl) countEl.textContent = visible + ' dossier' + (visible > 1 ? 's' : '');
+
+  const emptyFilter = document.getElementById('hist-empty-filter');
+  if (emptyFilter) emptyFilter.style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
 {% endblock %}
