@@ -3,178 +3,126 @@
 
 {% block content %}
 <style>
-    :root {
-        --navy: #0C1929;
-        --gold: #C8A84B;
-        --gold-light: #e0c070;
-        --gray-1: #a3b0c0;
-        --gray-2: #e0e4eb;
-    }
-    
-    .tracking-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 2.5rem; align-items: start; }
-    @media (max-width: 768px) { .tracking-grid { grid-template-columns: 1fr; gap: 1.5rem; } }
-    
-    .card {
-        background: var(--navy);
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,.15);
-        margin-bottom: 1.5rem;
-    }
-    
-    .step-row { display: flex; align-items: center; gap: .9rem; padding: .55rem 0; }
-    .step-dot {
-        width: 28px; height: 28px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0; font-size: .72rem; font-weight: 700;
-    }
-    .step-dot.done    { background: rgba(39,201,63,.15); color: #27c93f; border: 1px solid rgba(39,201,63,.3); }
-    .step-dot.active  { background: rgba(200,168,75,.15); color: var(--gold); border: 1px solid rgba(200,168,75,.4); }
-    .step-dot.pending { background: rgba(255,255,255,.05); color: #666; border: 1px solid rgba(255,255,255,.1); }
-    
-    .badge-status {
-        display: inline-flex; align-items: center; gap: .45rem;
-        font-size: .85rem; font-weight: 600; padding: .45rem 1.2rem;
-        border-radius: 50px;
-    }
-    .badge-recu    { background: rgba(136,150,164,.1); border: 1px solid rgba(136,150,164,.25); color: #c2cdd6; }
-    .badge-encours { background: rgba(229,169,58,.1); border: 1px solid rgba(229,169,58,.3); color: #e5a93a; }
-    .badge-termine { background: rgba(39,201,63,.1); border: 1px solid rgba(39,201,63,.3); color: #27c93f; }
-    
-    .kpi-box {
-        background: rgba(255,255,255,.03);
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 12px;
-        padding: 1.2rem;
-        text-align: center;
-    }
-    
-    .btn-rapport-primary {
-        display: flex; align-items: center; justify-content: center; gap: .7rem;
-        width: 100%; padding: 1.15rem 1.5rem; border-radius: 12px;
-        background: linear-gradient(135deg, #C8A84B, #e0c070);
-        color: #0C1929; font-weight: 700; font-size: .97rem;
-        text-decoration: none; transition: all .2s ease;
-    }
-    .btn-rapport-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(200,168,75,.3); }
-    
-    .btn-rapport-secondary {
-        display: flex; align-items: center; justify-content: center; gap: .6rem;
-        width: 100%; padding: .85rem 1.5rem; border-radius: 12px;
-        background: rgba(200,168,75,.08); border: 1px solid rgba(200,168,75,.3);
-        color: var(--gold); font-weight: 600; text-decoration: none;
-        transition: all .2s ease;
-    }
-    .btn-rapport-secondary:hover { background: rgba(200,168,75,.15); }
-    
-    .report-summary {
-        background: rgba(200,168,75,.05);
-        border: 1px solid rgba(200,168,75,.25);
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    .info-row {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: .7rem 0; border-bottom: 1px solid rgba(255,255,255,.06);
-    }
-    .info-row:last-child { border-bottom: none; }
-    
-    .preview-item {
-        display: flex; align-items: center; gap: .7rem;
-        font-size: .85rem; color: var(--gray-2); padding: .4rem 0;
-    }
-    .preview-dot {
-        width: 6px; height: 6px; border-radius: 50%;
-        background: var(--gold); opacity: .7;
-    }
-    
-    .trust-footer {
-        margin-top: 3rem; padding: 1.8rem 2rem;
-        background: rgba(200,168,75,.04);
-        border: 1px solid rgba(200,168,75,.15);
-        border-radius: 14px;
-        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;
-    }
+.tracking-grid { display:grid;grid-template-columns:1fr 1.4fr;gap:2.5rem;align-items:start }
+@media(max-width:768px) { .tracking-grid { grid-template-columns:1fr;gap:1.5rem } }
+.step-row { display:flex;align-items:center;gap:.9rem;padding:.55rem 0 }
+.step-dot { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.72rem;font-weight:700 }
+.step-dot.done    { background:rgba(39,201,63,.15);color:#27c93f;border:1px solid rgba(39,201,63,.25) }
+.step-dot.active  { background:rgba(200,168,75,.15);color:var(--gold);border:1px solid rgba(200,168,75,.35) }
+.step-dot.pending { background:rgba(255,255,255,.04);color:var(--muted);border:1px solid rgba(255,255,255,.07) }
+.step-connector { width:1px;height:18px;background:rgba(255,255,255,.07);margin-left:13px }
+.info-row { display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.04);gap:.5rem }
+.info-row:last-child { border-bottom:none }
+.info-label { font-size:.8rem;color:var(--gray-1);flex-shrink:0 }
+.info-val   { font-size:.83rem;color:var(--gray-2);text-align:right }
+.badge-status { display:inline-flex;align-items:center;gap:.45rem;font-size:.85rem;font-weight:600;padding:.4rem 1.1rem;border-radius:50px }
+.badge-recu    { background:rgba(136,150,164,.1);border:1px solid rgba(136,150,164,.2);color:#c2cdd6 }
+.badge-encours { background:rgba(229,169,58,.1);border:1px solid rgba(229,169,58,.25);color:#e5a93a }
+.badge-termine { background:rgba(39,201,63,.1);border:1px solid rgba(39,201,63,.25);color:#27c93f }
+.kpi-box { background:var(--navy-3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1rem 1.2rem;text-align:center }
+.kpi-label { font-size:.65rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem }
+.kpi-val   { font-size:2rem;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif;line-height:1 }
+.score-ring-wrap { position:relative;width:80px;height:80px;flex-shrink:0 }
+.score-ring-wrap svg { transform:rotate(-90deg) }
+.score-ring-label { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center }
+.score-ring-num { font-size:1.2rem;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif;line-height:1 }
+.score-ring-sub { font-size:.52rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem }
+.alerte-item { display:flex;align-items:flex-start;gap:.6rem;padding:.55rem .8rem;border-radius:6px;background:rgba(239,83,80,.07);border:1px solid rgba(239,83,80,.18);font-size:.8rem;color:#ef9a9a;line-height:1.5 }
+.alerte-icon { font-size:.85rem;flex-shrink:0;margin-top:.05rem }
+.preview-item { display:flex;align-items:center;gap:.7rem;font-size:.82rem;color:var(--gray-2);padding:.3rem 0 }
+.preview-dot { width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:.6;flex-shrink:0 }
+.btn-rapport-primary { display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;padding:1.1rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,#C8A84B,#e0c070);color:#0C1929;font-weight:700;font-size:.95rem;text-decoration:none;box-sizing:border-box;transition:opacity .2s,transform .15s }
+.btn-rapport-primary:hover { opacity:.92;transform:translateY(-1px) }
+.btn-rapport-secondary { display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;padding:.75rem 1.4rem;border-radius:10px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.22);color:var(--gold);font-weight:600;font-size:.85rem;text-decoration:none;box-sizing:border-box;transition:background .2s }
+.btn-rapport-secondary:hover { background:rgba(200,168,75,.1) }
+.trust-footer { margin-top:3rem;padding:1.5rem 2rem;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.1);border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem }
+.trust-footer-stats { display:flex;align-items:center;gap:2rem;flex-wrap:wrap }
+.trust-stat { text-align:center }
+.trust-stat strong { display:block;font-size:1.05rem;font-weight:700;color:var(--gold) }
+.trust-stat span { font-size:.7rem;color:var(--gray-1);margin-top:.1rem;display:block }
+.trust-sep { width:1px;height:28px;background:rgba(255,255,255,.07) }
+.tracking-3col { display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;align-items:start }
+@media(max-width:900px){ .tracking-3col { grid-template-columns:1fr 1fr } }
+@media(max-width:600px){ .tracking-3col { grid-template-columns:1fr } }
 </style>
 
 <script>
 const TRACKING_TR = {
   fr: {
-    "header.label":       "Validation indépendante · ConformExpert",
-    "header.received":    "Reçu le",
-    "header.mission.carbone": "Bilan carbone immobilier",
-    "header.mission.complet": "Analyse complète",
+    "header.label":       "Validation ind\u00e9pendante \u00b7 ConformExpert",
+    "header.received":    "Re\u00e7u le",
+    "header.mission.carbone": "Pr\u00e9-analyse technique",
+    "header.mission.complet": "Analyse compl\u00e8te",
     "header.mission.validation": "Validation",
     "header.mission.default": "Validation thermique",
-    "alert.vigilance":    "Points de vigilance détectés lors de l’analyse automatique",
+    "alert.vigilance":    "Points de vigilance d\u00e9tect\u00e9s lors de l\u2019analyse automatique",
     "status.label":       "Statut du dossier",
-    "status.recu":        "Dossier reçu",
+    "status.recu":        "Dossier re\u00e7u",
     "status.encours":     "Validation en cours",
     "status.termine":     "Rapport disponible",
-    "deadline.label":     "Délai garanti",
-    "deadline.val":       "10 jours ouvrés",
+    "deadline.label":     "D\u00e9lai garanti",
+    "deadline.val":       "10 jours ouvr\u00e9s",
     "progress.label":     "Avancement",
     "btn.rapport":        "Consulter le rapport de validation",
-    "btn.pdf":            "Télécharger le PDF",
+    "btn.pdf":            "T\u00e9l\u00e9charger le PDF",
     "waiting.title":      "En attente de validation",
-    "waiting.desc":       "Votre dossier est en cours d’examen. Vous recevrez un email avec le devis dès qu’il sera validé par notre équipe.",
+    "waiting.desc":       "Votre dossier est en cours d\u2019examen. Vous recevrez un email avec le devis d\u00e8s qu\u2019il sera valid\u00e9 par notre \u00e9quipe.",
     "info.title":         "Informations du dossier",
     "info.client":        "Client",
-    "info.ref":           "Référence",
+    "info.ref":           "R\u00e9f\u00e9rence",
     "info.mission":       "Type de mission",
     "info.norme":         "Norme",
     "info.logiciel":      "Logiciel BET",
     "info.version":       "Version norme",
-    "info.building":      "Type de bâtiment",
+    "info.building":      "Type de b\u00e2timent",
     "info.surface":       "Surface",
-    "info.year":          "Année construction",
-    "info.date":          "Date de réception",
+    "info.year":          "Ann\u00e9e construction",
+    "info.date":          "Date de r\u00e9ception",
     "info.link":          "Lien de suivi",
     "info.copy":          "Copier",
-    "info.copied":        "✓ Copié !",
-    "result.title":       "Résultat de la validation",
-    "result.verdict.carbone": "État technique global",
+    "info.copied":        "\u2713 Copi\u00e9 !",
+    "result.title":       "R\u00e9sultat de la validation",
+    "result.verdict.carbone": "\u00c9tat technique global",
     "result.verdict":     "Verdict",
-    "result.analyzing":   "En cours d’analyse",
-    "result.conform":     "✓ Conforme",
-    "result.conform.sub": "Rapport du bureau d’études validé",
-    "result.nonconform":  "✗ Non conforme",
-    "result.nonconform.sub": "Des points d’attention ont été identifiés",
-    "result.energy":      "Classe énergie",
+    "result.analyzing":   "En cours d\u2019analyse",
+    "result.conform":     "\u2713 Conforme",
+    "result.conform.sub": "Rapport du bureau d\u2019\u00e9tudes valid\u00e9",
+    "result.nonconform":  "\u2717 Non conforme",
+    "result.nonconform.sub": "Des points d\u2019attention ont \u00e9t\u00e9 identifi\u00e9s",
+    "result.energy":      "Classe \u00e9nergie",
     "result.ges":         "Classe GES",
-    "result.keyvals":     "Valeurs clés",
-    "result.summer":      "DH confort d’été",
-    "result.conso":       "Conso. énergie primaire",
-    "result.desc":        "Le rapport complet contient l’avis indépendant de ConformExpert, les anomalies détectées et les recommandations détaillées.",
+    "result.keyvals":     "Valeurs cl\u00e9s",
+    "result.summer":      "DH confort d\u2019\u00e9t\u00e9",
+    "result.conso":       "Conso. \u00e9nergie primaire",
+    "result.desc":        "Le rapport complet contient l\u2019avis ind\u00e9pendant de ConformExpert, les anomalies d\u00e9tect\u00e9es et les recommandations d\u00e9taill\u00e9es.",
     "preview.title":      "Ce que contiendra le rapport",
-    "preview.1":          "Vérification indépendante des valeurs déclarées",
-    "preview.2":          "Détection des anomalies et incohérences",
-    "preview.3":          "Croisement avec les consommations réelles",
-    "preview.4":          "Avis indépendant sur la fiabilité du rapport",
-    "preview.5":          "Recommandations et plan d’action détaillé",
-    "preview.6":          "État technique des composants du bâtiment",
-    "preview.7":          "Plan de travaux priorisé avec estimations budgétaires",
-    "invoices.title":     "Factures énergétiques",
-    "invoices.analyzed":  "✓ Analysée",
+    "preview.1":          "V\u00e9rification ind\u00e9pendante des valeurs d\u00e9clar\u00e9es",
+    "preview.2":          "D\u00e9tection des anomalies et incoh\u00e9rences",
+    "preview.3":          "Croisement avec les consommations r\u00e9elles",
+    "preview.4":          "Avis ind\u00e9pendant sur la fiabilit\u00e9 du rapport",
+    "preview.5":          "Recommandations et plan d\u2019action d\u00e9taill\u00e9",
+    "preview.6":          "\u00c9tat technique des composants du b\u00e2timent",
+    "preview.7":          "Plan de travaux prioris\u00e9 avec estimations budg\u00e9taires",
+    "invoices.title":     "Factures \u00e9nerg\u00e9tiques",
+    "invoices.analyzed":  "\u2713 Analys\u00e9e",
     "invoices.pending":   "En attente",
-    "invoices.desc":      "Ces factures seront croisées avec les consommations modélisées dans le rapport thermique.",
-    "contact.title":      "Une question sur votre dossier ?",
-    "contact.sub":        "Notre équipe répond sous 24h ouvrées",
-    "contact.btn":        "Nous contacter",
-    "trust.independent":  "Indépendant",
-    "trust.deadline":     "Délai garanti",
-    "trust.desc":         "ConformExpert est un tiers indépendant — notre analyse n’est pas liée au bureau d’études ayant produit le rapport thermique.",
-    "devis.title":        "Devis accepté — la validation a démarré !",
-    "devis.desc":         "Un email de confirmation vous a été envoyé. Revenez sur cette page pour suivre l’avancement.",
-    "mission.carbone":    "Bilan carbone immobilier",
+    "invoices.desc":      "Ces factures seront crois\u00e9es avec les consommations mod\u00e9lis\u00e9es dans le rapport thermique.",
+    "contact.title":      "Une question sur votre dossier\u00a0?",
+    "contact.sub":        "Notre \u00e9quipe r\u00e9pond sous 24h ouvr\u00e9es",
+    "contact.btn":        "\u2709 Nous contacter",
+    "trust.independent":  "Ind\u00e9pendant",
+    "trust.deadline":     "D\u00e9lai garanti",
+    "trust.desc":         "ConformExpert est un tiers ind\u00e9pendant \u2014 notre analyse n\u2019est pas li\u00e9e au bureau d\u2019\u00e9tudes ayant produit le rapport thermique.",
+    "devis.title":        "Devis accept\u00e9 \u2014 la validation a d\u00e9marr\u00e9\u00a0!",
+    "devis.desc":         "Un email de confirmation vous a \u00e9t\u00e9 envoy\u00e9. Revenez sur cette page pour suivre l\u2019avancement.",
+    "mission.carbone":        "Pr\u00e9-analyse technique (Bilan carbone)",
+    "mission.complet":    "Analyse compl\u00e8te",
     "mission.default":    "Validation thermique"
   },
   en: {
-    "header.label":       "Independent validation · ConformExpert",
+    "header.label":       "Independent validation \u00b7 ConformExpert",
     "header.received":    "Received on",
+    "header.mission.carbone": "Technical pre-analysis",
     "header.mission.carbone": "Carbon assessment",
     "header.mission.validation": "Validation",
     "header.mission.default": "Thermal validation",
@@ -203,21 +151,21 @@ const TRACKING_TR = {
     "info.date":          "Receipt date",
     "info.link":          "Tracking link",
     "info.copy":          "Copy",
-    "info.copied":        "✓ Copied!",
+    "info.copied":        "\u2713 Copied!",
     "result.title":       "Validation result",
     "result.verdict.carbone": "Overall technical status",
     "result.verdict":     "Verdict",
     "result.analyzing":   "Analysis in progress",
-    "result.conform":     "✓ Compliant",
+    "result.conform":     "\u2713 Compliant",
     "result.conform.sub": "Engineering report validated",
-    "result.nonconform":  "✗ Non-compliant",
+    "result.nonconform":  "\u2717 Non-compliant",
     "result.nonconform.sub": "Attention points have been identified",
     "result.energy":      "Energy class",
     "result.ges":         "GHG class",
     "result.keyvals":     "Key values",
     "result.summer":      "Summer comfort (DH)",
     "result.conso":       "Primary energy consumption",
-    "result.desc":        "The full report contains ConformExpert’s independent opinion, detected anomalies and detailed recommendations.",
+    "result.desc":        "The full report contains ConformExpert\u2019s independent opinion, detected anomalies and detailed recommendations.",
     "preview.title":      "What the report will contain",
     "preview.1":          "Independent verification of declared values",
     "preview.2":          "Detection of anomalies and inconsistencies",
@@ -227,17 +175,18 @@ const TRACKING_TR = {
     "preview.6":          "Technical condition of building components",
     "preview.7":          "Prioritized works plan with budget estimates",
     "invoices.title":     "Energy bills",
-    "invoices.analyzed":  "✓ Analyzed",
+    "invoices.analyzed":  "\u2713 Analyzed",
     "invoices.pending":   "Pending",
     "invoices.desc":      "These bills will be cross-referenced with the modelled consumption in the thermal report.",
     "contact.title":      "A question about your file?",
     "contact.sub":        "Our team replies within 24 business hours",
-    "contact.btn":        "Contact us",
+    "contact.btn":        "\u2709 Contact us",
     "trust.independent":  "Independent",
     "trust.deadline":     "Guaranteed deadline",
-    "trust.desc":         "ConformExpert is an independent third party — our analysis is not linked to the firm that produced the thermal report.",
-    "devis.title":        "Quote accepted — validation has started!",
+    "trust.desc":         "ConformExpert is an independent third party \u2014 our analysis is not linked to the firm that produced the thermal report.",
+    "devis.title":        "Quote accepted \u2014 validation has started!",
     "devis.desc":         "A confirmation email has been sent to you. Come back to this page to track progress.",
+    "mission.carbone":        "Technical pre-analysis (Bilan carbone)",
     "mission.carbone":    "Carbon assessment",
     "mission.default":    "Thermal validation"
   }
@@ -255,15 +204,18 @@ function applyTrackingLang() {
 document.addEventListener('DOMContentLoaded', applyTrackingLang);
 </script>
 
-{# HEADER #}
+{# ── Header #}
 <div class="page-header">
   <div class="ph-inner">
     <span class="s-label" data-ti18n="header.label">Validation indépendante · ConformExpert</span>
     <h1>{{ document.name }}</h1>
-    <p style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-size:.88rem;color:var(--gray-1)">
+    <p style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-size:.85rem;color:var(--gray-1)">
       <span>DOC-{{ document.id|stringformat:"04d" }}</span>
       <span style="opacity:.3">·</span>
       <span><span data-ti18n="header.received">Reçu le</span> {{ document.upload_date|date:"d/m/Y" }}</span>
+      {% if document.type_analyse or document.norme %}
+      <span style="opacity:.3">·</span>
+      {% endif %}
     </p>
   </div>
 </div>
@@ -271,69 +223,77 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
 <div class="container">
 
   {% if devis_accepte %}
-  <div style="background:rgba(39,201,63,.07);border:1px solid rgba(39,201,63,.2);border-radius:12px;padding:1.2rem 1.6rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
-    <span style="font-size:1.4rem">✅</span>
+  <div style="background:rgba(39,201,63,.07);border:1px solid rgba(39,201,63,.2);border-radius:10px;padding:1.1rem 1.4rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem">
+    <span>✅</span>
     <div>
-      <div style="font-size:.95rem;color:#27c93f;font-weight:600" data-ti18n="devis.title">Devis accepté — la validation a démarré !</div>
-      <div style="font-size:.82rem;color:var(--gray-1);margin-top:.3rem" data-ti18n="devis.desc">Un email de confirmation vous a été envoyé. Revenez sur cette page pour suivre l’avancement.</div>
+      <div style="font-size:.92rem;color:#27c93f;font-weight:600" data-ti18n="devis.title">Devis accepté — la validation a démarré !</div>
+      <div style="font-size:.8rem;color:var(--gray-1);margin-top:.25rem" data-ti18n="devis.desc">Un email de confirmation vous a été envoyé. Revenez sur cette page pour suivre l'avancement.</div>
     </div>
   </div>
   {% endif %}
 
-  <div class="card">
-    {# Statut + délai #}
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1.5rem;margin-bottom:1.8rem">
-      <div>
-        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-1);margin-bottom:.5rem" data-ti18n="status.label">Statut du dossier</div>
-        {% if document.status == 'recu' %}
-          <span class="badge-status badge-recu">📥 <span data-ti18n="status.recu">Dossier reçu</span></span>
-        {% elif document.status == 'en_cours' %}
-          <span class="badge-status badge-encours">🔍 <span data-ti18n="status.encours">Validation en cours</span></span>
-        {% else %}
-          <span class="badge-status badge-termine">✓ <span data-ti18n="status.termine">Rapport disponible</span></span>
-        {% endif %}
-      </div>
 
+  <div class="card" style="padding:2rem;margin-bottom:1.5rem;border-color:rgba(200,168,75,.15)">
+
+    {# Ligne supérieure : statut + délai #}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.6rem">
+      <div style="display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap">
+        <div>
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-1);margin-bottom:.4rem" data-ti18n="status.label">Statut du dossier</div>
+          {% if document.status == 'recu' %}
+            <span class="badge-status badge-recu">📥 <span data-ti18n="status.recu">Dossier reçu</span></span>
+          {% elif document.status == 'en_cours' %}
+            <span class="badge-status badge-encours">🔍 <span data-ti18n="status.encours">Validation en cours</span></span>
+          {% else %}
+            <span class="badge-status badge-termine">✓ <span data-ti18n="status.termine">Rapport disponible</span></span>
+          {% endif %}
+        </div>
+      </div>
       <div style="text-align:right">
-        <div style="font-size:.68rem;color:var(--gray-1);margin-bottom:.4rem" data-ti18n="deadline.label">Délai garanti</div>
-        <div style="font-size:1rem;color:var(--gold);font-weight:600" data-ti18n="deadline.val">10 jours ouvrés</div>
+        <div style="font-size:.65rem;color:var(--gray-1);margin-bottom:.3rem" data-ti18n="deadline.label">Délai garanti</div>
+        <div style="font-size:.9rem;color:var(--gold);font-weight:600" data-ti18n="deadline.val">10 jours ouvrés</div>
       </div>
     </div>
 
-    {# Progression #}
-    <div style="margin-bottom:2rem">
-      <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--gray-1);margin-bottom:.6rem">
+    {# Barre de progression #}
+    <div style="margin-bottom:1.6rem">
+      <div style="display:flex;justify-content:space-between;font-size:.73rem;color:var(--gray-1);margin-bottom:.5rem">
         <span data-ti18n="progress.label">Avancement</span>
-        <span style="color:var(--gold);font-weight:700">{{ progress_pct }}%</span>
+        <span style="color:var(--gold);font-weight:600">{{ progress_pct }}%</span>
       </div>
-      <div style="height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden">
+      <div style="height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
         <div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#C8A84B,#e0c070);width:{{ progress_pct }}%;transition:width .8s ease"></div>
       </div>
     </div>
 
-    {# Étapes #}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem">
+    {# Étapes horizontales #}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.5rem">
       {% for step_label, step_state in step_list %}
-      <div style="display:flex;align-items:center;gap:.7rem;padding:1rem;border-radius:12px;
-        {% if step_state == 'done' %}background:rgba(39,201,63,.08);border:1px solid rgba(39,201,63,.2)
-        {% elif step_state == 'active' %}background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3)
-        {% else %}background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08){% endif %}">
-        <div class="step-dot {{ step_state }}">
+      <div style="display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-radius:8px;
+        {% if step_state == 'done' %}background:rgba(39,201,63,.07);border:1px solid rgba(39,201,63,.15)
+        {% elif step_state == 'active' %}background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2)
+        {% else %}background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05){% endif %}">
+        <div class="step-dot {{ step_state }}" style="flex-shrink:0;width:22px;height:22px;font-size:.65rem">
           {% if step_state == 'done' %}✓{% elif step_state == 'active' %}→{% else %}○{% endif %}
         </div>
-        <span style="font-size:.82rem;{% if step_state == 'active' %}font-weight:600;color:var(--gold){% elif step_state == 'done' %}color:#27c93f{% else %}color:var(--gray-2){% endif %}">{{ step_label }}</span>
+        <span style="font-size:.76rem;
+          {% if step_state == 'done' %}color:var(--gray-2)
+          {% elif step_state == 'active' %}color:var(--white);font-weight:500
+          {% else %}color:var(--muted){% endif %}">
+          {{ step_label }}
+        </span>
       </div>
       {% endfor %}
     </div>
 
-    {# CTA Rapport #}
+    {# CTA rapport si terminé #}
     {% if document.status == 'termine' %}
-    <div style="display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap">
-      <a href="{% url 'rapport_ia_client' document.tracking_token %}" class="btn-rapport-primary">
+    <div style="display:flex;gap:.8rem;margin-top:1.4rem;flex-wrap:wrap">
+      <a href="{% url 'rapport_ia_client' document.tracking_token %}" class="btn-rapport-primary" style="flex:1;min-width:200px">
         📄 <span data-ti18n="btn.rapport">Consulter le rapport de validation</span>
       </a>
       {% if document.rapport_pdf %}
-      <a href="{{ document.rapport_pdf.url }}" target="_blank" download class="btn-rapport-secondary">
+      <a href="{{ document.rapport_pdf.url }}" target="_blank" download class="btn-rapport-secondary" style="flex:1;min-width:160px">
         ⬇ <span data-ti18n="btn.pdf">Télécharger le PDF</span>
       </a>
       {% endif %}
@@ -342,32 +302,41 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
 
     {# Message attente #}
     {% if document.status == 'recu' %}
-    <div style="margin-top:1.8rem;padding:1.3rem 1.6rem;background:rgba(200,168,75,.06);border-radius:12px;border:1px solid rgba(200,168,75,.2)">
-      <div style="font-size:.88rem;color:var(--gold);font-weight:500">⏳ <span data-ti18n="waiting.title">En attente de validation</span></div>
-      <p style="font-size:.8rem;color:var(--gray-2);line-height:1.7;margin:0" data-ti18n="waiting.desc"></p>
+    <div style="margin-top:1.2rem;padding:1rem 1.2rem;background:rgba(200,168,75,.04);border-radius:8px;border:1px solid rgba(200,168,75,.12)">
+      <div style="font-size:.82rem;color:var(--gold);font-weight:500;margin-bottom:.3rem">⏳ <span data-ti18n="waiting.title">En attente de validation</span></div>
+      <p style="font-size:.78rem;color:var(--gray-2);line-height:1.65;margin:0" data-ti18n="waiting.desc">
+        Votre dossier est en cours d'examen. Vous recevrez un email avec le devis dès qu'il sera validé par notre équipe.
+      </p>
     </div>
     {% endif %}
   </div>
 
+
   <div class="tracking-3col">
 
-    {# Colonne 1 : Infos dossier #}
-    <div class="card" style="padding:1.6rem">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem;color:var(--gold)" data-ti18n="info.title">Informations du dossier</h3>
+    <div class="card" style="padding:1.5rem">
+      <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1rem;color:var(--gold)" data-ti18n="info.title">Informations du dossier</h3>
       {% if document.client_name %}
       <div class="info-row"><span class="info-label" data-ti18n="info.client">Client</span><span class="info-val">{{ document.client_name }}</span></div>
       {% endif %}
       <div class="info-row">
         <span class="info-label" data-ti18n="info.ref">Référence</span>
-        <span style="font-size:.85rem;color:var(--gold);font-family:monospace;font-weight:600">DOC-{{ document.id|stringformat:"04d" }}</span>
+        <span style="font-size:.82rem;color:var(--gold);font-family:monospace;font-weight:600">DOC-{{ document.id|stringformat:"04d" }}</span>
       </div>
       <div class="info-row">
         <span class="info-label" data-ti18n="info.mission">Mission</span>
         <span class="info-val">
           {% if document.type_analyse == 'carbone' %}<span data-ti18n="mission.carbone">Bilan carbone immobilier</span>
+          
           {% else %}<span data-ti18n="mission.default">Validation thermique</span>{% endif %}
         </span>
       </div>
+      {% if document.norme and document.type_analyse != 'carbone' %}
+      <div class="info-row"><span class="info-label" data-ti18n="info.norme">Norme</span><span style="font-size:.82rem;color:var(--white);font-weight:500">{{ document.norme }}</span></div>
+      {% endif %}
+      {% if document.logiciel_detecte %}
+      <div class="info-row"><span class="info-label" data-ti18n="info.logiciel">Logiciel</span><span class="info-val">{{ document.logiciel_detecte }}</span></div>
+      {% endif %}
       {% if document.get_building_type_display %}
       <div class="info-row"><span class="info-label" data-ti18n="info.building">Bâtiment</span><span class="info-val">{{ document.get_building_type_display }}</span></div>
       {% endif %}
@@ -376,118 +345,152 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
       {% endif %}
       <div class="info-row"><span class="info-label" data-ti18n="info.date">Reçu le</span><span class="info-val">{{ document.upload_date|date:"d/m/Y" }}</span></div>
       <div class="info-row">
-        <span class="info-label" data-ti18n="info.link">Lien de suivi</span>
-        <button id="copyBtn" onclick="navigator.clipboard.writeText('{{ request.build_absolute_uri }}'); const lang=localStorage.getItem('ce_lang')||'fr';const tr=TRACKING_TR[lang]||TRACKING_TR['fr'];this.innerHTML=tr['info.copied'];setTimeout(()=>{this.innerHTML=tr['info.copy']},2000)" style="background:none;border:none;color:var(--gold);font-size:.8rem;cursor:pointer">Copier</button>
+        <span class="info-label" data-ti18n="info.link">Lien</span>
+        <button id="copyBtn" onclick="
+          navigator.clipboard.writeText('{{ request.build_absolute_uri }}');
+          const lang = localStorage.getItem('ce_lang') || 'fr';
+          const tr = TRACKING_TR[lang] || TRACKING_TR['fr'];
+          this.innerHTML = tr['info.copied'];
+          setTimeout(()=>{ this.innerHTML = tr['info.copy']; }, 2000)"
+          style="background:none;border:none;color:var(--gold);font-size:.78rem;cursor:pointer;padding:0;font-family:inherit"
+          data-ti18n="info.copy">Copier</button>
       </div>
     </div>
 
-    {# Colonne 2 : Résultat ou preview #}
+
     {% if document.status == 'termine' %}
-    <div class="card" style="padding:1.6rem;border-color:rgba(200,168,75,.25)">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem;color:var(--gold)" data-ti18n="result.title">Résultat de la validation</h3>
-      {% if document.type_analyse == 'carbone' %}
-      <div class="report-summary">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem">
-          <div>
-            <strong style="font-size:.85rem;color:#ef5350">Empreinte carbone</strong><br>
-            <span style="font-size:2.4rem;font-weight:700;color:#ef5350">6,26</span>
-            <span style="font-size:1.1rem;color:#ef5350"> kgCO₂eq/m².an</span>
-            <div style="color:#ef5350;font-size:.9rem">modérée (+56% vs seuil RE2020)</div>
-          </div>
-          <div>
-            <strong style="font-size:.85rem">Classe DPE</strong><br>
-            <span style="font-size:2.4rem;font-weight:700;color:#27c93f">C</span>
-          </div>
-          <div>
-            <strong style="font-size:.85rem">Conformité RT2012</strong><br>
-            <div>CEP <strong>96,0 kWh ep/m².an</strong> <span style="color:#27c93f">✓</span></div>
-            <div>Bbio <strong>126,3</strong> <span style="color:#27c93f">✓</span></div>
+    <div class="card" style="padding:1.5rem;border-color:rgba(200,168,75,.15)">
+      <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1rem;color:var(--gold)" data-ti18n="result.title">Résultat de la validation</h3>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem">
+        {% if rapport_ia_score %}
+        <div class="score-ring-wrap">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#C8A84B" stroke-width="6"
+              stroke-dasharray="201" stroke-dashoffset="{{ rapport_ia_score_offset }}" stroke-linecap="round"/>
+          </svg>
+          <div class="score-ring-label">
+            <span class="score-ring-num">{{ rapport_ia_score }}</span>
+            <span class="score-ring-sub">/100</span>
           </div>
         </div>
+        {% endif %}
+        <div style="flex:1">
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.4rem">
+            {% if document.type_analyse == 'carbone' %}<span data-ti18n="result.verdict.carbone">État technique</span>{% else %}<span data-ti18n="result.verdict">Verdict</span> {{ document.norme }}{% endif %}
+          </div>
+          {% if document.is_conform is None %}
+            <span style="color:var(--muted);font-size:.85rem" data-ti18n="result.analyzing">En cours</span>
+          {% elif document.is_conform %}
+            <div style="font-size:1.1rem;font-weight:700;color:#27c93f;font-family:'Playfair Display',serif" data-ti18n="result.conform">✓ Conforme</div>
+            <div style="font-size:.73rem;color:var(--gray-1);margin-top:.2rem" data-ti18n="result.conform.sub">Rapport validé</div>
+          {% else %}
+            <div style="font-size:1.1rem;font-weight:700;color:#ef5350;font-family:'Playfair Display',serif" data-ti18n="result.nonconform">✗ Non conforme</div>
+            <div style="font-size:.73rem;color:var(--gray-1);margin-top:.2rem" data-ti18n="result.nonconform.sub">Points d'attention identifiés</div>
+          {% endif %}
+        </div>
       </div>
+      {% if document.rt2012_bbio or document.rt2012_cep or document.re2020_energy_efficiency or document.dpe_conso_ep %}
+      <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.6rem" data-ti18n="result.keyvals">Valeurs clés</div>
+      {% if document.rt2012_bbio %}<div class="info-row"><span class="info-label">Bbio</span><span class="info-val">{{ document.rt2012_bbio }}</span></div>{% endif %}
+      {% if document.rt2012_cep %}<div class="info-row"><span class="info-label">Cep</span><span class="info-val">{{ document.rt2012_cep }} kWh/m².an</span></div>{% endif %}
+      {% if document.re2020_energy_efficiency %}<div class="info-row"><span class="info-label">Cep,nr</span><span class="info-val">{{ document.re2020_energy_efficiency }} kWh/m².an</span></div>{% endif %}
+      {% if document.dpe_conso_ep %}<div class="info-row"><span class="info-label" data-ti18n="result.conso">Conso. EP</span><span class="info-val">{{ document.dpe_conso_ep }} kWh/m².an</span></div>{% endif %}
       {% endif %}
-      <p style="font-size:.82rem;color:var(--gray-2);line-height:1.6" data-ti18n="result.desc"></p>
+      <p style="font-size:.75rem;color:var(--gray-1);line-height:1.6;margin:.8rem 0 0" data-ti18n="result.desc">
+        Le rapport contient l'avis indépendant de ConformExpert, les émissions analysées et les leviers de réduction.
+      </p>
     </div>
     {% else %}
-    <div class="card" style="padding:1.6rem;background:rgba(200,168,75,.04)">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:1.2rem;color:var(--gold)" data-ti18n="preview.title">Ce que contiendra le rapport</h3>
-      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.1"></span></div>
-      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.2"></span></div>
-      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.3"></span></div>
-      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.4"></span></div>
-      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.5"></span></div>
+    <div class="card" style="padding:1.5rem;background:rgba(200,168,75,.03);border-color:rgba(200,168,75,.1)">
+      <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1rem;color:var(--gold)" data-ti18n="preview.title">Ce que contiendra le rapport</h3>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.1">Vérification indépendante des valeurs</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.2">Détection des anomalies</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.3">Croisement consommations réelles</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.4">Avis indépendant de fiabilité</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.5">Recommandations et plan d'action</span></div>
       {% if document.type_analyse == 'carbone' %}
-      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.6"></span></div>
-      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.7"></span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.6">État technique des composants</span></div>
+      <div class="preview-item"><span class="preview-dot"></span><span data-ti18n="preview.7">Plan de travaux priorisé</span></div>
       {% endif %}
     </div>
     {% endif %}
 
-    {# Colonne 3 : Factures #}
+
     {% if document.factures.exists %}
-    <div class="card" style="padding:1.6rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--gold);margin:0" data-ti18n="invoices.title">Factures énergétiques</h3>
-        <span style="font-size:.78rem;color:var(--gray-1)">{{ document.factures.count }} fichier{% if document.factures.count > 1 %}s{% endif %}</span>
+    <div class="card" style="padding:1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;color:var(--gold);margin:0" data-ti18n="invoices.title">Factures énergétiques</h3>
+        <span style="font-size:.7rem;color:var(--gray-1)">{{ document.factures.count }} fichier{% if document.factures.count > 1 %}s{% endif %}</span>
       </div>
       {% for facture in document.factures.all %}
       <div class="info-row">
         <span class="info-label">{{ facture.get_type_energie_display|default:facture.type_energie }}</span>
-        <span style="font-size:.8rem;color:{% if facture.analyse_ok %}#27c93f{% else %}var(--gray-1){% endif %}">
+        <span style="font-size:.75rem;color:{% if facture.analyse_ok %}#27c93f{% else %}var(--gray-1){% endif %}">
           {% if facture.analyse_ok %}<span data-ti18n="invoices.analyzed">✓ Analysée</span>{% else %}<span data-ti18n="invoices.pending">En attente</span>{% endif %}
         </span>
       </div>
       {% endfor %}
-      <p style="font-size:.78rem;color:var(--gray-1);margin-top:1rem;line-height:1.6" data-ti18n="invoices.desc"></p>
+      <p style="font-size:.73rem;color:var(--gray-1);margin:.8rem 0 0;line-height:1.55" data-ti18n="invoices.desc">
+        Croisées avec les consommations modélisées.
+      </p>
     </div>
+    {% else %}
+    <div></div>
     {% endif %}
 
   </div>
 
-  {# Messages #}
-  <div class="card" style="padding:1.6rem">
-    <div style="font-size:.9rem;color:var(--white);font-weight:500;margin-bottom:1.2rem" data-ti18n="contact.title">Messages ConformExpert</div>
-    <div style="display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.5rem;max-height:320px;overflow-y:auto" id="msgListClient">
+
+
+
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:1rem" data-ti18n="contact.title">Messages ConformExpert</div>
+
+    <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;max-height:260px;overflow-y:auto" id="msgListClient">
       {% for msg in document.messages.all %}
-      <div style="padding:.9rem 1.1rem;border-radius:12px;font-size:.85rem;line-height:1.6;
-        {% if msg.auteur == 'admin' %}background:rgba(200,168,75,.09);border:1px solid rgba(200,168,75,.2);margin-right:25%{% else %}background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);margin-left:25%{% endif %}">
-        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--gray-1);margin-bottom:.4rem">
+      <div style="padding:.7rem .9rem;border-radius:8px;font-size:.82rem;line-height:1.55;
+        {% if msg.auteur == 'admin' %}
+          background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.15);margin-right:20%
+        {% else %}
+          background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-left:20%
+        {% endif %}">
+        <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--gray-1);margin-bottom:.3rem">
           <span>{% if msg.auteur == 'admin' %}ConformExpert{% else %}Vous{% endif %}</span>
           <span>{{ msg.created_at|date:"d/m/Y à H:i" }}</span>
         </div>
         <div style="color:var(--gray-2)">{{ msg.contenu }}</div>
         {% if msg.fichier %}
-        <a href="{{ msg.fichier.url }}" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;margin-top:.6rem;font-size:.78rem;color:var(--gold)">
-          📎 {{ msg.fichier_nom|default:"Fichier joint" }}
+        <a href="{{ msg.fichier.url }}" target="_blank"
+          style="display:inline-flex;align-items:center;gap:.4rem;margin-top:.5rem;font-size:.75rem;color:var(--gold);text-decoration:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          {{ msg.fichier_nom|default:"Fichier joint" }}
         </a>
         {% endif %}
       </div>
       {% empty %}
-      <div style="text-align:center;padding:2rem 0;color:var(--gray-1)">Aucun message pour ce dossier.</div>
+      <div style="text-align:center;padding:1.2rem 0;font-size:.8rem;color:var(--gray-1)">
+        Aucun message pour ce dossier.
+      </div>
       {% endfor %}
     </div>
 
     <form method="post" action="{% url 'client_send_message' document.tracking_token %}" enctype="multipart/form-data">
       {% csrf_token %}
-      <div style="display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:end">
-        <textarea name="contenu" rows="2" placeholder="Écrire un message…" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:var(--white);padding:1rem;font-size:.85rem;resize:vertical;width:100%"></textarea>
-        <div style="display:flex;flex-direction:column;gap:.6rem">
-          <label style="display:inline-flex;align-items:center;gap:.5rem;padding:1rem 1.2rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;font-size:.8rem;color:var(--gray-1);cursor:pointer">
-            📎 Joindre
+      <div style="display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:end">
+        <textarea name="contenu" rows="2" placeholder="Écrire un message…"
+          style="background:var(--navy-3);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:var(--white);font-size:.82rem;padding:.7rem .9rem;resize:vertical;font-family:inherit;width:100%;box-sizing:border-box"
+          onfocus="this.style.borderColor='rgba(200,168,75,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <label style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .8rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.75rem;color:var(--gray-1);cursor:pointer;white-space:nowrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+            Joindre
             <input type="file" name="fichier" style="display:none">
           </label>
-          <button type="submit" class="btn btn-gold">Envoyer</button>
+          <button type="submit" class="btn btn-gold btn-sm" data-ti18n="contact.btn">Envoyer</button>
         </div>
       </div>
     </form>
-  </div>
-
-  <div class="trust-footer">
-    <div style="display:flex;align-items:center;gap:1rem">
-      <span style="background:rgba(200,168,75,.1);color:var(--gold);padding:.4rem .9rem;border-radius:50px;font-size:.8rem;font-weight:600">Indépendant</span>
-      <span style="background:rgba(200,168,75,.1);color:var(--gold);padding:.4rem .9rem;border-radius:50px;font-size:.8rem;font-weight:600">Délai garanti</span>
-    </div>
-    <p style="font-size:.8rem;color:var(--gray-1);max-width:420px" data-ti18n="trust.desc"></p>
   </div>
 
 </div>
