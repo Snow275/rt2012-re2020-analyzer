@@ -1,0 +1,26 @@
+/*
+ * ConformExpert — style.css
+ *
+ * Les styles principaux sont définis directement dans base.html (CSS-in-template).
+ * Ce fichier sert uniquement aux overrides spécifiques et aux éléments
+ * qui ne sont pas couverts par le template de base.
+ *
+ * NE PAS remettre d'anciens styles Bootstrap ici — ils entrent en conflit
+ * avec le design navy/or actuel.
+ */
+
+/* ── Graphiques (results.html) ── */
+#criteriaChart,
+#documentChart {
+    max-width: 100%;
+    max-height: 400px;
+    margin: 0 auto;
+    display: block;
+}
+
+/* ── Utilitaire print pour les rapports ── */
+@media print {
+    nav, footer { display: none !important; }
+    body { background: white !important; color: black !important; }
+    .card { border: 1px solid #ccc !important; }
+}

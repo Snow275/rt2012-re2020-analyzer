@@ -21,3 +21,26 @@ anyio>=4.4.0 # not directly required, pinned by Snyk to avoid a vulnerability
 cryptography>=46.0.5 # not directly required, pinned by Snyk to avoid a vulnerability
 werkzeug>=2.3.8 # not directly required, pinned by Snyk to avoid a vulnerability
 zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
+anthropic>=0.34.0
+anyio>=4.4.0
+asgiref==3.8.1
+chardet==5.2.0
+charset-normalizer==3.4.1
+cryptography>=46.0.5
+dj-database-url==2.3.0
+Django==5.2
+djangorestframework==3.16.0
+gunicorn==23.0.0
+h11>=0.16.0
+pillow==11.1.0
+psycopg2-binary==2.9.10
+PyPDF2==3.0.1
+python-docx
+python-dotenv==1.0.1
+reportlab==4.2.5
+sendgrid
+sqlparse==0.5.3
+tzdata==2025.1
+werkzeug>=2.3.8
+whitenoise==6.8.2
+zipp>=3.19.1

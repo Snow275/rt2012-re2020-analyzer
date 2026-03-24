@@ -28,8 +28,12 @@ class Migration(migrations.Migration):
                     ADD COLUMN IF NOT EXISTS nombre_logements INTEGER NULL,
                     ADD COLUMN IF NOT EXISTS type_analyse VARCHAR(10) NOT NULL DEFAULT 'energie';
 
-                ALTER TABLE main_documentfile
-                    ADD COLUMN IF NOT EXISTS taille INTEGER NULL;
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'main_documentfile') THEN
+                        ALTER TABLE main_documentfile ADD COLUMN IF NOT EXISTS taille INTEGER NULL;
+                    END IF;
+                END $$;
             """,
             reverse_sql="""
                 DROP TABLE IF EXISTS main_factureenergie;

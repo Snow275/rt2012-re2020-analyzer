@@ -63,10 +63,14 @@ class Migration(migrations.Migration):
                     ADD COLUMN IF NOT EXISTS obs_potentiel_economies VARCHAR(20) NOT NULL DEFAULT '';
 
                 -- ── DocumentFile — champs extraction ──────────────────────────
-                ALTER TABLE main_documentfile
-                    ADD COLUMN IF NOT EXISTS type_rapport_detecte VARCHAR(30) NOT NULL DEFAULT '',
-                    ADD COLUMN IF NOT EXISTS extraction_ok BOOLEAN NOT NULL DEFAULT FALSE,
-                    ADD COLUMN IF NOT EXISTS extraction_json JSONB NULL;
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'main_documentfile') THEN
+                        ALTER TABLE main_documentfile ADD COLUMN IF NOT EXISTS type_rapport_detecte VARCHAR(30) NOT NULL DEFAULT '';
+                        ALTER TABLE main_documentfile ADD COLUMN IF NOT EXISTS extraction_ok BOOLEAN NOT NULL DEFAULT FALSE;
+                        ALTER TABLE main_documentfile ADD COLUMN IF NOT EXISTS extraction_json JSONB NULL;
+                    END IF;
+                END $$;
 
                 -- ── DocumentFile — nouveaux types (type_fichier) ───────────────
                 -- Pas besoin de migration SQL pour les choices Django (metadata uniquement)

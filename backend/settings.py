@@ -11,20 +11,38 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = [
     "web-production-f6c00.up.railway.app",
     "conformexpert.cc",
-    "www.conformexpert.cc"
+    "www.conformexpert.cc",
+    "localhost",
+    "0.0.0.0",
+    "127.0.0.1",
+    ".replit.dev",
+    ".repl.co",
+    ".replit.app",
+    "*",
 ]
+
+_replit_domain = os.environ.get('REPLIT_DEV_DOMAIN', '')
+if _replit_domain:
+    ALLOWED_HOSTS.append(_replit_domain)
 
 CSRF_TRUSTED_ORIGINS = [
     "https://conformexpert.cc",
     "https://www.conformexpert.cc",
     "https://web-production-f6c00.up.railway.app",
+    "http://localhost:5000",
+    "https://*.replit.dev",
+    "https://*.repl.co",
+    "https://*.replit.app",
 ]
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = True
+if _replit_domain:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{_replit_domain}")
 
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False') == 'True'
+
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 INSTALLED_APPS = [
     'django.contrib.admin',
