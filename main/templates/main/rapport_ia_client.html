@@ -115,6 +115,15 @@
       /* Cacher éléments navigation */
       .pub-back, .pdf-btn-wrap, .print-hide { display: none !important; }
 
+      /* Pour bilan carbone : cacher le template web, afficher uniquement le template print */
+      .cb-hero, .cb-kpis, .cb-avis,
+      .cb-section-hd, .cb-score-ring,
+      .risque-card, .levier-item, .levier-horizon,
+      .conf-row, .poste-row, .poste-row-head,
+      .point-fort, .verif-item,
+      .cb-verdict, .cb-resume,
+      [id^="panel-rapport"] .card { display: none !important; }
+
       /* Header */
       .pub-header { position: static !important; background: #0C1929 !important; border-bottom: 3px solid #C8A84B !important; padding: .5rem 1.2rem !important; margin-bottom: .5rem; }
       .pub-logo .w { color: #fff !important; }
