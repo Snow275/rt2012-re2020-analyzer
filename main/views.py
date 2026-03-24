@@ -160,13 +160,16 @@ def accepter_devis(request, devis_id):
             devis.document.save()
 
         _send_html_async(
-            "Devis accepté",
+            "✅ Devis accepté — ConformExpert",
             "email_notification_admin.html",
             {
-                "client": devis.client_nom,
-                "projet": devis.projet_nom,
-                "montant": devis.montant,
-                "reference": f"DEV-{devis.id:04d}",
+                "sujet":        "Devis accepté par le client",
+                "client":       devis.client_nom,
+                "projet":       devis.projet_nom,
+                "montant":      devis.montant,
+                "doc_id":       f"{devis.id:04d}",
+                "type_analyse": devis.document.type_analyse if devis.document else None,
+                "admin_url":    f"{SITE_URL}/dossier/{devis.document.id}/editer/" if devis.document else None,
             },
             "contact@conformexpert.cc",
         )
@@ -182,13 +185,15 @@ def refuser_devis(request, devis_id):
         devis.save()
 
         _send_html_async(
-            "Devis refusé",
+            "❌ Devis refusé — ConformExpert",
             "email_notification_admin.html",
             {
-                "client": devis.client_nom,
-                "projet": devis.projet_nom,
-                "montant": devis.montant,
-                "status": "refusé",
+                "sujet":        "Devis refusé par le client",
+                "client":       devis.client_nom,
+                "projet":       devis.projet_nom,
+                "montant":      devis.montant,
+                "doc_id":       f"{devis.id:04d}",
+                "type_analyse": devis.document.type_analyse if devis.document else None,
             },
             "contact@conformexpert.cc",
         )
