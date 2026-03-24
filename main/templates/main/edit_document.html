@@ -1730,11 +1730,21 @@ select.f-input option { background: #0c1929; }
 <script>
 const DOC_ID          = {{ document.id }};
 const TYPE_ANALYSE    = "{{ document.type_analyse }}";
-const RAPPORT_SAUVEGARDE = JSON.parse(document.getElementById('rapport-ia-data').textContent);
-let rapportDejaRendu  = false;
-let facInitDone       = false;
-let facMode           = 'conso';
-let facCache          = null;
+const RAPPORT_SAUVEGARDE = (function() {
+  try {
+    var raw = document.getElementById('rapport-ia-data').textContent.trim();
+    if (!raw || raw === 'null') return null;
+    raw = raw.replace(/(\d),(\d)/g, '$1.$2');
+    return JSON.parse(raw);
+  } catch(e) {
+    console.warn('Rapport IA JSON invalide:', e.message);
+    return null;
+  }
+})();
+var rapportDejaRendu  = false;
+var facInitDone       = false;
+var facMode           = 'conso';
+var facCache          = null;
 
 // ── Onglets ──────────────────────────────────────────────
 function showTab(name) {
