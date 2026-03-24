@@ -37,7 +37,7 @@
             Bonjour{% if client_name %} <strong>{{ client_name }}</strong>{% endif %},
           </p>
           <p style="margin:0 0 20px;font-size:15px;color:#333;line-height:1.7">
-            Nous avons étudié votre projet et nous avons le plaisir de vous adresser notre devis pour la réalisation de l'analyse de conformité thermique.
+            Nous avons étudié votre projet et nous avons le plaisir de vous adresser notre devis pour la réalisation de l'analyse de votre dossier.
           </p>
 
           <!-- DEVIS BOX -->
@@ -47,7 +47,7 @@
                 <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:16px">Détail du devis</div>
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="font-size:14px;color:#333;padding:8px 0;border-bottom:1px solid #eee">Analyse de conformité {{ norme }}</td>
+                    <td style="font-size:14px;color:#333;padding:8px 0;border-bottom:1px solid #eee">{% if type_analyse == 'carbone' %}Bilan carbone immobilier{% else %}Analyse de conformité {{ norme }}{% endif %}</td>
                     <td align="right" style="font-size:14px;color:#333;padding:8px 0;border-bottom:1px solid #eee;white-space:nowrap">{{ montant_ht }} € HT</td>
                   </tr>
                   {% if notes %}
@@ -103,7 +103,7 @@
 
           <p style="margin:0;font-size:13px;color:#aaa;line-height:1.6">
             En cas de question, répondez directement à cet email ou contactez-nous à 
-            <a href="/cdn-cgi/l/email-protection#caa9a5a4beaba9be8aa9a5a4aca5b8a7afb2baafb8bee4acb8" style="color:#c8a84b"><span class="__cf_email__" data-cfemail="f695999882979582b69599989099849b938e86938482d89084">[email&#160;protected]</span></a>.
+            <a href="mailto:contact@conformexpert.cc" style="color:#c8a84b">contact@conformexpert.cc</a>.
           </p>
 
         </td>
