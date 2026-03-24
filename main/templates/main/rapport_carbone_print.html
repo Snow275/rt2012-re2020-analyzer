@@ -1,0 +1,534 @@
+{# ══════════════════════════════════════════════════════════════
+   RAPPORT CARBONE — VERSION PRINT UNIQUEMENT
+   Affiché seulement via @media print, caché à l'écran
+══════════════════════════════════════════════════════════════ #}
+<style>
+.rcp { display: none; }
+@media print {
+  /* Cacher le rendu web */
+  .cb-hero, .cb-kpis, .cb-avis, .card,
+  .risque-card, .levier-item, .levier-horizon,
+  .conf-row, .poste-row, .poste-row-head,
+  .point-fort, .verif-item,
+  #rapport-carbone-screen { display: none !important; }
+
+  /* Afficher le template print */
+  .rcp { display: block !important; }
+
+  /* Base document */
+  .rcp * { box-sizing: border-box; margin: 0; padding: 0; }
+  .rcp {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.5;
+    color: #111;
+    background: #fff;
+    max-width: 100%;
+  }
+
+  /* ── En-tête section ── */
+  .rcp-section-title {
+    font-size: 10pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #0f2744;
+    border-bottom: 2px solid #0f2744;
+    padding-bottom: 4px;
+    margin: 20px 0 10px;
+    page-break-after: avoid;
+  }
+
+  /* ── Bandeau verdct hero ── */
+  .rcp-hero {
+    background: #0f2744;
+    color: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    page-break-inside: avoid;
+  }
+  .rcp-hero-left h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .rcp-hero-left p { font-size: 8.5pt; color: rgba(255,255,255,.7); }
+  .rcp-hero-meta { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+  .rcp-hero-meta span { font-size: 8pt; color: rgba(255,255,255,.65); }
+  .rcp-hero-meta span strong { color: #fff; }
+  .rcp-hero-right { text-align: center; flex-shrink: 0; }
+  .rcp-score {
+    font-size: 28pt;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .rcp-score-lbl { font-size: 7.5pt; color: rgba(255,255,255,.6); margin-top: 2px; }
+  .rcp-verdict {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid;
+  }
+  .rcp-verdict.ok  { background: #dcfce7; color: #15803d; border-color: #86efac; }
+  .rcp-verdict.mod { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+  .rcp-verdict.ko  { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+  /* ── Résumé ── */
+  .rcp-resume {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-left: 4px solid #0f2744;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 8.5pt;
+    color: #1f2937;
+    line-height: 1.65;
+    margin-bottom: 14px;
+    page-break-inside: avoid;
+  }
+
+  /* ── KPIs tableau ── */
+  .rcp-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .rcp-kpi {
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    background: #f9fafb;
+    page-break-inside: avoid;
+  }
+  .rcp-kpi-val {
+    font-size: 16pt;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .rcp-kpi-lbl { font-size: 6.5pt; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
+  .rcp-kpi-unit { font-size: 6pt; color: #9ca3af; margin-top: 1px; }
+  .rcp-kpi-badge {
+    display: inline-block;
+    font-size: 6pt;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-top: 3px;
+  }
+  .rcp-kpi-badge.ok  { background: #dcfce7; color: #15803d; }
+  .rcp-kpi-badge.ko  { background: #fee2e2; color: #dc2626; }
+
+  /* ── Tableau générique ── */
+  .rcp table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+  }
+  .rcp table thead tr {
+    background: #0f2744;
+    color: #fff;
+  }
+  .rcp table thead th {
+    padding: 7px 10px;
+    font-weight: 600;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    text-align: left;
+    border: none;
+  }
+  .rcp table tbody tr:nth-child(even) { background: #f8fafc; }
+  .rcp table tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #1f2937;
+    vertical-align: top;
+  }
+  .rcp-badge {
+    display: inline-block;
+    font-size: 7pt;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .rcp-badge.ok     { background: #dcfce7; color: #15803d; }
+  .rcp-badge.ko     { background: #fee2e2; color: #dc2626; }
+  .rcp-badge.na     { background: #f3f4f6; color: #6b7280; }
+  .rcp-badge.nv     { background: #fef3c7; color: #92400e; }
+  .rcp-badge.eleve  { background: #fee2e2; color: #dc2626; }
+  .rcp-badge.modere { background: #fef3c7; color: #92400e; }
+  .rcp-badge.faible { background: #eff6ff; color: #1d4ed8; }
+
+  /* ── Leviers numérotés ── */
+  .rcp-levier {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 9px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: #f9fafb;
+    margin-bottom: 6px;
+    page-break-inside: avoid;
+  }
+  .rcp-levier-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #0f2744;
+    color: #fff;
+    font-size: 8pt;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .rcp-levier-body { flex: 1; }
+  .rcp-levier-title { font-size: 8.5pt; font-weight: 600; color: #111; margin-bottom: 2px; }
+  .rcp-levier-desc  { font-size: 7.5pt; color: #4b5563; line-height: 1.45; }
+  .rcp-levier-gain  { font-size: 8pt; font-weight: 700; color: #15803d; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+  .rcp-levier-horizon-label {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 4px 0 6px;
+    margin-top: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 6px;
+  }
+  .rcp-levier-horizon-label.ct { color: #15803d; }
+  .rcp-levier-horizon-label.mt { color: #92400e; }
+  .rcp-levier-horizon-label.lt { color: #1d4ed8; }
+
+  /* ── Risques ── */
+  .rcp-risque {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid;
+    border-left: 4px solid;
+    margin-bottom: 8px;
+    page-break-inside: avoid;
+  }
+  .rcp-risque.eleve  { background: #fff1f2; border-color: #fca5a5; border-left-color: #dc2626; }
+  .rcp-risque.modere { background: #fffbeb; border-color: #fcd34d; border-left-color: #92400e; }
+  .rcp-risque.faible { background: #eff6ff; border-color: #bfdbfe; border-left-color: #1d4ed8; }
+  .rcp-risque-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .rcp-risque-title  { font-size: 8.5pt; font-weight: 600; color: #111; }
+  .rcp-risque-desc   { font-size: 7.5pt; color: #374151; line-height: 1.5; margin-bottom: 4px; }
+  .rcp-risque-action { font-size: 7.5pt; color: #92400e; font-style: italic; }
+
+  /* ── Points forts ── */
+  .rcp-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 8.5pt;
+    color: #1f2937;
+  }
+  .rcp-point:last-child { border-bottom: none; }
+  .rcp-point-check { color: #15803d; font-size: 10pt; flex-shrink: 0; line-height: 1.2; }
+
+  /* ── Vérifications ── */
+  .rcp-verif {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 5px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 8.5pt;
+    color: #374151;
+  }
+  .rcp-verif:last-child { border-bottom: none; }
+  .rcp-verif-arrow { color: #92400e; flex-shrink: 0; }
+
+  /* ── Avis indépendant ── */
+  .rcp-avis {
+    background: #f0fdf4;
+    border: 1.5px solid #86efac;
+    border-left: 4px solid #15803d;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    page-break-inside: avoid;
+  }
+  .rcp-avis-label {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #15803d;
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rcp-avis p { font-size: 8.5pt; color: #1f2937; line-height: 1.7; font-style: italic; }
+
+  /* ── Mentions légales ── */
+  .rcp-mentions {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 7.5pt;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-top: 14px;
+  }
+  .rcp-mentions strong { color: #374151; }
+
+  /* ── Sauts de page ── */
+  .rcp-page-break { page-break-before: always; }
+}
+</style>
+
+{# ── Template print dédié carbone ── #}
+{% if rapport %}
+<div class="rcp">
+
+  {# Hero #}
+  <div class="rcp-hero">
+    <div class="rcp-hero-left">
+      <h2>🌿 Bilan carbone immobilier</h2>
+      <p>{{ document.name }}</p>
+      <div class="rcp-hero-meta">
+        <span>🏗️ <strong>{{ document.get_building_type_display }}</strong></span>
+        {% if document.surface_totale %}<span>📐 <strong>{{ document.surface_totale }} m²</strong></span>{% endif %}
+        {% if document.annee_construction %}<span>📅 <strong>{{ document.annee_construction }}</strong></span>{% endif %}
+        <span>🌍 <strong>{{ document.get_pays_display }}</strong></span>
+      </div>
+      {% if rapport.verdict %}
+      <div class="rcp-verdict {% if 'Faible' in rapport.verdict %}ok{% elif 'modérée' in rapport.verdict or 'Modérée' in rapport.verdict %}mod{% else %}ko{% endif %}">
+        {{ rapport.verdict }}
+      </div>
+      {% endif %}
+    </div>
+    {% if rapport.score_global %}
+    <div class="rcp-hero-right">
+      <div class="rcp-score" style="color:{% if rapport.score_global >= 70 %}#4ade80{% elif rapport.score_global >= 40 %}#fbbf24{% else %}#f87171{% endif %}">
+        {{ rapport.score_global }}
+      </div>
+      <div class="rcp-score-lbl">/100</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# Résumé exécutif #}
+  {% if rapport.resume_executif %}
+  <div class="rcp-resume">{{ rapport.resume_executif }}</div>
+  {% endif %}
+
+  {# KPIs émissions #}
+  {% if rapport.emissions %}
+  <div class="rcp-kpis">
+    <div class="rcp-kpi">
+      {% if rapport.emissions.ic_energie.conforme is not None %}
+      <div class="rcp-kpi-badge {% if rapport.emissions.ic_energie.conforme %}ok{% else %}ko{% endif %}">
+        {% if rapport.emissions.ic_energie.conforme %}✓ RE2020{% else %}✗ RE2020{% endif %}
+      </div>
+      {% endif %}
+      <div class="rcp-kpi-val" style="color:{% if rapport.emissions.ic_energie.conforme %}#15803d{% elif rapport.emissions.ic_energie.conforme == False %}#dc2626{% else %}#92400e{% endif %}">
+        {{ rapport.emissions.ic_energie.valeur|default:"—" }}
+      </div>
+      <div class="rcp-kpi-lbl">Ic énergie</div>
+      <div class="rcp-kpi-unit">kgCO2eq/m².an</div>
+    </div>
+    <div class="rcp-kpi">
+      {% if rapport.emissions.ic_construction.conforme is not None %}
+      <div class="rcp-kpi-badge {% if rapport.emissions.ic_construction.conforme %}ok{% else %}ko{% endif %}">
+        {% if rapport.emissions.ic_construction.conforme %}✓ RE2020{% else %}✗ RE2020{% endif %}
+      </div>
+      {% endif %}
+      <div class="rcp-kpi-val" style="color:#92400e">{{ rapport.emissions.ic_construction.valeur|default:"—" }}</div>
+      <div class="rcp-kpi-lbl">Ic construction</div>
+      <div class="rcp-kpi-unit">kgCO2eq/m²</div>
+    </div>
+    <div class="rcp-kpi">
+      <div class="rcp-kpi-val" style="color:#1d4ed8">{{ rapport.emissions.conso_ep.valeur|default:"—" }}</div>
+      <div class="rcp-kpi-lbl">Conso. énergie primaire</div>
+      <div class="rcp-kpi-unit">kWh ep/m².an</div>
+    </div>
+    <div class="rcp-kpi">
+      <div class="rcp-kpi-val" style="color:{% if rapport.emissions.classe_dpe == 'A' %}#15803d{% elif rapport.emissions.classe_dpe == 'B' %}#16a34a{% elif rapport.emissions.classe_dpe == 'C' %}#65a30d{% elif rapport.emissions.classe_dpe == 'D' %}#ca8a04{% elif rapport.emissions.classe_dpe == 'E' %}#c2410c{% elif rapport.emissions.classe_dpe == 'F' %}#b91c1c{% else %}#991b1b{% endif %}">
+        {{ rapport.emissions.classe_dpe|default:"—" }}
+      </div>
+      <div class="rcp-kpi-lbl">Classe DPE</div>
+      <div class="rcp-kpi-unit">{{ rapport.emissions.emission_ges.valeur|default:"" }}{% if rapport.emissions.emission_ges.valeur %} kgCO2/m².an{% endif %}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Postes d'émission #}
+  {% if rapport.postes_emission %}
+  <div class="rcp-section-title">Postes d'émission carbone</div>
+  <table>
+    <thead><tr>
+      <th style="width:30%">Poste</th>
+      <th style="width:15%;text-align:center">Part estimée</th>
+      <th style="width:15%;text-align:center">Impact</th>
+      <th>Observation</th>
+    </tr></thead>
+    <tbody>
+      {% for p in rapport.postes_emission %}
+      <tr>
+        <td style="font-weight:600">{{ p.poste }}</td>
+        <td style="text-align:center;font-weight:700;color:#92400e">{{ p.part_estimee|default:"—" }}</td>
+        <td style="text-align:center">
+          <span class="rcp-badge {% if p.niveau == 'élevé' %}eleve{% elif p.niveau == 'modéré' %}modere{% else %}faible{% endif %}">
+            {{ p.niveau|default:"—" }}
+          </span>
+        </td>
+        <td style="font-size:7.5pt;color:#4b5563">{{ p.observation|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {# Conformité réglementaire #}
+  {% if rapport.conformite_reglementaire %}
+  <div class="rcp-section-title">Conformité réglementaire</div>
+  <table>
+    <thead><tr>
+      <th style="width:30%">Référentiel</th>
+      <th style="width:20%;text-align:center">Statut</th>
+      <th>Détail</th>
+    </tr></thead>
+    <tbody>
+      {% for c in rapport.conformite_reglementaire %}
+      <tr>
+        <td style="font-weight:600">{{ c.referentiel }}</td>
+        <td style="text-align:center">
+          <span class="rcp-badge {% if c.statut == 'conforme' %}ok{% elif c.statut == 'non_conforme' %}ko{% elif c.statut == 'non_applicable' %}na{% else %}nv{% endif %}">
+            {% if c.statut == 'conforme' %}✓ Conforme{% elif c.statut == 'non_conforme' %}✗ Non conforme{% elif c.statut == 'non_applicable' %}N/A{% else %}Non vérifié{% endif %}
+          </span>
+        </td>
+        <td style="font-size:7.5pt;color:#4b5563">{{ c.detail|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {# Leviers de réduction #}
+  {% if rapport.leviers_reduction %}
+  <div class="rcp-section-title rcp-page-break">Leviers de réduction carbone</div>
+
+  {% for l in rapport.leviers_reduction %}{% if l.horizon == 'Court terme' %}
+  {% if forloop.first %}<div class="rcp-levier-horizon-label ct">▶ Court terme</div>{% endif %}
+  <div class="rcp-levier">
+    <div class="rcp-levier-num">{{ forloop.counter }}</div>
+    <div class="rcp-levier-body">
+      <div class="rcp-levier-title">
+        {{ l.levier }}
+        {% if l.impact %} — <span class="rcp-badge {% if l.impact == 'élevé' %}eleve{% elif l.impact == 'modéré' %}modere{% else %}faible{% endif %}">Impact {{ l.impact }}</span>{% endif %}
+      </div>
+      {% if l.description %}<div class="rcp-levier-desc">{{ l.description }}</div>{% endif %}
+    </div>
+    {% if l.gain_estime %}<div class="rcp-levier-gain">{{ l.gain_estime }}</div>{% endif %}
+  </div>
+  {% endif %}{% endfor %}
+
+  {% for l in rapport.leviers_reduction %}{% if l.horizon == 'Moyen terme' %}
+  {% if forloop.first %}<div class="rcp-levier-horizon-label mt">▶ Moyen terme</div>{% endif %}
+  <div class="rcp-levier">
+    <div class="rcp-levier-num">{{ forloop.counter }}</div>
+    <div class="rcp-levier-body">
+      <div class="rcp-levier-title">
+        {{ l.levier }}
+        {% if l.impact %} — <span class="rcp-badge {% if l.impact == 'élevé' %}eleve{% elif l.impact == 'modéré' %}modere{% else %}faible{% endif %}">Impact {{ l.impact }}</span>{% endif %}
+      </div>
+      {% if l.description %}<div class="rcp-levier-desc">{{ l.description }}</div>{% endif %}
+    </div>
+    {% if l.gain_estime %}<div class="rcp-levier-gain">{{ l.gain_estime }}</div>{% endif %}
+  </div>
+  {% endif %}{% endfor %}
+
+  {% for l in rapport.leviers_reduction %}{% if l.horizon == 'Long terme' %}
+  {% if forloop.first %}<div class="rcp-levier-horizon-label lt">▶ Long terme</div>{% endif %}
+  <div class="rcp-levier">
+    <div class="rcp-levier-num">{{ forloop.counter }}</div>
+    <div class="rcp-levier-body">
+      <div class="rcp-levier-title">
+        {{ l.levier }}
+        {% if l.impact %} — <span class="rcp-badge {% if l.impact == 'élevé' %}eleve{% elif l.impact == 'modéré' %}modere{% else %}faible{% endif %}">Impact {{ l.impact }}</span>{% endif %}
+      </div>
+      {% if l.description %}<div class="rcp-levier-desc">{{ l.description }}</div>{% endif %}
+    </div>
+    {% if l.gain_estime %}<div class="rcp-levier-gain">{{ l.gain_estime }}</div>{% endif %}
+  </div>
+  {% endif %}{% endfor %}
+
+  {% endif %}
+
+  {# Risques #}
+  {% if rapport.risques %}
+  <div class="rcp-section-title">Risques identifiés — {{ rapport.risques|length }} risque{{ rapport.risques|length|pluralize }} détecté{{ rapport.risques|length|pluralize }}</div>
+  {% for r in rapport.risques %}
+  <div class="rcp-risque {% if r.gravite == 'élevé' %}eleve{% elif r.gravite == 'modéré' %}modere{% else %}faible{% endif %}">
+    <div class="rcp-risque-header">
+      <span class="rcp-badge {% if r.gravite == 'élevé' %}eleve{% elif r.gravite == 'modéré' %}modere{% else %}faible{% endif %}">{{ r.gravite|default:"modéré" }}</span>
+      <span class="rcp-risque-title">{{ r.titre }}</span>
+      {% if r.urgence %}<span style="font-size:7pt;color:#6b7280;margin-left:auto">🕐 {{ r.urgence }}</span>{% endif %}
+    </div>
+    <div class="rcp-risque-desc">{{ r.description }}</div>
+    {% if r.action %}<div class="rcp-risque-action">→ {{ r.action }}</div>{% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {# Points forts #}
+  {% if rapport.points_forts %}
+  <div class="rcp-section-title">Points forts — Performance carbone</div>
+  {% for p in rapport.points_forts %}
+  <div class="rcp-point">
+    <span class="rcp-point-check">✓</span>
+    <span>{{ p }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {# Vérifications complémentaires #}
+  {% if rapport.verifications_complementaires %}
+  <div class="rcp-section-title">Vérifications complémentaires recommandées</div>
+  {% for v in rapport.verifications_complementaires %}
+  <div class="rcp-verif">
+    <span class="rcp-verif-arrow">→</span>
+    <span>{{ v }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {# Avis indépendant #}
+  {% if rapport.avis_independant %}
+  <div class="rcp-avis">
+    <div class="rcp-avis-label">🌿 Avis indépendant ConformExpert</div>
+    <p>{{ rapport.avis_independant }}</p>
+  </div>
+  {% endif %}
+
+  {# Mentions légales #}
+  {% if rapport.mentions_legales %}
+  <div class="rcp-mentions">
+    <strong>Mentions légales —</strong> {{ rapport.mentions_legales }}
+  </div>
+  {% endif %}
+
+</div>
+{% endif %}
