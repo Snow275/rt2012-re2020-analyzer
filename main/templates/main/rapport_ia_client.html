@@ -365,12 +365,10 @@
     <span class="cover-logo-w">Conform</span><span class="cover-logo-g">Expert</span>
   </div>
   <div class="cover-body">
-    {% if document.type_analyse == "pca" %}
-    RAPPORT D'ANALYSE TECHNIQUE
-    {% elif document.type_analyse == "complet" %}
-    RAPPORT D'ANALYSE TECHNIQUE ET ÉNERGÉTIQUE
+    {% if document.type_analyse == "carbone" %}
+    BILAN CARBONE IMMOBILIER
     {% else %}
-    RAPPORT D'ANALYSE THERMIQUE
+    RAPPORT DE VALIDATION THERMIQUE & ÉNERGÉTIQUE
     {% endif %}
     <div class="cover-title" id="cover-doc-name">{{ document.name }}</div>
     <div class="cover-meta">
@@ -378,11 +376,13 @@
       <div class="cover-meta-row"><span class="cover-meta-label">Norme</span><span class="cover-meta-val">{{ document.norme }}</span></div>
       <div class="cover-meta-row"><span class="cover-meta-label">Type de bâtiment</span><span class="cover-meta-val">{{ document.get_building_type_display }}</span></div>
       <div class="cover-meta-row"><span class="cover-meta-label">Date d'analyse</span><span class="cover-meta-val">{{ document.upload_date|date:"d/m/Y" }}</span></div>
-      {% if document.dpe_classe_energie %}
-      <div class="cover-meta-row"><span class="cover-meta-label">Classe DPE énergie</span><span class="cover-meta-val" style="font-size:1.4rem;font-weight:700;font-family:'Playfair Display',serif">{{ document.dpe_classe_energie }}</span></div>
-      {% endif %}
-      {% if document.dpe_conso_ep %}
-      <div class="cover-meta-row"><span class="cover-meta-label">Conso. énergie primaire</span><span class="cover-meta-val">{{ document.dpe_conso_ep }} kWh ep/m².an</span></div>
+      {% if document.type_analyse == "carbone" %}
+        {% if document.dpe_classe_energie %}<div class="cover-meta-row"><span class="cover-meta-label">Classe DPE</span><span class="cover-meta-val" style="font-size:1.4rem;font-weight:700;font-family:'Playfair Display',serif">{{ document.dpe_classe_energie }}</span></div>{% endif %}
+        {% if document.re2020_carbon_emissions %}<div class="cover-meta-row"><span class="cover-meta-label">Ic énergie RE2020</span><span class="cover-meta-val">{{ document.re2020_carbon_emissions }} kgCO2eq/m².an</span></div>{% endif %}
+        {% if document.dpe_emission_ges %}<div class="cover-meta-row"><span class="cover-meta-label">Émissions GES</span><span class="cover-meta-val">{{ document.dpe_emission_ges }} kgCO2eq/m².an</span></div>{% endif %}
+      {% else %}
+        {% if document.dpe_classe_energie %}<div class="cover-meta-row"><span class="cover-meta-label">Classe DPE énergie</span><span class="cover-meta-val" style="font-size:1.4rem;font-weight:700;font-family:'Playfair Display',serif">{{ document.dpe_classe_energie }}</span></div>{% endif %}
+        {% if document.dpe_conso_ep %}<div class="cover-meta-row"><span class="cover-meta-label">Conso. énergie primaire</span><span class="cover-meta-val">{{ document.dpe_conso_ep }} kWh ep/m².an</span></div>{% endif %}
       {% endif %}
     </div>
     {% if rapport %}
@@ -411,12 +411,20 @@
   <ol class="toc-list">
     <li><span class="toc-item">Verdict & résumé exécutif</span><span class="toc-dots"></span><span class="toc-page">3</span></li>
     {% if document.dpe_classe_energie or document.dpe_conso_ep %}<li><span class="toc-item">Données DPE</span><span class="toc-dots"></span><span class="toc-page">3</span></li>{% endif %}
-    <li><span class="toc-item">Analyse détaillée des critères</span><span class="toc-dots"></span><span class="toc-page">4</span></li>
-    {% if rapport and rapport.points_forts %}<li><span class="toc-item">Points forts identifiés</span><span class="toc-dots"></span><span class="toc-page">4</span></li>{% endif %}
-    {% if rapport and rapport.non_conformites %}<li><span class="toc-item">Non-conformités détaillées</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
-    {% if rapport and rapport.recommandations %}<li><span class="toc-item">Recommandations & plan d'action</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
-    {% if rapport and rapport.analyse_enveloppe or rapport and rapport.systemes_energetiques %}<li><span class="toc-item">Enveloppe thermique & systèmes énergétiques</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
-    {% if rapport and rapport.contexte_reglementaire %}<li><span class="toc-item">Contexte réglementaire</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
+    {% if document.type_analyse == "carbone" %}
+      {% if rapport and rapport.postes_emission %}<li><span class="toc-item">Postes d'émission carbone</span><span class="toc-dots"></span><span class="toc-page">4</span></li>{% endif %}
+      {% if rapport and rapport.conformite_reglementaire %}<li><span class="toc-item">Conformité réglementaire</span><span class="toc-dots"></span><span class="toc-page">4</span></li>{% endif %}
+      {% if rapport and rapport.leviers_reduction %}<li><span class="toc-item">Leviers de réduction carbone</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
+      {% if rapport and rapport.risques %}<li><span class="toc-item">Risques identifiés</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
+      {% if rapport and rapport.points_forts %}<li><span class="toc-item">Points forts</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
+    {% else %}
+      <li><span class="toc-item">Analyse détaillée des critères</span><span class="toc-dots"></span><span class="toc-page">4</span></li>
+      {% if rapport and rapport.points_forts %}<li><span class="toc-item">Points forts identifiés</span><span class="toc-dots"></span><span class="toc-page">4</span></li>{% endif %}
+      {% if rapport and rapport.non_conformites %}<li><span class="toc-item">Non-conformités détaillées</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
+      {% if rapport and rapport.recommandations %}<li><span class="toc-item">Recommandations & plan d'action</span><span class="toc-dots"></span><span class="toc-page">5</span></li>{% endif %}
+      {% if rapport and rapport.analyse_enveloppe or rapport and rapport.systemes_energetiques %}<li><span class="toc-item">Enveloppe thermique & systèmes énergétiques</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
+      {% if rapport and rapport.contexte_reglementaire %}<li><span class="toc-item">Contexte réglementaire</span><span class="toc-dots"></span><span class="toc-page">6</span></li>{% endif %}
+    {% endif %}
     <li><span class="toc-item">Mentions légales</span><span class="toc-dots"></span><span class="toc-page">6</span></li>
   </ol>
   <div class="toc-notice">
@@ -435,13 +443,60 @@
 </header>
 
 <div class="pub-wrap">
-{% if document.type_analyse == "pca" %}
-    {% include "main/rapport_pca.html" %}
+{% if document.type_analyse == "carbone" %}
+
+  <div class="dossier-hd fu">
+    <h1>{{ document.name }}</h1>
+    <p>Référence <span>DOC-{{ document.id|stringformat:"04d" }}</span> &nbsp;·&nbsp; 🌿 Bilan carbone immobilier &nbsp;·&nbsp; {{ document.get_building_type_display }}</p>
+  </div>
+
+  <div class="pdf-btn-wrap" style="display:flex;justify-content:flex-end;margin-bottom:1.2rem;margin-top:-.5rem">
+    <button onclick="window.print()"
+      style="display:inline-flex;align-items:center;gap:.55rem;padding:.6rem 1.4rem;background:var(--gold);color:#0C1929;font-weight:700;font-size:.83rem;border:none;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:opacity .2s"
+      onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+      📄 Télécharger PDF
+    </button>
+  </div>
+
+  {% include "main/rapport_carbone.html" %}
+
+  {% if has_factures %}
+  <div class="card fu" style="padding:1.6rem;margin-bottom:1.4rem;margin-top:1.4rem">
+    <div class="section-title" style="color:var(--gold);margin-bottom:1rem">⚡ Factures énergétiques analysées</div>
+    <div id="facl-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.8rem;margin-bottom:1.2rem"></div>
+    <div style="display:flex;gap:.5rem;margin-bottom:.8rem">
+      <button id="faclbc" onclick="faclSw('conso')" style="padding:.35rem .9rem;border-radius:6px;border:1px solid rgba(200,168,75,.3);background:rgba(200,168,75,.15);color:var(--gold);font-size:.76rem;cursor:pointer;font-family:inherit">Consommation</button>
+      <button id="faclbk" onclick="faclSw('cout')"  style="padding:.35rem .9rem;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--gray1);font-size:.76rem;cursor:pointer;font-family:inherit">Coût</button>
+    </div>
+    <div id="facl-chart" style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-bottom:1rem;padding:0 .2rem"></div>
+    <div id="facl-rep" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem"></div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+        <thead><tr style="background:rgba(0,0,0,.2)">
+          <th style="padding:.45rem .8rem;text-align:left;color:var(--gray1);font-weight:500;font-size:.67rem;text-transform:uppercase">Période</th>
+          <th style="padding:.45rem .8rem;text-align:right;color:var(--gray1);font-weight:500;font-size:.67rem;text-transform:uppercase">Conso.</th>
+          <th style="padding:.45rem .8rem;text-align:right;color:var(--gray1);font-weight:500;font-size:.67rem;text-transform:uppercase">Montant</th>
+          <th style="padding:.45rem .8rem;text-align:right;color:var(--gray1);font-weight:500;font-size:.67rem;text-transform:uppercase">€/kWh</th>
+          <th style="padding:.45rem .8rem;text-align:center;color:var(--gray1);font-weight:500;font-size:.67rem;text-transform:uppercase">Alerte</th>
+        </tr></thead>
+        <tbody id="facl-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div style="text-align:center;padding:2rem 0 1rem">
+    <a href="{% url 'tracking' document.tracking_token %}"
+      style="display:inline-flex;align-items:center;gap:.6rem;padding:.75rem 1.8rem;border-radius:9px;border:1px solid rgba(200,168,75,.3);color:var(--gold);font-size:.88rem;text-decoration:none;background:rgba(200,168,75,.05);font-weight:500">
+      ← Retour au suivi du dossier
+    </a>
+  </div>
+
 {% else %}
   
   <div class="dossier-hd fu">
     <h1>{{ document.name }}</h1>
-    <p>Référence <span>DOC-{{ document.id|stringformat:"04d" }}</span> &nbsp;·&nbsp; {{ document.norme }} &nbsp;·&nbsp; {{ document.get_building_type_display }}</p>
+    <p>Référence <span>DOC-{{ document.id|stringformat:"04d" }}</span> &nbsp;·&nbsp; {% if document.type_analyse != "carbone" %}{{ document.norme }} &nbsp;·&nbsp; {% endif %}{{ document.get_building_type_display }}</p>
   </div>
 
   <div class="pdf-btn-wrap" style="display:flex;justify-content:flex-end;margin-bottom:1.2rem;margin-top:-.5rem">
@@ -457,10 +512,10 @@
     {% with v=rapport.verdict %}
 
     <!-- Verdict -->
-    <div class="verdict-box fu {% if v == 'Conforme' %}conform{% elif v == 'Données insuffisantes' %}insuff{% else %}nonconf{% endif %}">
+    <div class="verdict-box fu {% if v == 'Conforme' or 'Faible' in v %}conform{% elif v == 'Données insuffisantes' %}insuff{% else %}nonconf{% endif %}">
       <div>
-        <div class="verdict-label">Verdict — {{ document.norme }}</div>
-        <div class="verdict-text {% if v == 'Conforme' %}conform{% elif v == 'Données insuffisantes' %}insuff{% else %}nonconf{% endif %}">{{ v|default:"—" }}</div>
+        <div class="verdict-label">{% if document.type_analyse == "carbone" %}Bilan carbone — {{ document.get_building_type_display }}{% else %}Verdict — {{ document.norme }}{% endif %}</div>
+        <div class="verdict-text {% if v == 'Conforme' or 'Faible' in v %}conform{% elif v == 'Données insuffisantes' %}insuff{% else %}nonconf{% endif %}">{{ v|default:"—" }}</div>
       </div>
       <div class="verdict-icon">{% if v == 'Conforme' %}✅{% elif v == 'Données insuffisantes' %}⏳{% else %}❌{% endif %}</div>
     </div>
