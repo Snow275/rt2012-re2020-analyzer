@@ -270,6 +270,9 @@
       <option value="carbone">Bilan carbone</option>
     </select>
     <span class="hist-count" id="hist-count">{{ paginator.count }} dossier{% if paginator.count > 1 %}s{% endif %}</span>
+    <a href="{% url 'export_csv_history' %}" class="hist-btn" title="Exporter en CSV" style="width:auto;padding:0 .8rem;gap:.4rem;display:flex;align-items:center;font-size:.78rem;color:var(--gold);border-color:rgba(200,168,75,.3);background:rgba(200,168,75,.05);white-space:nowrap;text-decoration:none">
+      ⬇ CSV
+    </a>
   </div>
 
   <!-- Liste -->

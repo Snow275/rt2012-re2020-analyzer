@@ -312,6 +312,56 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
   </div>
 
 
+  {# ── Timeline visuelle ── #}
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;margin-bottom:1.2rem;color:var(--gold)">Avancement détaillé</h3>
+    <div style="position:relative;padding-left:2rem">
+      {# Ligne verticale #}
+      <div style="position:absolute;left:.6rem;top:.6rem;bottom:.6rem;width:2px;background:rgba(255,255,255,.06);border-radius:2px"></div>
+      {% for step_label, step_state in step_list %}
+      <div style="position:relative;display:flex;align-items:flex-start;gap:1rem;margin-bottom:{% if not forloop.last %}1.2rem{% else %}0{% endif %}">
+        {# Point de la timeline #}
+        <div style="position:absolute;left:-1.4rem;top:.1rem;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0;
+          {% if step_state == 'done' %}background:rgba(39,201,63,.2);border:2px solid #27c93f;color:#27c93f
+          {% elif step_state == 'active' %}background:rgba(200,168,75,.2);border:2px solid var(--gold);color:var(--gold)
+          {% else %}background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);color:var(--muted){% endif %}">
+          {% if step_state == 'done' %}✓{% elif step_state == 'active' %}→{% else %}○{% endif %}
+        </div>
+        {# Contenu #}
+        <div>
+          <div style="font-size:.82rem;font-weight:{% if step_state == 'active' %}600{% else %}400{% endif %};
+            {% if step_state == 'done' %}color:var(--gray-2)
+            {% elif step_state == 'active' %}color:var(--white)
+            {% else %}color:var(--muted){% endif %}">
+            {{ step_label }}
+          </div>
+          {% if step_state == 'done' and forloop.first %}
+          <div style="font-size:.72rem;color:var(--gray-1);margin-top:.15rem">{{ document.upload_date|date:"d/m/Y" }}</div>
+          {% elif step_state == 'active' %}
+          <div style="font-size:.72rem;color:var(--gold);margin-top:.15rem">En cours…</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── Aperçu PDF intégré ── #}
+  {% if document.rapport_pdf and document.status == 'termine' %}
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3 style="font-family:'Playfair Display',serif;font-size:.9rem;color:var(--gold);margin:0">Aperçu du rapport PDF</h3>
+      <a href="{{ document.rapport_pdf.url }}" download class="btn btn-outline btn-sm">⬇ Télécharger</a>
+    </div>
+    <div style="border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.06)">
+      <embed src="{{ document.rapport_pdf.url }}" type="application/pdf" width="100%" height="520px" style="display:block">
+      <div style="padding:1rem;text-align:center;background:rgba(255,255,255,.03)">
+        <p style="font-size:.8rem;color:var(--gray-1);margin:0">Si l'aperçu ne s'affiche pas, <a href="{{ document.rapport_pdf.url }}" target="_blank" style="color:var(--gold)">cliquez ici pour ouvrir le PDF</a>.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="tracking-3col">
 
     <div class="card" style="padding:1.5rem">

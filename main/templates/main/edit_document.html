@@ -1085,6 +1085,23 @@ select.f-input option { background: #0c1929; }
             </p>
           </form>
         </div>
+
+        {# Aperçu PDF si rapport déjà déposé #}
+        {% if document.rapport_pdf %}
+        <div style="margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,.06)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
+            <div class="comm-card-title">Aperçu du rapport PDF</div>
+            <a href="{{ document.rapport_pdf.url }}" target="_blank" download class="btn btn-outline btn-sm">⬇ Télécharger</a>
+          </div>
+          <div style="border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.07)">
+            <embed src="{{ document.rapport_pdf.url }}" type="application/pdf" width="100%" height="480px" style="display:block">
+          </div>
+          <p style="font-size:.72rem;color:var(--gray-1);margin:.5rem 0 0">
+            Si l'aperçu ne s'affiche pas, <a href="{{ document.rapport_pdf.url }}" target="_blank" style="color:var(--gold)">ouvrez le PDF dans un nouvel onglet</a>.
+          </p>
+        </div>
+        {% endif %}
+
       </div>
 
     </div>
@@ -1200,11 +1217,22 @@ select.f-input option { background: #0c1929; }
     <!-- Barre de progression -->
     <div id="progress-bar-wrap" class="progress-wrap">
       <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--gray-1);margin-bottom:.4rem">
-        <span id="progress-label">Envoi du document à Claude…</span>
-        <span id="progress-pct">0%</span>
+        <span id="progress-label">Préparation de l'analyse…</span>
+        <div style="display:flex;align-items:center;gap:.8rem">
+          <span id="progress-time" style="color:var(--muted);font-size:.7rem"></span>
+          <span id="progress-pct">0%</span>
+        </div>
       </div>
       <div class="progress-bar">
         <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <div id="progress-steps" style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap">
+        <span class="prog-step prog-step--active" data-step="0" style="font-size:.65rem;padding:.15rem .5rem;border-radius:99px;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);color:var(--gold)">Lecture</span>
+        <span class="prog-step" data-step="1" style="font-size:.65rem;padding:.15rem .5rem;border-radius:99px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--muted)">Extraction</span>
+        <span class="prog-step" data-step="2" style="font-size:.65rem;padding:.15rem .5rem;border-radius:99px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--muted)">Analyse</span>
+        <span class="prog-step" data-step="3" style="font-size:.65rem;padding:.15rem .5rem;border-radius:99px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--muted)">Vérification</span>
+        <span class="prog-step" data-step="4" style="font-size:.65rem;padding:.15rem .5rem;border-radius:99px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--muted)">Rédaction</span>
+        <span class="prog-step" data-step="5" style="font-size:.65rem;padding:.15rem .5rem;border-radius:99px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:var(--muted)">Finalisation</span>
       </div>
     </div>
 
@@ -1801,11 +1829,116 @@ function getCsrf() {
   return c ? c.split('=')[1].trim() : '';
 }
 
+// ── Toast notifications ───────────────────────────────────
+function showToast(message, type) {
+  type = type || 'success';
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;
+    padding:.85rem 1.2rem;border-radius:10px;font-size:.85rem;font-weight:500;
+    display:flex;align-items:center;gap:.7rem;
+    box-shadow:0 8px 30px rgba(0,0,0,.4);
+    background:${type==='success'?'rgba(39,201,63,.12)':type==='error'?'rgba(229,57,53,.12)':'rgba(200,168,75,.12)'};
+    border:1px solid ${type==='success'?'rgba(39,201,63,.3)':type==='error'?'rgba(229,57,53,.3)':'rgba(200,168,75,.3)'};
+    color:${type==='success'?'#27c93f':type==='error'?'#ef5350':'var(--gold)'};
+    transform:translateX(120%);transition:transform .35s ease`;
+  toast.innerHTML = `<span>${type==='success'?'✓':type==='error'?'✗':'ℹ'}</span><span>${message}</span>`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+  setTimeout(() => { toast.style.transform = 'translateX(120%)'; setTimeout(() => toast.remove(), 350); }, 4000);
+}
+
+// ── Autosave formulaire ───────────────────────────────────
+(function() {
+  const STORAGE_KEY = 'ce_autosave_doc_' + DOC_ID;
+  const FIELDS = ['client_name','client_email','client_phone','name','norme','status','building_type',
+    'surface_totale','annee_construction','notes_internes','notes_conformite','observations_generales',
+    'recommandations_admin','travaux_isolation','travaux_menuiseries','travaux_chauffage',
+    'travaux_ventilation','travaux_autres'];
+
+  var saveTimer = null;
+  var saveIndicator = null;
+
+  function createIndicator() {
+    if (saveIndicator) return;
+    saveIndicator = document.createElement('div');
+    saveIndicator.id = 'autosave-indicator';
+    saveIndicator.style.cssText = 'position:fixed;bottom:1.5rem;left:1.5rem;z-index:9000;font-size:.75rem;color:var(--gray-1);display:none;align-items:center;gap:.4rem;background:rgba(12,25,41,.9);padding:.4rem .8rem;border-radius:6px;border:1px solid rgba(255,255,255,.07)';
+    saveIndicator.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span><span id="autosave-text">Sauvegardé</span>';
+    document.body.appendChild(saveIndicator);
+  }
+
+  function setSaveStatus(text, show) {
+    if (!saveIndicator) createIndicator();
+    document.getElementById('autosave-text').textContent = text;
+    saveIndicator.style.display = show ? 'flex' : 'none';
+  }
+
+  function saveForm() {
+    setSaveStatus('Sauvegarde…', true);
+    const data = {};
+    FIELDS.forEach(name => {
+      const el = document.querySelector('[name="' + name + '"]');
+      if (el) data[name] = el.value;
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ts: Date.now(), data})); } catch(e) {}
+    setTimeout(() => setSaveStatus('Sauvegardé ✓', true), 300);
+    setTimeout(() => setSaveStatus('', false), 2500);
+  }
+
+  function restoreForm() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const obj = JSON.parse(saved);
+      const age = (Date.now() - (obj.ts || 0)) / 1000;
+      if (age > 3600) { localStorage.removeItem(STORAGE_KEY); return; }
+      let restored = 0;
+      FIELDS.forEach(name => {
+        if (obj.data && obj.data[name] !== undefined) {
+          const el = document.querySelector('[name="' + name + '"]');
+          if (el && !el.value && obj.data[name]) { el.value = obj.data[name]; restored++; }
+        }
+      });
+      if (restored > 0) showToast('Brouillon restauré (' + restored + ' champs)', 'info');
+    } catch(e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    createIndicator();
+    restoreForm();
+    FIELDS.forEach(name => {
+      const el = document.querySelector('[name="' + name + '"]');
+      if (el) el.addEventListener('input', function() {
+        clearTimeout(saveTimer);
+        setSaveStatus('Modification détectée…', true);
+        saveTimer = setTimeout(saveForm, 1500);
+      });
+    });
+    const forms = document.querySelectorAll('form[method="post"]');
+    forms.forEach(f => f.addEventListener('submit', function() {
+      try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    }));
+  });
+})();
+
 // ── Barre de progression ──────────────────────────────────
-function setProgress(pct, label) {
+function setProgress(pct, label, timeLeft) {
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-pct').textContent  = pct + '%';
   if (label) document.getElementById('progress-label').textContent = label;
+  const timeEl = document.getElementById('progress-time');
+  if (timeEl) timeEl.textContent = timeLeft || '';
+  const stepMap = [[0,15],[1,30],[2,48],[3,62],[4,75],[5,100]];
+  stepMap.forEach(([idx, threshold]) => {
+    const el = document.querySelector('.prog-step[data-step="' + idx + '"]');
+    if (!el) return;
+    if (pct >= threshold) {
+      el.style.background = 'rgba(39,201,63,.12)'; el.style.borderColor = 'rgba(39,201,63,.3)'; el.style.color = '#27c93f';
+    } else if (pct >= (idx > 0 ? stepMap[idx-1][1] : 0)) {
+      el.style.background = 'rgba(200,168,75,.1)'; el.style.borderColor = 'rgba(200,168,75,.3)'; el.style.color = 'var(--gold)';
+    }
+  });
 }
 
 // ── Génération rapport IA ─────────────────────────────────
@@ -1821,19 +1954,33 @@ async function genererRapportIA(force) {
 
   errorDiv.style.display     = 'none';
   progressWrap.style.display = 'block';
-  setProgress(5, 'Envoi du document à Claude…');
+  setProgress(5, 'Préparation de l\'analyse…', '~2 min estimées');
 
-  const labels = TYPE_ANALYSE === 'carbone'
-    ? ['Lecture des documents…', 'Analyse des émissions carbone…', 'Identification des leviers de réduction…']
-    : ['Lecture du document thermique…', `Analyse des critères {{ document.norme }}…`, 'Génération des recommandations…'];
+  const steps = TYPE_ANALYSE === 'carbone'
+    ? [
+        { pct: 15, label: 'Lecture des documents PDF…',            time: '~1 min 50 s' },
+        { pct: 30, label: 'Extraction des données carbone…',       time: '~1 min 30 s' },
+        { pct: 50, label: 'Analyse DPE et émissions GES…',         time: '~1 min 10 s' },
+        { pct: 65, label: 'Identification des leviers de réduction…',time: '~50 s' },
+        { pct: 78, label: 'Calcul conformité RE2020 carbone…',     time: '~30 s' },
+        { pct: 85, label: 'Rédaction du rapport bilan carbone…',   time: '~15 s' },
+      ]
+    : [
+        { pct: 15, label: 'Lecture du document thermique…',        time: '~1 min 50 s' },
+        { pct: 30, label: 'Extraction des valeurs {{ document.norme }}…', time: '~1 min 30 s' },
+        { pct: 48, label: 'Vérification Bbio / Cep / Tic…',       time: '~1 min 10 s' },
+        { pct: 62, label: 'Analyse enveloppe et systèmes…',        time: '~50 s' },
+        { pct: 75, label: 'Détection des anomalies…',              time: '~30 s' },
+        { pct: 85, label: 'Génération des recommandations…',       time: '~15 s' },
+      ];
 
+  let stepIdx = 0;
   const prog = setInterval(() => {
-    const current = parseInt(document.getElementById('progress-fill').style.width) || 5;
-    if (current < 85) {
-      const next = Math.min(current + Math.random() * 7, 85);
-      setProgress(Math.round(next), current < 30 ? labels[0] : current < 60 ? labels[1] : labels[2]);
+    if (stepIdx < steps.length) {
+      const s = steps[stepIdx++];
+      setProgress(s.pct, s.label, s.time);
     }
-  }, 1200);
+  }, 1800);
 
   try {
     const url  = `/dossier/${DOC_ID}/rapport-ia/` + (force ? '?force=1' : '');
@@ -1846,7 +1993,8 @@ async function genererRapportIA(force) {
     const data = await resp.json();
     if (!resp.ok || !data.success) throw new Error(data.error || 'Erreur inconnue');
 
-    setProgress(100, 'Rapport généré ✓');
+    setProgress(100, 'Rapport généré ✓', '');
+    showToast('Rapport IA généré avec succès !', 'success');
     setTimeout(() => { progressWrap.style.display = 'none'; }, 800);
     if (rapportVide) rapportVide.style.display = 'none';
     afficherRapport(data.rapport);

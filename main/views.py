@@ -871,6 +871,46 @@ def home(request):
         recent_devis     = []
         devis_en_attente = 0
 
+    # ── Stats mensuelles (6 derniers mois) ──────────────────
+    from datetime import date
+    import calendar
+    monthly_data = []
+    today = timezone.now().date()
+    for i in range(5, -1, -1):
+        year  = (today.replace(day=1) - timedelta(days=i * 28)).year
+        month = (today.replace(day=1) - timedelta(days=i * 28)).month
+        _, last_day = calendar.monthrange(year, month)
+        count = documents.filter(
+            upload_date__year=year,
+            upload_date__month=month,
+        ).count()
+        monthly_data.append({
+            'label': f"{['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][month-1]}",
+            'count': count,
+        })
+    max_monthly = max((m['count'] for m in monthly_data), default=1) or 1
+
+    # ── Conformité par norme ─────────────────────────────────
+    from collections import defaultdict
+    norme_stats = defaultdict(lambda: {'total': 0, 'conformes': 0})
+    for doc in documents.filter(status='termine'):
+        n = doc.norme or ('Carbone' if doc.type_analyse == 'carbone' else '—')
+        norme_stats[n]['total'] += 1
+        if doc.is_conform is True:
+            norme_stats[n]['conformes'] += 1
+    norme_conformite = []
+    for norme_name, vals in norme_stats.items():
+        pct = round(vals['conformes'] / vals['total'] * 100) if vals['total'] else 0
+        norme_conformite.append({'norme': norme_name, 'total': vals['total'], 'conformes': vals['conformes'], 'pct': pct})
+    norme_conformite.sort(key=lambda x: -x['total'])
+
+    # ── Terminés ce mois ─────────────────────────────────────
+    termine_ce_mois = documents.filter(
+        status='termine',
+        upload_date__year=today.year,
+        upload_date__month=today.month,
+    ).count()
+
     context = {
         'documents':   documents,
         'energie_docs': energie_docs,
@@ -890,12 +930,15 @@ def home(request):
         'docs_carbone_en_cours': carbone_docs.filter(status='en_cours'),
         'docs_carbone_termine':  carbone_docs.filter(status='termine'),
 
-
-
         # Compteurs
         'count_energie': energie_docs.count(),
         'count_carbone': carbone_docs.count(),
 
+        # Nouveaux : stats enrichies
+        'monthly_data':      monthly_data,
+        'max_monthly':       max_monthly,
+        'norme_conformite':  norme_conformite,
+        'termine_ce_mois':   termine_ce_mois,
     }
     return render(request, 'main/home.html', context)
 
@@ -922,6 +965,44 @@ def history(request):
         'documents': page_obj,
         'paginator': paginator,
         'page_obj': page_obj,
+    })
+
+
+@login_required(login_url='/login/')
+def export_csv_history(request):
+    import csv
+    from django.http import HttpResponse
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="dossiers_conformexpert.csv"'
+    response.write('\ufeff')
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow(['Référence', 'Nom du dossier', 'Client', 'Email client', 'Type', 'Norme', 'Statut', 'Conformité', 'Date de dépôt'])
+    for doc in Document.objects.all().order_by('-upload_date'):
+        conform = '—'
+        if doc.is_conform is True:
+            conform = 'Conforme'
+        elif doc.is_conform is False:
+            conform = 'Non conforme'
+        writer.writerow([
+            f'DOC-{doc.id:04d}',
+            doc.name,
+            doc.client_name or '—',
+            doc.client_email or '—',
+            'Bilan carbone' if doc.type_analyse == 'carbone' else 'Validation thermique',
+            doc.norme or '—',
+            {'recu': 'Reçu', 'en_cours': 'En cours', 'termine': 'Terminé'}.get(doc.status, doc.status),
+            conform,
+            doc.upload_date.strftime('%d/%m/%Y') if doc.upload_date else '—',
+        ])
+    return response
+
+
+@login_required(login_url='/login/')
+def ia_rapport_status(request, doc_id):
+    doc = get_object_or_404(Document, id=doc_id)
+    return JsonResponse({
+        'has_rapport': bool(doc.rapport_ia_json),
+        'status': doc.status,
     })
 
 

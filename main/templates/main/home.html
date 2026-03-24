@@ -63,10 +63,12 @@
   .kpi-strip { grid-template-columns:1fr 1fr }
   .kanban { grid-template-columns:1fr }
   .main-grid { grid-template-columns:1fr !important }
+  .stats-enrichies { grid-template-columns:1fr !important }
 }
 @media(max-width:600px) {
   .kpi-strip { grid-template-columns:1fr 1fr }
   .type-tab { padding:.65rem .9rem;font-size:.74rem }
+  .stats-enrichies { grid-template-columns:1fr !important }
 }
 </style>
 
@@ -103,6 +105,48 @@
       <div class="kpi-val" style="{% if devis_en_attente > 0 %}color:var(--gold){% endif %}">{{ devis_en_attente }}</div>
       <div class="kpi-sub">à traiter</div>
     </div>
+  </div>
+
+  {# ── Stats enrichies ── #}
+  <div class="fade-up stats-enrichies" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.8rem">
+
+    {# Graphique mensuel #}
+    <div style="background:var(--navy-2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1.2rem 1.4rem">
+      <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-1);margin-bottom:1rem">Volume mensuel — 6 derniers mois</div>
+      <div style="display:flex;align-items:flex-end;gap:.5rem;height:70px">
+        {% for m in monthly_data %}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.35rem">
+          <div style="width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,rgba(200,168,75,.7),rgba(200,168,75,.25));height:{% if max_monthly > 0 %}{% widthratio m.count max_monthly 60 %}{% else %}0{% endif %}px;min-height:{% if m.count > 0 %}4{% else %}0{% endif %}px;transition:height .4s ease"></div>
+          <div style="font-size:.6rem;color:var(--gray-1)">{{ m.label }}</div>
+          {% if m.count %}<div style="font-size:.65rem;color:var(--gold);font-weight:600">{{ m.count }}</div>{% else %}<div style="font-size:.65rem;color:var(--muted)">0</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Conformité par norme #}
+    <div style="background:var(--navy-2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1.2rem 1.4rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-1)">Conformité par norme</div>
+        <div style="font-size:.7rem;color:var(--gray-1)">{{ termine_ce_mois }} terminé{{ termine_ce_mois|pluralize }} ce mois</div>
+      </div>
+      {% if norme_conformite %}
+        {% for n in norme_conformite %}
+        <div style="margin-bottom:.65rem">
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:.3rem">
+            <span style="color:var(--gray-2)">{{ n.norme }}</span>
+            <span style="color:{% if n.pct >= 70 %}#27c93f{% elif n.pct >= 40 %}#E5A93A{% else %}#ef5350{% endif %};font-weight:600">{{ n.pct }}% <span style="color:var(--muted);font-weight:400">({{ n.conformes }}/{{ n.total }})</span></span>
+          </div>
+          <div style="height:4px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden">
+            <div style="height:100%;border-radius:99px;background:{% if n.pct >= 70 %}#27c93f{% elif n.pct >= 40 %}#E5A93A{% else %}#ef5350{% endif %};width:{{ n.pct }}%;transition:width .6s ease"></div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="font-size:.8rem;color:var(--muted);margin:0">Aucun dossier terminé pour l'instant.</p>
+      {% endif %}
+    </div>
+
   </div>
 
   {# ── Alerte anciens dossiers ── #}
