@@ -239,7 +239,7 @@
   <div class="ph-inner">
     <span class="s-label">Administration</span>
     <h1>Historique des dossiers</h1>
-    <p>{{ documents.count }} dossier{% if documents.count > 1 %}s{% endif %} au total</p>
+    <p>{{ paginator.count }} dossier{% if paginator.count > 1 %}s{% endif %} au total</p>
   </div>
 </div>
 
@@ -269,7 +269,7 @@
       <option value="energie">Validation thermique</option>
       <option value="carbone">Bilan carbone</option>
     </select>
-    <span class="hist-count" id="hist-count">{{ documents.count }} dossier{% if documents.count > 1 %}s{% endif %}</span>
+    <span class="hist-count" id="hist-count">{{ paginator.count }} dossier{% if paginator.count > 1 %}s{% endif %}</span>
   </div>
 
   <!-- Liste -->
@@ -338,129 +338,65 @@
     <p style="font-size:.82rem;margin-top:.4rem">Modifiez vos filtres de recherche.</p>
   </div>
 
-  <!-- Pagination -->
-  <div class="hist-pagination" id="hist-pagination"></div>
-  <div class="hist-page-info" id="hist-page-info"></div>
+  <!-- Pagination Django -->
+  {% if page_obj.has_other_pages %}
+  <div class="hist-pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="hist-page-btn">‹</a>
+    {% else %}
+    <button class="hist-page-btn" disabled>‹</button>
+    {% endif %}
+
+    {% for p in paginator.page_range %}
+      {% if p == page_obj.number %}
+        <button class="hist-page-btn active">{{ p }}</button>
+      {% elif p == 1 or p == paginator.num_pages or p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+        <a href="?page={{ p }}" class="hist-page-btn">{{ p }}</a>
+      {% elif p == page_obj.number|add:"-3" or p == page_obj.number|add:"3" %}
+        <span class="hist-page-btn" style="cursor:default;opacity:.4">…</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="hist-page-btn">›</a>
+    {% else %}
+    <button class="hist-page-btn" disabled>›</button>
+    {% endif %}
+  </div>
+  <div class="hist-page-info">
+    {{ page_obj.start_index }}–{{ page_obj.end_index }} sur {{ paginator.count }} dossier{% if paginator.count > 1 %}s{% endif %}
+  </div>
+  {% endif %}
 
   {% endif %}
 </div>
 
 <script>
-const PER_PAGE = 10;
-let currentPage = 1;
-let filteredCards = [];
-
 function filtrerDossiers() {
   const q      = document.getElementById('hist-search').value.toLowerCase().trim();
   const status = document.getElementById('hist-filter-status').value;
   const type   = document.getElementById('hist-filter-type').value;
-  const cards  = Array.from(document.querySelectorAll('#hist-grid .hist-card'));
+  const cards  = document.querySelectorAll('#hist-grid .hist-card');
 
-  // Hide all first
-  cards.forEach(c => c.style.display = 'none');
-
-  // Filter
-  filteredCards = cards.filter(card => {
+  let visible = 0;
+  cards.forEach(card => {
     const matchQ = !q ||
       card.dataset.name.includes(q) ||
       card.dataset.client.includes(q) ||
       card.dataset.ref.includes(q);
     const matchS = !status || card.dataset.status === status;
     const matchT = !type   || card.dataset.type   === type;
-    return matchQ && matchS && matchT;
+    const show = matchQ && matchS && matchT;
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
   });
 
-  // Reset to page 1 on filter change
-  currentPage = 1;
-  afficherPage();
-}
-
-function afficherPage() {
-  const total = filteredCards.length;
-  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
-  currentPage = Math.min(currentPage, totalPages);
-
-  const start = (currentPage - 1) * PER_PAGE;
-  const end   = start + PER_PAGE;
-
-  // Show only current page cards
-  filteredCards.forEach((card, i) => {
-    card.style.display = (i >= start && i < end) ? '' : 'none';
-  });
-
-  // Update count
   const countEl = document.getElementById('hist-count');
-  if (countEl) countEl.textContent = total + ' dossier' + (total > 1 ? 's' : '');
+  if (countEl) countEl.textContent = visible + ' dossier' + (visible > 1 ? 's' : '');
 
-  // Empty state
   const emptyFilter = document.getElementById('hist-empty-filter');
-  if (emptyFilter) emptyFilter.style.display = total === 0 ? 'block' : 'none';
-
-  // Render pagination
-  renderPagination(totalPages, total, start, end);
+  if (emptyFilter) emptyFilter.style.display = visible === 0 ? 'block' : 'none';
 }
-
-function renderPagination(totalPages, total, start, end) {
-  const pag  = document.getElementById('hist-pagination');
-  const info = document.getElementById('hist-page-info');
-  if (!pag) return;
-
-  // Hide pagination if only 1 page
-  if (totalPages <= 1) {
-    pag.innerHTML = '';
-    if (info) info.textContent = '';
-    return;
-  }
-
-  let html = '';
-
-  // Prev button
-  html += `<button class="hist-page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
-
-  // Page numbers with ellipsis
-  const pages = [];
-  for (let p = 1; p <= totalPages; p++) {
-    if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
-      pages.push(p);
-    } else if (pages[pages.length - 1] !== '…') {
-      pages.push('…');
-    }
-  }
-
-  pages.forEach(p => {
-    if (p === '…') {
-      html += `<span class="hist-page-btn" style="cursor:default;opacity:.4">…</span>`;
-    } else {
-      html += `<button class="hist-page-btn ${p === currentPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
-    }
-  });
-
-  // Next button
-  html += `<button class="hist-page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
-
-  pag.innerHTML = html;
-
-  // Info line
-  if (info) {
-    const from = total === 0 ? 0 : start + 1;
-    const to   = Math.min(end, total);
-    info.textContent = `${from}–${to} sur ${total} dossier${total > 1 ? 's' : ''}`;
-  }
-}
-
-function goPage(p) {
-  const totalPages = Math.ceil(filteredCards.length / PER_PAGE);
-  if (p < 1 || p > totalPages) return;
-  currentPage = p;
-  afficherPage();
-  // Scroll to top of list
-  document.getElementById('hist-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// Init on load
-document.addEventListener('DOMContentLoaded', () => {
-  filtrerDossiers();
-});
 </script>
 
 {% endblock %}
