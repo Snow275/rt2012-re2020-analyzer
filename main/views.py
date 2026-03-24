@@ -776,13 +776,22 @@ def import_document(request):
 
 def get_tracking_steps(document):
     """Retourne la liste des étapes de suivi avec leur état (done / active / pending)."""
-    steps_def = [
-        ("Dossier reçu et validé",              'recu'),
-        ("Analyse de l'enveloppe thermique",     'en_cours'),
-        ("Vérification systèmes & attestations", 'en_cours'),
-        ("Rédaction du rapport",                 'en_cours'),
-        ("Livraison du rapport PDF",             'termine'),
-    ]
+    if getattr(document, 'type_analyse', 'energie') == 'carbone':
+        steps_def = [
+            ("Dossier reçu et validé",           'recu'),
+            ("Extraction des données carbone",   'en_cours'),
+            ("Analyse des émissions & DPE",      'en_cours'),
+            ("Rédaction du bilan carbone",       'en_cours'),
+            ("Livraison du rapport PDF",         'termine'),
+        ]
+    else:
+        steps_def = [
+            ("Dossier reçu et validé",              'recu'),
+            ("Analyse de l'enveloppe thermique",     'en_cours'),
+            ("Vérification systèmes & attestations", 'en_cours'),
+            ("Rédaction du rapport",                 'en_cours'),
+            ("Livraison du rapport PDF",             'termine'),
+        ]
     order = ['recu', 'en_cours', 'termine']
     current_idx = order.index(document.status)
     result = []
@@ -2500,7 +2509,7 @@ def _analyser_facture_ia(fichier_path):
         pdf_b64 = base64.standard_b64encode(f.read()).decode('utf-8')
 
     resp = client.messages.create(
-        model="claude-opus-4-5",
+        model="claude-haiku-4-5-20251001",
         max_tokens=1200,
         messages=[{
             "role": "user",
