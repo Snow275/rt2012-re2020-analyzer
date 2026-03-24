@@ -735,9 +735,14 @@ def import_document(request):
                 except Exception:
                     texte_complet = ""
 
-            resultat_complet = analyser_rapport_thermique(texte_complet)
-            valeurs = resultat_complet.get('valeurs', {})
-            analyze_document(document, valeurs, resultat_complet)
+            # Pour bilan carbone, on ne parse pas comme un rapport thermique
+            if type_analyse == 'carbone':
+                document.extraction_alertes = []
+                document.save(update_fields=['extraction_alertes'])
+            else:
+                resultat_complet = analyser_rapport_thermique(texte_complet)
+                valeurs = resultat_complet.get('valeurs', {})
+                analyze_document(document, valeurs, resultat_complet)
             send_mail_reception(document)
 
             messages.success(request, "Dossier reçu. Votre lien de suivi a été créé.")
@@ -2690,6 +2695,23 @@ def analyser_document(request, doc_id):
 
     if not texte_complet and not pdf_b64_principal:
         return JsonResponse({'error': 'Aucun document PDF trouvé dans ce dossier'}, status=400)
+
+    # Pour un bilan carbone, on ne lance pas le parser thermique
+    if document.type_analyse == 'carbone':
+        return JsonResponse({
+            'success':              True,
+            'type_rapport':         'bilan_carbone',
+            'type_rapport_label':   'Bilan carbone immobilier',
+            'logiciel_detecte':     None,
+            'version_norme':        None,
+            'norme_appliquee':      None,
+            'nb_valeurs_extraites': 0,
+            'alertes':              [],
+            'conformite_declaree':  'non_applicable',
+            'resume':               "Documents reçus pour bilan carbone. Générez le rapport IA pour lancer l'analyse.",
+            'batiment':             {},
+            'valeurs':              {},
+        })
 
     try:
         resultat = analyser_rapport_thermique(texte_complet, pdf_b64=pdf_b64_principal)
