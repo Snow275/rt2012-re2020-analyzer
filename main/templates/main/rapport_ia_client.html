@@ -115,14 +115,11 @@
       /* Cacher éléments navigation */
       .pub-back, .pdf-btn-wrap, .print-hide { display: none !important; }
 
-      /* Pour bilan carbone : cacher le template web, afficher uniquement le template print */
-      .cb-hero, .cb-kpis, .cb-avis,
-      .cb-section-hd, .cb-score-ring,
-      .risque-card, .levier-item, .levier-horizon,
-      .conf-row, .poste-row, .poste-row-head,
-      .point-fort, .verif-item,
-      .cb-verdict, .cb-resume,
-      [id^="panel-rapport"] .card { display: none !important; }
+      /* Cacher template web carbone — afficher uniquement template print */
+      .screen-only { display: none !important; }
+
+      /* Cacher bouton retour au suivi */
+      a[href*="tracking"] { display: none !important; }
 
       /* Header */
       .pub-header { position: static !important; background: #0C1929 !important; border-bottom: 3px solid #C8A84B !important; padding: .5rem 1.2rem !important; margin-bottom: .5rem; }
@@ -279,6 +276,7 @@
       .cover-verdict { font-size: 1.6rem; font-weight: 700; font-family: 'Playfair Display', serif; }
       .cover-verdict.cv-ok    { color: #27C93F !important; }
       .cover-verdict.cv-ko    { color: #ef5350 !important; }
+      .cover-verdict.cv-mod   { color: #E5A93A !important; }
       .cover-verdict.cv-insuff{ color: #888 !important; }
       .cover-footer {
         background: rgba(200,168,75,.08) !important;
@@ -397,7 +395,7 @@
     {% if rapport %}
     <div class="cover-verdict-wrap">
       <div class="cover-verdict-label">Verdict</div>
-      <div class="cover-verdict {% if rapport.verdict == 'Conforme' %}cv-ok{% elif rapport.verdict == 'Données insuffisantes' %}cv-insuff{% else %}cv-ko{% endif %}">
+      <div class="cover-verdict {% if rapport.verdict == 'Conforme' or 'Faible' in rapport.verdict %}cv-ok{% elif rapport.verdict == 'Données insuffisantes' or 'insuffisantes' in rapport.verdict %}cv-insuff{% elif 'modérée' in rapport.verdict or 'Modérée' in rapport.verdict %}cv-mod{% else %}cv-ko{% endif %}">
         {% if rapport.verdict == 'Conforme' %}✅{% elif rapport.verdict == 'Données insuffisantes' %}⏳{% else %}❌{% endif %}
         {{ rapport.verdict|default:"—" }}
       </div>
@@ -467,7 +465,7 @@
     </button>
   </div>
 
-  {% include "main/rapport_carbone.html" %}
+  <div class="screen-only">{% include "main/rapport_carbone.html" %}</div>
   {% include "main/rapport_carbone_print.html" %}
 
   {% if has_factures %}
