@@ -121,8 +121,194 @@
   .poste-row > *:nth-child(3), .poste-row-head > *:nth-child(3) { display:none; }
 }
 @media print {
-  .cb-hero { background:#f8f8f8 !important; border-color:#ddd !important; }
-  .cb-kpi, .levier-item, .risque-card { background:#fafafa !important; border-color:#ddd !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  /* ── Base ── */
+  body { background:#fff !important; color:#111 !important; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5pt; line-height:1.5; }
+
+  /* ── Cacher éléments web ── */
+  .cb-score-ring, .cb-verdict { display:none !important; }
+
+  /* ── Variables light ── */
+  :root {
+    --green:#16a34a; --red:#dc2626; --blue:#1d4ed8;
+    --gold:#92400e;  --gray1:#4b5563; --gray2:#1f2937;
+    --muted:#6b7280; --white:#111;
+  }
+
+  /* ── Hero → bandeau document ── */
+  .cb-hero {
+    background:#0f2744 !important;
+    border:none !important;
+    border-radius:8px !important;
+    padding:1.2rem 1.6rem !important;
+    margin-bottom:1rem !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:1.5rem !important;
+    page-break-inside:avoid;
+  }
+  .cb-hero h1 { color:#fff !important; font-size:1.15rem !important; margin-bottom:.15rem !important; }
+  .cb-hero > div:last-child > div:first-child { color:rgba(255,255,255,.75) !important; font-size:.8rem !important; }
+  .cb-hero-meta { margin-top:.5rem !important; gap:.4rem .8rem !important; }
+  .cb-meta-pill { color:rgba(255,255,255,.65) !important; font-size:.72rem !important; }
+  .cb-meta-pill strong { color:#fff !important; }
+
+  /* ── Résumé exécutif ── */
+  .card {
+    background:#fff !important;
+    border:1.5px solid #d1d5db !important;
+    border-radius:8px !important;
+    page-break-inside:avoid;
+    margin-bottom:.9rem !important;
+  }
+
+  /* ── KPIs → tableau horizontal ── */
+  .cb-kpis {
+    display:grid !important;
+    grid-template-columns:repeat(4,1fr) !important;
+    gap:.5rem !important;
+    margin-bottom:.9rem !important;
+  }
+  .cb-kpi {
+    background:#f8fafc !important;
+    border:1.5px solid #d1d5db !important;
+    border-radius:8px !important;
+    padding:.7rem .8rem !important;
+    text-align:center !important;
+    page-break-inside:avoid;
+  }
+  .cb-kpi-val { font-size:1.4rem !important; font-weight:700 !important; line-height:1.1 !important; }
+  .cb-kpi-lbl { font-size:.6rem !important; color:#4b5563 !important; text-transform:uppercase !important; letter-spacing:.05em !important; }
+  .cb-kpi-unit { font-size:.6rem !important; color:#6b7280 !important; }
+  .cb-kpi-badge { font-size:.55rem !important; top:.4rem !important; right:.4rem !important; }
+  .badge-ok  { background:#dcfce7 !important; color:#16a34a !important; }
+  .badge-nok { background:#fee2e2 !important; color:#dc2626 !important; }
+
+  /* ── Section headers ── */
+  .cb-section-hd {
+    border-bottom:2px solid #0f2744 !important;
+    margin-bottom:.8rem !important;
+    padding-bottom:.5rem !important;
+    page-break-after:avoid;
+  }
+  .cb-section-hd h3 { color:#0f2744 !important; font-size:.95rem !important; }
+  .cb-section-icon { display:none !important; }
+  .cb-section-hd span { font-size:.65rem !important; color:#6b7280 !important; }
+
+  /* ── Postes d'émission → tableau propre ── */
+  .poste-row-head {
+    background:#0f2744 !important;
+    color:#fff !important;
+    font-size:.65rem !important;
+    padding:.45rem .8rem !important;
+    border-radius:4px 4px 0 0 !important;
+  }
+  .poste-row {
+    padding:.6rem .8rem !important;
+    border-bottom:1px solid #f3f4f6 !important;
+    font-size:.8rem !important;
+  }
+  .poste-row:hover { background:transparent !important; }
+  .niveau-bar { background:#e5e7eb !important; height:5px !important; }
+  .niveau-fill { height:5px !important; }
+  .niveau-pill { font-size:.62rem !important; padding:.12rem .5rem !important; }
+  .niveau-faible { background:#dcfce7 !important; color:#16a34a !important; border-color:#86efac !important; }
+  .niveau-modere { background:#fef3c7 !important; color:#92400e !important; border-color:#fcd34d !important; }
+  .niveau-eleve  { background:#fee2e2 !important; color:#dc2626 !important; border-color:#fca5a5 !important; }
+
+  /* ── Conformité → tableau propre ── */
+  .conf-row {
+    padding:.65rem .8rem !important;
+    border-bottom:1px solid #f3f4f6 !important;
+    font-size:.82rem !important;
+  }
+  .conf-row:last-child { border-bottom:none !important; }
+  .conf-statut { font-size:.65rem !important; padding:.15rem .55rem !important; }
+  .conf-ok  { background:#dcfce7 !important; color:#16a34a !important; border-color:#86efac !important; }
+  .conf-nok { background:#fee2e2 !important; color:#dc2626 !important; border-color:#fca5a5 !important; }
+  .conf-na  { background:#f3f4f6 !important; color:#6b7280 !important; border-color:#d1d5db !important; }
+  .conf-nv  { background:#fef3c7 !important; color:#92400e !important; border-color:#fcd34d !important; }
+
+  /* ── Leviers → liste numérotée propre ── */
+  .levier-horizon { margin-bottom:1rem !important; }
+  .levier-horizon-label { margin-bottom:.5rem !important; }
+  .levier-dot { display:none !important; }
+  .levier-title { font-size:.8rem !important; font-weight:700 !important; color:#0f2744 !important; text-transform:uppercase !important; letter-spacing:.05em !important; }
+  .levier-item {
+    background:#f9fafb !important;
+    border:1px solid #e5e7eb !important;
+    border-radius:6px !important;
+    padding:.65rem .9rem !important;
+    margin-bottom:.4rem !important;
+    page-break-inside:avoid;
+  }
+  .levier-num {
+    background:#0f2744 !important;
+    color:#fff !important;
+    font-size:.65rem !important;
+    width:20px !important; height:20px !important;
+  }
+  .levier-gain { color:#16a34a !important; font-size:.75rem !important; font-weight:700 !important; }
+  .impact-eleve  { background:#dcfce7 !important; color:#16a34a !important; }
+  .impact-modere { background:#fef3c7 !important; color:#92400e !important; }
+  .impact-faible { background:#eff6ff !important; color:#1d4ed8 !important; }
+
+  /* ── Risques ── */
+  .risque-card { page-break-inside:avoid; margin-bottom:.6rem !important; padding:.9rem 1.1rem !important; }
+  .risque-card.eleve  { background:#fff1f2 !important; border-color:#fca5a5 !important; border-left-color:#dc2626 !important; }
+  .risque-card.modere { background:#fffbeb !important; border-color:#fcd34d !important; border-left-color:#92400e !important; }
+  .risque-card.faible { background:#eff6ff !important; border-color:#bfdbfe !important; border-left-color:#1d4ed8 !important; }
+  .rb-eleve  { background:#fee2e2 !important; color:#dc2626 !important; }
+  .rb-modere { background:#fef3c7 !important; color:#92400e !important; }
+  .rb-faible { background:#eff6ff !important; color:#1d4ed8 !important; }
+  .risque-badge { font-size:.62rem !important; }
+
+  /* ── Points forts ── */
+  .point-fort { padding:.5rem 0 !important; border-bottom:1px solid #f3f4f6 !important; }
+  .point-fort:last-child { border-bottom:none !important; }
+  .pf-check { background:#dcfce7 !important; border-color:#86efac !important; width:16px !important; height:16px !important; }
+  .point-fort span { font-size:.82rem !important; color:#1f2937 !important; }
+
+  /* ── Vérifications ── */
+  .verif-item { font-size:.82rem !important; color:#1f2937 !important; padding:.45rem 0 !important; border-bottom:1px solid #f3f4f6 !important; }
+  .verif-item:last-child { border-bottom:none !important; }
+
+  /* ── Avis indépendant ── */
+  .cb-avis {
+    background:#f0fdf4 !important;
+    border:1.5px solid #86efac !important;
+    border-left:4px solid #16a34a !important;
+    border-radius:8px !important;
+    padding:1.1rem 1.4rem !important;
+    page-break-inside:avoid;
+  }
+  .cb-avis p { color:#1f2937 !important; font-size:.86rem !important; line-height:1.7 !important; }
+
+  /* ── Textes globaux ── */
+  [style*="color:var(--gray1)"] { color:#4b5563 !important; }
+  [style*="color:var(--gray2)"] { color:#1f2937 !important; }
+  [style*="color:var(--white)"] { color:#111 !important; }
+  [style*="color:var(--gold)"]  { color:#92400e !important; }
+  [style*="color:var(--green)"] { color:#16a34a !important; }
+  [style*="color:var(--red)"]   { color:#dc2626 !important; }
+  [style*="color:var(--blue)"]  { color:#1d4ed8 !important; }
+  [style*="color:#E5A93A"]      { color:#92400e !important; }
+  [style*="color:#4ade80"]      { color:#16a34a !important; }
+
+  /* ── Mentions légales ── */
+  [style*="rgba(255,255,255,.02)"] {
+    background:#f9fafb !important;
+    border-color:#e5e7eb !important;
+    border-radius:6px !important;
+    font-size:.72rem !important;
+    color:#4b5563 !important;
+  }
+
+  /* ── Sauts de page ── */
+  .cb-kpis       { page-break-inside:avoid; }
+  h3             { page-break-after:avoid; }
+  .cb-section-hd { page-break-after:avoid; }
 }
 </style>
 
