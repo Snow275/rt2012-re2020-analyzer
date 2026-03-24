@@ -665,8 +665,8 @@ def faq(request):
         {
             "question": "Quel est le délai de livraison ?",
             "answer": (
-                "Nous garantissons la livraison du rapport sous 10 jours ouvrés après réception d'un dossier complet. "
-                "Ce délai est affiché sur votre lien de suivi dès la réception du dossier."
+                "Nous garantissons la livraison du rapport sous 10 jours ouvrés après validation du devis et réception du paiement. "
+                "Ce délai est affiché sur votre lien de suivi dès le démarrage de l'analyse."
             ),
         },
         {
@@ -913,8 +913,16 @@ def results(request):
 
 @login_required(login_url='/login/')
 def history(request):
-    documents = Document.objects.all().order_by('-upload_date')
-    return render(request, 'main/history.html', {'documents': documents})
+    from django.core.paginator import Paginator
+    documents_qs = Document.objects.all().order_by('-upload_date')
+    paginator = Paginator(documents_qs, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'main/history.html', {
+        'documents': page_obj,
+        'paginator': paginator,
+        'page_obj': page_obj,
+    })
 
 
 @login_required(login_url='/login/')
