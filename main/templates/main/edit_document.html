@@ -1197,22 +1197,87 @@ select.f-input option { background: #0c1929; }
         </button>
         {% endif %}
         
-        {% if request.user.is_staff %}
-
-             {% if document.dpe_classe_energie and document.dpe_conso_ep %}
-                 <h3>Étiquette DPE</h3>
-                 <img src="https://www.outils.immo/outils-immo.php?type=dpe&modele=2021&lettre={{ document.dpe_classe_energie|lower }}&valeur={{ document.dpe_conso_ep }}">
-             {% endif %}
-
-             {% if document.dpe_classe_ges and document.dpe_emission_ges %}
-                 <h3>Étiquette GES</h3>
-                 <img src="https://www.outils.immo/outils-immo.php?type=ges&modele=2021&lettre={{ document.dpe_classe_ges|lower }}&valeur={{ document.dpe_emission_ges }}">
-             {% endif %}
-
+        {% if document.rapport_ia_json %}
+        <button onclick="imprimerRapport()" title="Imprimer"
+          style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:var(--gray-2);font-size:.78rem;cursor:pointer;font-family:inherit">
+          🖨 Imprimer
+        </button>
+        <button onclick="copierResume()" id="btn-copy-resume" title="Copier le résumé"
+          style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:var(--gray-2);font-size:.78rem;cursor:pointer;font-family:inherit">
+          📋 Copier
+        </button>
+        {% if document.rapport_pdf %}
+        <a href="{{ document.rapport_pdf.url }}" download
+          style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);border-radius:7px;color:var(--gold);font-size:.78rem;text-decoration:none">
+          ⬇ PDF
+        </a>
         {% endif %}
-         
+        {% endif %}
+
+        {% if request.user.is_staff %}
+          {% if document.dpe_classe_energie and document.dpe_conso_ep %}
+            <img src="https://www.outils.immo/outils-immo.php?type=dpe&modele=2021&lettre={{ document.dpe_classe_energie|lower }}&valeur={{ document.dpe_conso_ep }}" style="height:42px">
+          {% endif %}
+          {% if document.dpe_classe_ges and document.dpe_emission_ges %}
+            <img src="https://www.outils.immo/outils-immo.php?type=ges&modele=2021&lettre={{ document.dpe_classe_ges|lower }}&valeur={{ document.dpe_emission_ges }}" style="height:42px">
+          {% endif %}
+        {% endif %}
         </div>
         </div>
+
+    {# ── Résumé serveur-side : toujours visible au rechargement ── #}
+    {% if rapport_ia_verdict %}
+    <div id="rapport-serverside-summary" style="margin-bottom:1.4rem;padding:1.2rem 1.4rem;border-radius:10px;
+      {% if 'Conforme' in rapport_ia_verdict or 'Faible empreinte' in rapport_ia_verdict or 'Bon état' in rapport_ia_verdict %}
+        background:rgba(39,201,63,.06);border:1px solid rgba(39,201,63,.2)
+      {% elif 'Non conforme' in rapport_ia_verdict or 'Élevée' in rapport_ia_verdict %}
+        background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.2)
+      {% else %}
+        background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.15)
+      {% endif %}
+      ">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:{% if rapport_ia_resume %}.9rem{% else %}0{% endif %}">
+        <div style="display:flex;align-items:center;gap:.9rem">
+          <div style="font-size:1.8rem">
+            {% if 'Conforme' in rapport_ia_verdict or 'Faible empreinte' in rapport_ia_verdict or 'Bon état' in rapport_ia_verdict %}✅
+            {% elif 'Non conforme' in rapport_ia_verdict or 'Élevée' in rapport_ia_verdict %}❌
+            {% else %}⚠️{% endif %}
+          </div>
+          <div>
+            <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-1);margin-bottom:.3rem">Verdict de l'analyse IA</div>
+            <div style="font-size:1.05rem;font-weight:700;font-family:'Playfair Display',serif;
+              {% if 'Conforme' in rapport_ia_verdict or 'Faible empreinte' in rapport_ia_verdict %}color:#27c93f
+              {% elif 'Non conforme' in rapport_ia_verdict or 'Élevée' in rapport_ia_verdict %}color:#ef5350
+              {% else %}color:var(--gold){% endif %}">
+              {{ rapport_ia_verdict }}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          {% if rapport_ia_score is not None %}
+          <div style="text-align:center">
+            <div style="font-size:.6rem;color:var(--gray-1);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Score</div>
+            <div style="font-size:1.8rem;font-weight:700;font-family:'Playfair Display',serif;
+              {% if rapport_ia_score >= 70 %}color:#27c93f{% elif rapport_ia_score >= 40 %}color:#E5A93A{% else %}color:#ef5350{% endif %}">
+              {{ rapport_ia_score }}<span style="font-size:.9rem;color:var(--gray-1)">/100</span>
+            </div>
+          </div>
+          {% endif %}
+          {% if rapport_ia_fiabilite %}
+          <div style="padding:.3rem .8rem;border-radius:99px;font-size:.72rem;font-weight:600;
+            {% if rapport_ia_fiabilite == 'Élevée' %}background:rgba(39,201,63,.1);border:1px solid rgba(39,201,63,.3);color:#27c93f
+            {% elif rapport_ia_fiabilite == 'Moyenne' %}background:rgba(229,169,58,.1);border:1px solid rgba(229,169,58,.3);color:#E5A93A
+            {% else %}background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.3);color:#ef5350{% endif %}">
+            Fiabilité {{ rapport_ia_fiabilite }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% if rapport_ia_resume %}
+      <div style="font-size:.84rem;color:var(--gray-2);line-height:1.65;border-top:1px solid rgba(255,255,255,.06);padding-top:.9rem" id="resume-serverside">{{ rapport_ia_resume }}</div>
+      {% endif %}
+    </div>
+    {% endif %}
 
     <!-- Barre de progression -->
     <div id="progress-bar-wrap" class="progress-wrap">
@@ -1767,7 +1832,7 @@ select.f-input option { background: #0c1929; }
 <!-- ══════════════════════════════════════════════════════
      JAVASCRIPT
 ══════════════════════════════════════════════════════ -->
-<script id="rapport-ia-data" type="application/json">{{ document.rapport_ia_json|default:"null" }}</script>
+<script id="rapport-ia-data" type="application/json">{{ document.rapport_ia_json|safe|default:"null" }}</script>
 <script>
 const DOC_ID          = {{ document.id }};
 const TYPE_ANALYSE    = "{{ document.type_analyse }}";
@@ -1775,11 +1840,10 @@ const RAPPORT_SAUVEGARDE = (function() {
   try {
     var raw = document.getElementById('rapport-ia-data').textContent.trim();
     if (!raw || raw === 'null') return null;
-    raw = raw.replace(/(\d),(\d)/g, '$1.$2');
     return JSON.parse(raw);
   } catch(e) {
-    console.warn('Rapport IA JSON invalide:', e.message);
-    return null;
+    console.warn('Rapport IA JSON invalide — rechargement depuis serveur:', e.message);
+    return '__FETCH__';
   }
 })();
 var rapportDejaRendu  = false;
@@ -1799,9 +1863,15 @@ function showTab(name) {
       btn.classList.remove('tab-btn--active');
     }
   });
-  if (name === 'rapport-ia' && RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
-    afficherRapport(RAPPORT_SAUVEGARDE);
-    rapportDejaRendu = true;
+  if (name === 'rapport-ia' && !rapportDejaRendu) {
+    if (RAPPORT_SAUVEGARDE && RAPPORT_SAUVEGARDE !== '__FETCH__') {
+      afficherRapport(RAPPORT_SAUVEGARDE);
+      rapportDejaRendu = true;
+    } else if (RAPPORT_SAUVEGARDE === '__FETCH__') {
+      fetch(`/dossier/${DOC_ID}/rapport-ia/`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json()).then(d => { if (d.success && d.rapport) { afficherRapport(d.rapport); rapportDejaRendu = true; } })
+        .catch(() => {});
+    }
   }
   if (name === 'factures' && !facInitDone) {
     facInitDone = true;
@@ -1809,12 +1879,65 @@ function showTab(name) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  if (RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
+document.addEventListener('DOMContentLoaded', async function () {
+  if (RAPPORT_SAUVEGARDE === '__FETCH__') {
+    // JSON corrompu dans le HTML → recharger depuis le serveur
+    try {
+      const r = await fetch(`/dossier/${DOC_ID}/rapport-ia/`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      const d = await r.json();
+      if (d.success && d.rapport) {
+        afficherRapport(d.rapport);
+        rapportDejaRendu = true;
+      }
+    } catch(e) { console.warn('Fallback fetch rapport échoué:', e); }
+  } else if (RAPPORT_SAUVEGARDE && !rapportDejaRendu) {
     afficherRapport(RAPPORT_SAUVEGARDE);
     rapportDejaRendu = true;
   }
 });
+
+// ── Imprimer / Copier rapport ────────────────────────────
+function imprimerRapport() {
+  const zone = document.getElementById('rapport-content');
+  if (!zone || zone.style.display === 'none') { alert('Aucun rapport à imprimer.'); return; }
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="utf-8"><title>Rapport IA — {{ document.name|escapejs }}</title>
+    <style>
+      body{font-family:sans-serif;padding:2rem;color:#111;max-width:800px;margin:auto}
+      h1{font-size:1.4rem;margin-bottom:.3rem}
+      h2{font-size:1rem;margin:1.4rem 0 .5rem;border-bottom:1px solid #ddd;padding-bottom:.3rem}
+      table{width:100%;border-collapse:collapse;margin:.7rem 0}
+      th,td{border:1px solid #ddd;padding:.5rem .7rem;font-size:.85rem;text-align:left}
+      th{background:#f5f5f5}
+      .verdict{font-size:1.2rem;font-weight:700;margin:.5rem 0}
+      @media print{body{padding:.5rem}}
+    </style></head><body>
+    <h1>Rapport d'analyse IA — {{ document.name|escapejs }}</h1>
+    <p style="color:#666;font-size:.85rem">Généré le ${new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}</p>
+    ${zone.innerHTML}
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 500);
+}
+
+function copierResume() {
+  let texte = '';
+  const sr = document.getElementById('resume-serverside');
+  const vd = document.getElementById('verdict-text');
+  const re = document.getElementById('resume-executif');
+  if (vd) texte += 'Verdict : ' + vd.textContent.trim() + '\n\n';
+  const resumeEl = (re && re.textContent.trim()) ? re : sr;
+  if (resumeEl) texte += resumeEl.textContent.trim();
+  if (!texte) { alert('Aucun résumé disponible.'); return; }
+  navigator.clipboard.writeText(texte).then(() => {
+    const btn = document.getElementById('btn-copy-resume');
+    const orig = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '✅ Copié !'; btn.style.color = '#27c93f'; }
+    setTimeout(() => { if (btn) { btn.innerHTML = orig; btn.style.color = ''; } }, 2000);
+  }).catch(() => { alert('Impossible de copier — sélectionnez et copiez manuellement.'); });
+}
 
 // ── Modal devis ──────────────────────────────────────────
 function ouvrirModalDevis() { document.getElementById('modal-devis').style.display = 'flex'; }
@@ -2025,6 +2148,9 @@ async function genererRapportIA(force) {
 // ── Rendu du rapport ──────────────────────────────────────
 
 function afficherRapport(r) {
+  // Masquer le résumé serveur-side puisque JS va afficher le rapport complet
+  const sss = document.getElementById('rapport-serverside-summary');
+  if (sss) sss.style.display = 'none';
   const el = id => document.getElementById(id);
   const show = id => { const e = el(id); if (e) e.style.display = 'block'; };
   const hide = id => { const e = el(id); if (e) e.style.display = 'none'; };

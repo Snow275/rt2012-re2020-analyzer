@@ -1191,6 +1191,23 @@ def edit_document(request, doc_id):
         messages.success(request, f'Dossier « {document.name} » mis à jour.')
         return redirect('edit_document', doc_id=doc_id)
 
+    # ── Pré-parser le rapport IA pour rendu serveur-side ──
+    import json as _json
+    rapport_ia = None
+    rapport_ia_verdict = None
+    rapport_ia_score   = None
+    rapport_ia_resume  = None
+    rapport_ia_fiabilite = None
+    if document.rapport_ia_json:
+        try:
+            rapport_ia = _json.loads(document.rapport_ia_json)
+            rapport_ia_verdict   = rapport_ia.get('verdict') or rapport_ia.get('verdict_technique') or rapport_ia.get('verdict_energie')
+            rapport_ia_score     = rapport_ia.get('score_global')
+            rapport_ia_resume    = rapport_ia.get('resume_executif') or ''
+            rapport_ia_fiabilite = rapport_ia.get('fiabilite_rapport')
+        except Exception:
+            rapport_ia = None
+
     return render(request, 'main/edit_document.html', {
         'document':        document,
         'status_choices':  STATUS_CHOICES,
@@ -1199,6 +1216,11 @@ def edit_document(request, doc_id):
         'norme_fields':    norme_fields,
         'all_norme_fields': ALL_NORME_FIELDS,
         'norme_choices':   Document.NORME_CHOICES,
+        'rapport_ia':          rapport_ia,
+        'rapport_ia_verdict':  rapport_ia_verdict,
+        'rapport_ia_score':    rapport_ia_score,
+        'rapport_ia_resume':   rapport_ia_resume,
+        'rapport_ia_fiabilite':rapport_ia_fiabilite,
         'email_steps': [
             ('1', '#60a5fa', 'rgba(59,130,246,.12)',  'Confirmation réception',       'Confirmer la réception du dossier',      'reception'),
             ('2', '#c8a84b', 'rgba(200,168,75,.12)',  'Envoi du devis',               "Devis avec bouton d'acceptation",        'devis'),
