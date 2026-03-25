@@ -386,7 +386,7 @@ def analyser_rapport_thermique(texte, pdf_b64=None):
             })
 
         payload = json.dumps({
-            "model": "claude-sonnet-4-5",
+            "model": "claude-sonnet-4-5-20251022",
             "max_tokens": 4000,
             "messages": [{"role": "user", "content": user_content}],
         }).encode('utf-8')
@@ -1397,7 +1397,7 @@ Si tout est à jour, "modifications" sera [] et "a_jour" sera true."""
 
     try:
         payload = json.dumps({
-            "model": "claude-sonnet-4-5",
+            "model": "claude-sonnet-4-5-20251022",
             "max_tokens": 1500,
             "messages": [{"role": "user", "content": prompt}],
         }).encode('utf-8')
@@ -2515,7 +2515,7 @@ N'invente aucune valeur. Si une donnée est absente, indique "Non disponible" da
     # ── 7. Appel API Claude ───────────────────────────────────
     try:
         payload = json.dumps({
-            "model": "claude-sonnet-4-5",
+            "model": "claude-sonnet-4-5-20251022",
             "max_tokens": 8000,
             "system": system_prompt,
             "messages": [{"role": "user", "content": user_content}],
