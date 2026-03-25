@@ -255,25 +255,30 @@
 
   {% else %}
 
-  <!-- Toolbar -->
-  <div class="hist-toolbar fade-up">
-    <input class="hist-search" type="text" id="hist-search" placeholder="Rechercher un dossier, client…" oninput="filtrerDossiers()">
-    <select class="hist-filter" id="hist-filter-status" onchange="filtrerDossiers()">
+  <!-- Toolbar — recherche + filtres serveur-side -->
+  <form method="get" action="{% url 'history' %}" class="hist-toolbar fade-up" id="hist-form">
+    <input class="hist-search" type="text" name="q" id="hist-search"
+           value="{{ q }}" placeholder="Rechercher un dossier, client…">
+    <select class="hist-filter" name="status" id="hist-filter-status" onchange="document.getElementById('hist-form').submit()">
       <option value="">Tous les statuts</option>
-      <option value="recu">Reçu</option>
-      <option value="en_cours">En cours</option>
-      <option value="termine">Terminé</option>
+      <option value="recu"     {% if filtre_status == 'recu' %}selected{% endif %}>Reçu</option>
+      <option value="en_cours" {% if filtre_status == 'en_cours' %}selected{% endif %}>En cours</option>
+      <option value="termine"  {% if filtre_status == 'termine' %}selected{% endif %}>Terminé</option>
     </select>
-    <select class="hist-filter" id="hist-filter-type" onchange="filtrerDossiers()">
+    <select class="hist-filter" name="type" id="hist-filter-type" onchange="document.getElementById('hist-form').submit()">
       <option value="">Tous les types</option>
-      <option value="energie">Validation thermique</option>
-      <option value="carbone">Bilan carbone</option>
+      <option value="energie" {% if filtre_type == 'energie' %}selected{% endif %}>Validation thermique</option>
+      <option value="carbone" {% if filtre_type == 'carbone' %}selected{% endif %}>Bilan carbone</option>
     </select>
+    <button type="submit" class="hist-btn" title="Rechercher" style="width:auto;padding:0 .8rem;font-size:.78rem;color:var(--gold);border-color:rgba(200,168,75,.3);background:rgba(200,168,75,.05);white-space:nowrap">🔍</button>
+    {% if q or filtre_status or filtre_type %}
+    <a href="{% url 'history' %}" class="hist-btn" title="Réinitialiser" style="width:auto;padding:0 .8rem;font-size:.78rem;white-space:nowrap">✕</a>
+    {% endif %}
     <span class="hist-count" id="hist-count">{{ paginator.count }} dossier{% if paginator.count > 1 %}s{% endif %}</span>
     <a href="{% url 'export_csv_history' %}" class="hist-btn" title="Exporter en CSV" style="width:auto;padding:0 .8rem;gap:.4rem;display:flex;align-items:center;font-size:.78rem;color:var(--gold);border-color:rgba(200,168,75,.3);background:rgba(200,168,75,.05);white-space:nowrap;text-decoration:none">
       ⬇ CSV
     </a>
-  </div>
+  </form>
 
   <!-- Liste -->
   <div class="hist-grid fade-up-2" id="hist-grid">
@@ -296,10 +301,10 @@
           <span>{{ doc.upload_date|date:"d/m/Y" }}</span>
           {% if doc.type_analyse == 'carbone' %}
           <span class="sep">·</span>
-          <span class="hist-type carbone">🌿 Bilan carbone</span>
+          <span class="hist-type-wrap"><span class="hist-type carbone">🌿 Bilan carbone</span></span>
           {% elif doc.norme %}
           <span class="sep">·</span>
-          <span class="hist-type energie">{{ doc.norme }}</span>
+          <span class="hist-type-wrap"><span class="hist-type energie">{{ doc.norme }}</span></span>
           {% endif %}
         </div>
       </div>
@@ -335,17 +340,19 @@
     {% endfor %}
   </div>
 
-  <div id="hist-empty-filter" style="display:none" class="hist-empty">
+  {% if not documents %}
+  <div class="hist-empty">
     <div style="font-size:2rem;margin-bottom:.8rem">🔍</div>
     <div style="color:var(--white);font-size:.95rem">Aucun résultat</div>
     <p style="font-size:.82rem;margin-top:.4rem">Modifiez vos filtres de recherche.</p>
   </div>
+  {% endif %}
 
   <!-- Pagination Django -->
   {% if page_obj.has_other_pages %}
   <div class="hist-pagination">
     {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="hist-page-btn">‹</a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if filtre_status %}&status={{ filtre_status }}{% endif %}{% if filtre_type %}&type={{ filtre_type }}{% endif %}" class="hist-page-btn">‹</a>
     {% else %}
     <button class="hist-page-btn" disabled>‹</button>
     {% endif %}
@@ -354,14 +361,14 @@
       {% if p == page_obj.number %}
         <button class="hist-page-btn active">{{ p }}</button>
       {% elif p == 1 or p == paginator.num_pages or p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
-        <a href="?page={{ p }}" class="hist-page-btn">{{ p }}</a>
+        <a href="?page={{ p }}{% if q %}&q={{ q }}{% endif %}{% if filtre_status %}&status={{ filtre_status }}{% endif %}{% if filtre_type %}&type={{ filtre_type }}{% endif %}" class="hist-page-btn">{{ p }}</a>
       {% elif p == page_obj.number|add:"-3" or p == page_obj.number|add:"3" %}
         <span class="hist-page-btn" style="cursor:default;opacity:.4">…</span>
       {% endif %}
     {% endfor %}
 
     {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}" class="hist-page-btn">›</a>
+    <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if filtre_status %}&status={{ filtre_status }}{% endif %}{% if filtre_type %}&type={{ filtre_type }}{% endif %}" class="hist-page-btn">›</a>
     {% else %}
     <button class="hist-page-btn" disabled>›</button>
     {% endif %}
@@ -375,31 +382,10 @@
 </div>
 
 <script>
-function filtrerDossiers() {
-  const q      = document.getElementById('hist-search').value.toLowerCase().trim();
-  const status = document.getElementById('hist-filter-status').value;
-  const type   = document.getElementById('hist-filter-type').value;
-  const cards  = document.querySelectorAll('#hist-grid .hist-card');
-
-  let visible = 0;
-  cards.forEach(card => {
-    const matchQ = !q ||
-      card.dataset.name.includes(q) ||
-      card.dataset.client.includes(q) ||
-      card.dataset.ref.includes(q);
-    const matchS = !status || card.dataset.status === status;
-    const matchT = !type   || card.dataset.type   === type;
-    const show = matchQ && matchS && matchT;
-    card.style.display = show ? '' : 'none';
-    if (show) visible++;
-  });
-
-  const countEl = document.getElementById('hist-count');
-  if (countEl) countEl.textContent = visible + ' dossier' + (visible > 1 ? 's' : '');
-
-  const emptyFilter = document.getElementById('hist-empty-filter');
-  if (emptyFilter) emptyFilter.style.display = visible === 0 ? 'block' : 'none';
-}
+// Soumission auto sur Enter dans le champ de recherche
+document.getElementById('hist-search').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('hist-form').submit(); }
+});
 </script>
 
 {% endblock %}

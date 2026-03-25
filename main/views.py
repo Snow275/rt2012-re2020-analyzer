@@ -10,8 +10,9 @@ from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings
-from django.conf import settings as django_settings
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.core.paginator import Paginator
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -24,6 +25,11 @@ import PyPDF2
 import re
 import threading
 import base64
+import json
+import csv
+import calendar
+from datetime import timedelta, date
+from collections import defaultdict
 
 
 # ──────────────────────────────────────────────────────────────
@@ -50,7 +56,7 @@ def _send_html_async(sujet, template_name, context, destinataire):
             html = render_to_string(f'main/emails/{template_name}', context)
             sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
             message = Mail(
-                from_email=django_settings.DEFAULT_FROM_EMAIL,
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 to_emails=destinataire,
                 subject=sujet,
                 html_content=html,
@@ -350,7 +356,6 @@ def analyser_rapport_thermique(texte, pdf_b64=None):
     extrait toutes les valeurs et génère des alertes de cohérence.
     Retourne un dict avec type_rapport, valeurs, alertes, métadonnées.
     """
-    import json
     import os
     import urllib.request
     import urllib.error
@@ -595,8 +600,8 @@ def contact(request):
                         f"Profil : {form.cleaned_data.get('profile', 'N/A')}\n\n"
                         f"Message :\n{form.cleaned_data['message']}"
                     ),
-                    from_email=django_settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[django_settings.CONTACT_EMAIL],
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[settings.CONTACT_EMAIL],
                     fail_silently=True,
                 )
             except Exception:
@@ -824,8 +829,16 @@ def tracking(request, token):
     # Marquer les messages admin comme lus par le client
     document.messages.filter(auteur='admin', lu_client=False).update(lu_client=True)
 
+    # Extraire le score IA depuis le rapport sauvegardé
     rapport_ia_score = None
-    rapport_ia_score_offset = 201
+    if document.rapport_ia_json:
+        try:
+            rapport_ia_data = json.loads(document.rapport_ia_json)
+            rapport_ia_score = rapport_ia_data.get('score_global')
+        except Exception:
+            pass
+    # Offset SVG pour le cercle de score (circumference ≈ 201 pour r=32)
+    score_ring_offset = round(201 * (1 - (rapport_ia_score or 0) / 100), 1) if rapport_ia_score is not None else 201
 
     return render(request, 'main/tracking.html', {
         'document': document,
@@ -833,7 +846,7 @@ def tracking(request, token):
         'progress_pct': progress_pct,
         'devis_accepte': devis_accepte,
         'rapport_ia_score': rapport_ia_score,
-        'rapport_ia_score_offset': rapport_ia_score_offset,
+        'rapport_ia_score_offset': score_ring_offset,
     })
 
 
@@ -845,9 +858,6 @@ def tracking(request, token):
 def home(request):
     if not request.user.is_staff:
         return redirect('landing')
-
-    from django.utils import timezone
-    from datetime import timedelta
 
     documents = Document.objects.filter(is_active=True).order_by('-upload_date')
 
@@ -872,26 +882,23 @@ def home(request):
         devis_en_attente = 0
 
     # ── Stats mensuelles (6 derniers mois) ──────────────────
-    from datetime import date
-    import calendar
     monthly_data = []
     today = timezone.now().date()
     for i in range(5, -1, -1):
-        year  = (today.replace(day=1) - timedelta(days=i * 28)).year
-        month = (today.replace(day=1) - timedelta(days=i * 28)).month
-        _, last_day = calendar.monthrange(year, month)
+        # Arithmétique correcte par mois (pas d'approximation en jours)
+        month = (today.month - i - 1) % 12 + 1
+        year  = today.year + ((today.month - i - 1) // 12)
         count = documents.filter(
             upload_date__year=year,
             upload_date__month=month,
         ).count()
         monthly_data.append({
-            'label': f"{['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][month-1]}",
+            'label': ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][month - 1],
             'count': count,
         })
     max_monthly = max((m['count'] for m in monthly_data), default=1) or 1
 
     # ── Conformité par norme ─────────────────────────────────
-    from collections import defaultdict
     norme_stats = defaultdict(lambda: {'total': 0, 'conformes': 0})
     for doc in documents.filter(status='termine'):
         n = doc.norme or ('Carbone' if doc.type_analyse == 'carbone' else '—')
@@ -956,22 +963,41 @@ def results(request):
 
 @login_required(login_url='/login/')
 def history(request):
-    from django.core.paginator import Paginator
-    documents_qs = Document.objects.all().order_by('-upload_date')
-    paginator = Paginator(documents_qs, 10)
+    qs = Document.objects.filter(is_active=True).order_by('-upload_date')
+
+    # ── Filtres serveur-side (couvrent toutes les pages) ──
+    q = request.GET.get('q', '').strip()
+    filtre_status = request.GET.get('status', '')
+    filtre_type   = request.GET.get('type', '')
+
+    if q:
+        from django.db.models import Q
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(client_name__icontains=q) |
+            Q(client_email__icontains=q)
+        )
+    if filtre_status:
+        qs = qs.filter(status=filtre_status)
+    if filtre_type:
+        qs = qs.filter(type_analyse=filtre_type)
+
+    paginator = Paginator(qs, 20)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
+
     return render(request, 'main/history.html', {
-        'documents': page_obj,
-        'paginator': paginator,
-        'page_obj': page_obj,
+        'documents':      page_obj,
+        'paginator':      paginator,
+        'page_obj':       page_obj,
+        'q':              q,
+        'filtre_status':  filtre_status,
+        'filtre_type':    filtre_type,
     })
 
 
 @login_required(login_url='/login/')
 def export_csv_history(request):
-    import csv
-    from django.http import HttpResponse
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="dossiers_conformexpert.csv"'
     response.write('\ufeff')
@@ -1192,7 +1218,6 @@ def edit_document(request, doc_id):
         return redirect('edit_document', doc_id=doc_id)
 
     # ── Pré-parser le rapport IA pour rendu serveur-side ──
-    import json as _json
     rapport_ia = None
     rapport_ia_verdict = None
     rapport_ia_score   = None
@@ -1200,7 +1225,7 @@ def edit_document(request, doc_id):
     rapport_ia_fiabilite = None
     if document.rapport_ia_json:
         try:
-            rapport_ia = _json.loads(document.rapport_ia_json)
+            rapport_ia = json.loads(document.rapport_ia_json)
             rapport_ia_verdict   = rapport_ia.get('verdict') or rapport_ia.get('verdict_technique') or rapport_ia.get('verdict_energie')
             rapport_ia_score     = rapport_ia.get('score_global')
             rapport_ia_resume    = rapport_ia.get('resume_executif') or ''
@@ -1299,7 +1324,6 @@ def delete_document(request, doc_id):
 
 @csrf_exempt
 def verifier_seuils(request):
-    import json
     import os
     import urllib.request
     import urllib.error
@@ -1448,7 +1472,6 @@ def download_rapport_word(request, doc_id):
 def download_report(request, document_id):
     """Génère et renvoie le rapport PDF ReportLab complet."""
     from io import BytesIO
-    from datetime import date
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm
@@ -2225,7 +2248,6 @@ def generer_rapport_ia(request, doc_id):
     POST             → génère via Claude, sauvegarde en BDD et retourne le JSON
     POST ?force=1    → force la régénération même si déjà sauvegardé
     """
-    import json
     import os
     import urllib.request
     import urllib.error
@@ -2538,14 +2560,12 @@ N'invente aucune valeur. Si une donnée est absente, indique "Non disponible" da
 
 def rapport_ia_client(request, token):
     """Page publique rapport IA — accessible via lien de suivi, sans login."""
-    import json as _json
-
     document = get_object_or_404(Document, tracking_token=token, status='termine')
     rapport = None
 
     if document.rapport_ia_json:
         try:
-            rapport = _json.loads(document.rapport_ia_json)
+            rapport = json.loads(document.rapport_ia_json)
         except Exception:
             rapport = None
 
@@ -2612,7 +2632,6 @@ Pour le gaz : convertis en kWh équivalent si possible (1 m³ ≈ 10.55 kWh).
 
 def _analyser_facture_ia(fichier_path):
     """Envoie un PDF de facture à Claude et retourne le dict extrait."""
-    import json
     import anthropic
 
     client = anthropic.Anthropic()
@@ -2931,8 +2950,6 @@ def api_report(request, pk):
 @login_required(login_url='/login/')
 def devis_list(request):
     from django.db.models import Sum
-    from datetime import date
-    import calendar
 
     current_statut = request.GET.get('statut', '')
     qs = Devis.objects.all()

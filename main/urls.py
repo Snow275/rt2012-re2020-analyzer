@@ -31,8 +31,7 @@ urlpatterns = [
     path('dossier/<int:doc_id>/rapport-word/', views.download_rapport_word, name='download_rapport_word'),
     path('dossier/<int:doc_id>/supprimer/',    views.delete_document,    name='delete_document'),
     path('dossier/<int:doc_id>/rapport-ia/',   views.generer_rapport_ia, name='generer_rapport_ia'),
-    path('dossier/<int:doc_id>/analyser/',     views.analyser_document,  name='analyser_document'),   # ← NOUVEAU
-    path('download_report/<int:document_id>/', views.download_report,    name='download_report_admin'),
+    path('dossier/<int:doc_id>/analyser/',     views.analyser_document,  name='analyser_document'),
 
     # ── DEVIS ────────────────────────────────────────────────────────────
     path('devis/',                              views.devis_list,         name='devis_list'),

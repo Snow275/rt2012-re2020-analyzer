@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ⚠️  En production : mettre dans une variable d'environnement
 SECRET_KEY = os.environ.get('SECRET_KEY', 'changez-moi-en-production-utilisez-env-variable')
 
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
     "web-production-f6c00.up.railway.app",
@@ -18,8 +18,9 @@ ALLOWED_HOSTS = [
     ".replit.dev",
     ".repl.co",
     ".replit.app",
-    "*",
 ]
+if DEBUG:
+    ALLOWED_HOSTS.append("*")
 
 _replit_domain = os.environ.get('REPLIT_DEV_DOMAIN', '')
 if _replit_domain:
