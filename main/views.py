@@ -13,13 +13,11 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.core.paginator import Paginator
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
+# DRF supprimé — API en JSON natif Django
 
 from .models import Document, DocumentFile, Analysis, Devis, FactureEnergie, Message
 from .forms import DocumentForm, ContactForm
-from .serializers import DocumentSerializer, AnalysisSerializer
+# serializers supprimé
 
 import PyPDF2
 import re
@@ -2572,21 +2570,16 @@ def rapport_ia_client(request, token):
 
     factures_data = []
     try:
-        for f in document.factures.filter(analyse_ok=True):
+        for f in document.factures.all():
             d = f.analyse_json or {}
-            if d.get('consommation') is not None:
-                factures_data.append({
-                    "type_energie":  f.type_energie,       # JS attend type_energie pas energie
-                    "periode_debut": d.get("periode_debut"),
-                    "periode_fin":   d.get("periode_fin"),
-                    "consommation":  d.get("consommation"),
-                    "unite":         d.get("unite", "kWh"),
-                    "montant_ttc":   d.get("montant_ttc"),
-                    "cout_par_kwh":  d.get("cout_par_kwh"),
-                    "devise":        d.get("devise", "EUR"),
-                    "fournisseur":   d.get("fournisseur"),
-                    "nom":           f.nom,
-                })
+            factures_data.append({
+                "energie":       f.type_energie,
+                "periode_debut": d.get("periode_debut"),
+                "periode_fin":   d.get("periode_fin"),
+                "consommation":  d.get("consommation"),
+                "montant_ttc":   d.get("montant_ttc"),
+                "analyse_ok":    f.analyse_ok,
+            })
     except Exception as e:
         print("Erreur lecture factures:", e)
 
@@ -2890,62 +2883,58 @@ def analyser_document(request, doc_id):
 # API REST
 # ──────────────────────────────────────────────────────────────
 
-@csrf_exempt
-@api_view(['GET', 'POST'])
-def api_document_list(request):
-    if request.method == 'GET':
-        documents  = Document.objects.all()
-        serializer = DocumentSerializer(documents, many=True)
-        return Response(serializer.data)
-    serializer = DocumentSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@csrf_exempt
-@api_view(['GET'])
-def api_document_detail(request, pk):
-    document   = get_object_or_404(Document, pk=pk)
-    serializer = DocumentSerializer(document)
-    return Response(serializer.data)
-
-
-@csrf_exempt
-@api_view(['GET'])
-def api_results(request):
-    documents  = Document.objects.all()
-    serializer = DocumentSerializer(documents, many=True)
-    return Response(serializer.data)
-
-
-@csrf_exempt
-@api_view(['GET'])
-def api_history(request):
-    documents  = Document.objects.all().order_by('-upload_date')
-    serializer = DocumentSerializer(documents, many=True)
-    return Response(serializer.data)
-
-
-@csrf_exempt
-@api_view(['GET'])
-def api_report(request, pk):
-    document = get_object_or_404(Document, pk=pk)
-    context  = {
-        'document':     document,
-        're2020_limits': fetch_re2020_requirements(),
-        'rt2012_limits': fetch_rt2012_requirements(),
+def _doc_to_dict(doc):
+    """Sérialise un Document en dict JSON-compatible."""
+    return {
+        'id':            doc.id,
+        'name':          doc.name,
+        'status':        doc.status,
+        'norme':         doc.norme,
+        'type_analyse':  doc.type_analyse,
+        'client_name':   doc.client_name,
+        'client_email':  doc.client_email,
+        'upload_date':   doc.upload_date.isoformat() if doc.upload_date else None,
+        'is_conform':    doc.is_conform,
+        'building_type': doc.building_type,
+        'surface_totale':doc.surface_totale,
+        'norme_label':   doc.norme or '—',
     }
-    try:
-        from weasyprint import HTML as WeasyprintHTML
-        html_string = render_to_string('main/report_template.html', context)
-        pdf = WeasyprintHTML(string=html_string).write_pdf()
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="report_{document.name}.pdf"'
-        return response
-    except ImportError:
-        return Response({'error': 'WeasyPrint non installé.'}, status=500)
+
+def api_document_list(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Non autorisé'}, status=401)
+    docs = Document.objects.all().order_by('-upload_date')
+    return JsonResponse({'results': [_doc_to_dict(d) for d in docs]})
+
+def api_document_detail(request, pk):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Non autorisé'}, status=401)
+    doc = get_object_or_404(Document, pk=pk)
+    return JsonResponse(_doc_to_dict(doc))
+
+def api_results(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Non autorisé'}, status=401)
+    docs = Document.objects.exclude(status='recu').order_by('-upload_date')
+    return JsonResponse({'results': [_doc_to_dict(d) for d in docs]})
+
+def api_history(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Non autorisé'}, status=401)
+    docs = Document.objects.all().order_by('-upload_date')
+    return JsonResponse({'results': [_doc_to_dict(d) for d in docs]})
+
+def api_report(request, pk):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Non autorisé'}, status=401)
+    doc = get_object_or_404(Document, pk=pk)
+    data = _doc_to_dict(doc)
+    if doc.rapport_ia_json:
+        try:
+            data['rapport_ia'] = json.loads(doc.rapport_ia_json)
+        except Exception:
+            pass
+    return JsonResponse(data)
 
 
 # ──────────────────────────────────────────────────────────────
