@@ -468,21 +468,32 @@
   {# ── Rapport bilan carbone inline ─────────────────────────── #}
   {% if rapport %}
 
-  {# Verdict #}
+  {# Verdict carbone — "Faible empreinte" = vert, "modérée" = orange, sinon rouge #}
   {% with vraw=rapport.verdict|default:"—" %}
-  {% with vok="Faible" in vraw %}
-  {% with vmod="modérée" in vraw %}
-  <div class="verdict-box fu {% if vok %}conform{% elif vmod %}insuff{% else %}nonconf{% endif %}" style="margin-bottom:1.8rem;padding:1.5rem 2rem;border-radius:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid;{% if vok %}background:rgba(39,201,63,.07);border-color:rgba(39,201,63,.3){% elif vmod %}background:rgba(229,169,58,.07);border-color:rgba(229,169,58,.3){% else %}background:rgba(229,57,53,.07);border-color:rgba(229,57,53,.3){% endif %}">
+  <div class="verdict-box fu" style="margin-bottom:1.8rem;padding:1.5rem 2rem;border-radius:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid;
+    {% if 'Faible' in vraw or 'faible' in vraw %}background:rgba(39,201,63,.07);border-color:rgba(39,201,63,.3)
+    {% elif 'modérée' in vraw or 'Modérée' in vraw %}background:rgba(229,169,58,.07);border-color:rgba(229,169,58,.3)
+    {% else %}background:rgba(229,57,53,.07);border-color:rgba(229,57,53,.3){% endif %}">
     <div>
-      <div class="verdict-label" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;opacity:.6;margin-bottom:.5rem">Bilan carbone — {{ document.get_building_type_display }}</div>
-      <div class="verdict-text" style="font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;{% if vok %}color:#27C93F{% elif vmod %}color:#E5A93A{% else %}color:#ef5350{% endif %}">{{ vraw }}</div>
+      <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;opacity:.6;margin-bottom:.5rem">Bilan carbone — {{ document.get_building_type_display }}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;
+        {% if 'Faible' in vraw or 'faible' in vraw %}color:#27C93F
+        {% elif 'modérée' in vraw or 'Modérée' in vraw %}color:#E5A93A
+        {% else %}color:#ef5350{% endif %}">{{ vraw }}</div>
       {% if rapport.score_global is not None %}
-      <div style="margin-top:.5rem;font-size:.8rem;color:var(--gray1)">Score global : <strong style="{% if vok %}color:#27C93F{% elif vmod %}color:#E5A93A{% else %}color:#ef5350{% endif %}">{{ rapport.score_global }}/100</strong></div>
+      <div style="margin-top:.5rem;font-size:.8rem;color:var(--gray1)">Score global : <strong style="
+        {% if 'Faible' in vraw or 'faible' in vraw %}color:#27C93F
+        {% elif 'modérée' in vraw or 'Modérée' in vraw %}color:#E5A93A
+        {% else %}color:#ef5350{% endif %}">{{ rapport.score_global }}/100</strong></div>
       {% endif %}
     </div>
-    <div style="font-size:3rem">{% if vok %}🌿{% elif vmod %}⚠️{% else %}🏭{% endif %}</div>
+    <div style="font-size:3rem">
+      {% if 'Faible' in vraw or 'faible' in vraw %}🌿
+      {% elif 'modérée' in vraw or 'Modérée' in vraw %}⚠️
+      {% else %}🏭{% endif %}
+    </div>
   </div>
-  {% endwith %}{% endwith %}{% endwith %}
+  {% endwith %}
 
   {# Résumé #}
   {% if rapport.resume_executif %}
