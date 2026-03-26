@@ -2572,16 +2572,21 @@ def rapport_ia_client(request, token):
 
     factures_data = []
     try:
-        for f in document.factures.all():
+        for f in document.factures.filter(analyse_ok=True):
             d = f.analyse_json or {}
-            factures_data.append({
-                "energie":       f.type_energie,
-                "periode_debut": d.get("periode_debut"),
-                "periode_fin":   d.get("periode_fin"),
-                "consommation":  d.get("consommation"),
-                "montant_ttc":   d.get("montant_ttc"),
-                "analyse_ok":    f.analyse_ok,
-            })
+            if d.get('consommation') is not None:
+                factures_data.append({
+                    "type_energie":  f.type_energie,       # JS attend type_energie pas energie
+                    "periode_debut": d.get("periode_debut"),
+                    "periode_fin":   d.get("periode_fin"),
+                    "consommation":  d.get("consommation"),
+                    "unite":         d.get("unite", "kWh"),
+                    "montant_ttc":   d.get("montant_ttc"),
+                    "cout_par_kwh":  d.get("cout_par_kwh"),
+                    "devise":        d.get("devise", "EUR"),
+                    "fournisseur":   d.get("fournisseur"),
+                    "nom":           f.nom,
+                })
     except Exception as e:
         print("Erreur lecture factures:", e)
 
