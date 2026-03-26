@@ -465,8 +465,213 @@
     </button>
   </div>
 
-  <div class="screen-only">{% include "main/rapport_carbone.html" %}</div>
-  {% include "main/rapport_carbone_print.html" %}
+  {# ── Rapport bilan carbone inline ─────────────────────────── #}
+  {% if rapport %}
+
+  {# Verdict #}
+  {% with vraw=rapport.verdict|default:"—" %}
+  {% with vok="Faible" in vraw %}
+  {% with vmod="modérée" in vraw %}
+  <div class="verdict-box fu {% if vok %}conform{% elif vmod %}insuff{% else %}nonconf{% endif %}" style="margin-bottom:1.8rem;padding:1.5rem 2rem;border-radius:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid;{% if vok %}background:rgba(39,201,63,.07);border-color:rgba(39,201,63,.3){% elif vmod %}background:rgba(229,169,58,.07);border-color:rgba(229,169,58,.3){% else %}background:rgba(229,57,53,.07);border-color:rgba(229,57,53,.3){% endif %}">
+    <div>
+      <div class="verdict-label" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;opacity:.6;margin-bottom:.5rem">Bilan carbone — {{ document.get_building_type_display }}</div>
+      <div class="verdict-text" style="font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;{% if vok %}color:#27C93F{% elif vmod %}color:#E5A93A{% else %}color:#ef5350{% endif %}">{{ vraw }}</div>
+      {% if rapport.score_global is not None %}
+      <div style="margin-top:.5rem;font-size:.8rem;color:var(--gray1)">Score global : <strong style="{% if vok %}color:#27C93F{% elif vmod %}color:#E5A93A{% else %}color:#ef5350{% endif %}">{{ rapport.score_global }}/100</strong></div>
+      {% endif %}
+    </div>
+    <div style="font-size:3rem">{% if vok %}🌿{% elif vmod %}⚠️{% else %}🏭{% endif %}</div>
+  </div>
+  {% endwith %}{% endwith %}{% endwith %}
+
+  {# Résumé #}
+  {% if rapport.resume_executif %}
+  <div class="card fu2" style="padding:1.6rem;margin-bottom:1.4rem">
+    <div class="section-title" style="color:var(--gold);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.9rem">📋 Résumé exécutif</div>
+    <p style="font-size:.92rem;color:var(--gray2);line-height:1.75">{{ rapport.resume_executif }}</p>
+  </div>
+  {% endif %}
+
+  {# Émissions clés #}
+  {% if rapport.emissions %}
+  <div class="card fu2" style="padding:1.6rem;margin-bottom:1.4rem">
+    <div class="section-title" style="color:#4ade80;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem">📊 Indicateurs carbone</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.9rem">
+      {% if rapport.emissions.ic_energie and rapport.emissions.ic_energie.valeur is not None %}
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:1.1rem;text-align:center">
+        <div style="font-size:.62rem;color:var(--gray1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem">Ic énergie</div>
+        <div style="font-size:1.7rem;font-weight:700;color:{% if rapport.emissions.ic_energie.conforme %}#27c93f{% else %}#ef5350{% endif %}">{{ rapport.emissions.ic_energie.valeur }}</div>
+        <div style="font-size:.62rem;color:var(--gray1);margin-top:.2rem">{{ rapport.emissions.ic_energie.unite|default:"kgCO₂eq/m².an" }}</div>
+        {% if rapport.emissions.ic_energie.seuil_re2020 %}<div style="font-size:.65rem;color:var(--muted);margin-top:.2rem">Seuil : {{ rapport.emissions.ic_energie.seuil_re2020 }}</div>{% endif %}
+      </div>
+      {% endif %}
+      {% if rapport.emissions.emission_ges and rapport.emissions.emission_ges.valeur is not None %}
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:1.1rem;text-align:center">
+        <div style="font-size:.62rem;color:var(--gray1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem">Émissions GES</div>
+        <div style="font-size:1.7rem;font-weight:700;color:var(--gold)">{{ rapport.emissions.emission_ges.valeur }}</div>
+        <div style="font-size:.62rem;color:var(--gray1);margin-top:.2rem">{{ rapport.emissions.emission_ges.unite|default:"kgCO₂eq/m².an" }}</div>
+      </div>
+      {% endif %}
+      {% if rapport.emissions.conso_ep and rapport.emissions.conso_ep.valeur is not None %}
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:1.1rem;text-align:center">
+        <div style="font-size:.62rem;color:var(--gray1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem">Conso. énergie primaire</div>
+        <div style="font-size:1.7rem;font-weight:700;color:var(--gold)">{{ rapport.emissions.conso_ep.valeur }}</div>
+        <div style="font-size:.62rem;color:var(--gray1);margin-top:.2rem">{{ rapport.emissions.conso_ep.unite|default:"kWh ep/m².an" }}</div>
+      </div>
+      {% endif %}
+      {% if rapport.emissions.classe_dpe %}
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:1.1rem;text-align:center">
+        <div style="font-size:.62rem;color:var(--gray1);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem">Classe DPE</div>
+        <div style="font-size:3rem;font-weight:700;font-family:'Playfair Display',serif;line-height:1;
+          color:{% if rapport.emissions.classe_dpe == 'A' %}#27c93f{% elif rapport.emissions.classe_dpe == 'B' %}#4ade80{% elif rapport.emissions.classe_dpe == 'C' %}#a3e635{% elif rapport.emissions.classe_dpe == 'D' %}#facc15{% elif rapport.emissions.classe_dpe == 'E' %}#fb923c{% elif rapport.emissions.classe_dpe == 'F' %}#f87171{% else %}#ef5350{% endif %}">
+          {{ rapport.emissions.classe_dpe }}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Postes d'émission #}
+  {% if rapport.postes_emission %}
+  <div class="card fu3" style="padding:1.6rem;margin-bottom:1.4rem">
+    <div class="section-title" style="color:#4ade80;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem">🏭 Postes d'émission</div>
+    {% for p in rapport.postes_emission %}
+    <div style="display:flex;align-items:flex-start;gap:1rem;padding:.9rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.3rem">
+          <strong style="font-size:.88rem;color:var(--white)">{{ p.poste }}</strong>
+          <span style="font-size:.7rem;padding:.12rem .5rem;border-radius:5px;
+            background:{% if p.niveau == 'élevé' %}rgba(229,57,53,.12){% elif p.niveau == 'modéré' %}rgba(229,169,58,.12){% else %}rgba(39,201,63,.12){% endif %};
+            color:{% if p.niveau == 'élevé' %}#ef5350{% elif p.niveau == 'modéré' %}#E5A93A{% else %}#27c93f{% endif %}">
+            {{ p.niveau|default:"" }}
+          </span>
+        </div>
+        <p style="font-size:.83rem;color:var(--gray2);line-height:1.55;margin:0">{{ p.observation|default:"" }}</p>
+      </div>
+      {% if p.part_estimee %}
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--gold)">{{ p.part_estimee }}</div>
+        <div style="font-size:.63rem;color:var(--gray1)">du bilan</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Conformité réglementaire #}
+  {% if rapport.conformite_reglementaire %}
+  <div class="card" style="padding:1.6rem;margin-bottom:1.4rem;overflow-x:auto">
+    <div class="section-title" style="color:var(--gold);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem">📋 Conformité réglementaire</div>
+    {% for cr in rapport.conformite_reglementaire %}
+    <div style="display:flex;align-items:center;gap:1rem;padding:.7rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="width:120px;flex-shrink:0">
+        <span style="font-size:.7rem;font-weight:700;padding:.15rem .55rem;border-radius:6px;
+          background:{% if cr.statut == 'conforme' %}rgba(39,201,63,.12){% elif cr.statut == 'non_conforme' %}rgba(229,57,53,.12){% else %}rgba(136,136,153,.12){% endif %};
+          color:{% if cr.statut == 'conforme' %}#27C93F{% elif cr.statut == 'non_conforme' %}#ef5350{% else %}#888899{% endif %}">
+          {% if cr.statut == 'conforme' %}✓ Conforme{% elif cr.statut == 'non_conforme' %}✗ Non conforme{% else %}— N/A{% endif %}
+        </span>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:.85rem;font-weight:600;color:var(--white);margin-bottom:.2rem">{{ cr.referentiel }}</div>
+        <div style="font-size:.79rem;color:var(--gray2)">{{ cr.detail|default:"" }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Points forts #}
+  {% if rapport.points_forts %}
+  <div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+    <div class="section-title" style="color:#27C93F;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.9rem">✅ Points forts</div>
+    <ul style="padding-left:1.3rem;display:flex;flex-direction:column;gap:.5rem">
+      {% for p in rapport.points_forts %}<li style="font-size:.88rem;color:var(--gray2)">{{ p }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Risques #}
+  {% if rapport.risques %}
+  <div style="margin-bottom:1.4rem">
+    <div class="section-title" style="color:#ef5350;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.9rem">⚠️ Risques identifiés</div>
+    {% for r in rapport.risques %}
+    <div style="padding:1.1rem 1.3rem;border-radius:12px;margin-bottom:.8rem;border-left:4px solid;
+      {% if r.gravite == 'élevé' %}border-color:#ef5350;background:rgba(229,57,53,.07);border-top:1px solid rgba(229,57,53,.2);border-right:1px solid rgba(229,57,53,.2);border-bottom:1px solid rgba(229,57,53,.2)
+      {% elif r.gravite == 'modéré' %}border-color:#ff9800;background:rgba(255,152,0,.05);border-top:1px solid rgba(255,152,0,.2);border-right:1px solid rgba(255,152,0,.2);border-bottom:1px solid rgba(255,152,0,.2)
+      {% else %}border-color:#C8A84B;background:rgba(200,168,75,.05);border-top:1px solid rgba(200,168,75,.2);border-right:1px solid rgba(200,168,75,.2);border-bottom:1px solid rgba(200,168,75,.2){% endif %}">
+      <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.5rem">
+        <span style="font-size:.69rem;font-weight:700;text-transform:uppercase;padding:.12rem .5rem;border-radius:6px;
+          background:{% if r.gravite == 'élevé' %}rgba(229,57,53,.15){% elif r.gravite == 'modéré' %}rgba(255,152,0,.12){% else %}rgba(200,168,75,.12){% endif %};
+          color:{% if r.gravite == 'élevé' %}#ef5350{% elif r.gravite == 'modéré' %}#ff9800{% else %}#C8A84B{% endif %}">
+          {{ r.gravite|default:"" }}</span>
+        <strong style="color:var(--white);font-size:.9rem">{{ r.titre }}</strong>
+        {% if r.urgence %}<span style="font-size:.68rem;color:var(--muted);margin-left:auto">{{ r.urgence }}</span>{% endif %}
+      </div>
+      <p style="font-size:.84rem;color:var(--gray2);margin-bottom:{% if r.action %}.5rem{% else %}0{% endif %};line-height:1.55">{{ r.description|default:"" }}</p>
+      {% if r.action %}<div style="font-size:.79rem"><span style="color:var(--muted)">Action : </span>{{ r.action }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Leviers de réduction #}
+  {% if rapport.leviers_reduction %}
+  <div class="card" style="padding:1.6rem;margin-bottom:1.4rem">
+    <div class="section-title" style="color:#60a5fa;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem">🔧 Leviers de réduction carbone</div>
+    {% for l in rapport.leviers_reduction %}
+    <div style="display:flex;gap:1rem;padding:.9rem 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="flex-shrink:0;width:80px;text-align:center;padding-top:.15rem">
+        <span style="font-size:.68rem;padding:.15rem .5rem;border-radius:6px;display:inline-block;
+          background:{% if l.impact == 'élevé' %}rgba(39,201,63,.12){% elif l.impact == 'modéré' %}rgba(229,169,58,.12){% else %}rgba(96,165,250,.1){% endif %};
+          color:{% if l.impact == 'élevé' %}#27c93f{% elif l.impact == 'modéré' %}#E5A93A{% else %}#60a5fa{% endif %}">
+          {{ l.impact|default:"" }}
+        </span>
+        {% if l.gain_estime %}<div style="font-size:.65rem;color:#4ade80;font-weight:600;margin-top:.3rem">{{ l.gain_estime }}</div>{% endif %}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:.88rem;font-weight:600;color:var(--white);margin-bottom:.3rem">{{ l.levier }}</div>
+        <p style="font-size:.82rem;color:var(--gray2);line-height:1.5;margin-bottom:.25rem">{{ l.description|default:"" }}</p>
+        {% if l.horizon %}<div style="font-size:.72rem;color:var(--muted)">{{ l.horizon }}</div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Vérifications complémentaires #}
+  {% if rapport.verifications_complementaires %}
+  <div class="card" style="padding:1.4rem;margin-bottom:1.4rem;background:rgba(200,168,75,.03);border-color:rgba(200,168,75,.15)">
+    <div class="section-title" style="color:var(--gold);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.8rem">🔍 Vérifications complémentaires recommandées</div>
+    <ul style="padding-left:1.3rem;display:flex;flex-direction:column;gap:.4rem">
+      {% for v in rapport.verifications_complementaires %}<li style="font-size:.84rem;color:var(--gray2)">{{ v }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Avis indépendant #}
+  {% if rapport.avis_independant %}
+  <div class="card" style="padding:1.6rem;margin-bottom:1.4rem;border-color:rgba(200,168,75,.25);background:rgba(200,168,75,.04)">
+    <div class="section-title" style="color:var(--gold);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.9rem">💬 Avis indépendant ConformExpert</div>
+    <p style="font-size:.9rem;color:var(--gray2);line-height:1.75;font-style:italic;margin:0">{{ rapport.avis_independant }}</p>
+  </div>
+  {% endif %}
+
+  {# Mentions légales #}
+  {% if rapport.mentions_legales %}
+  <div style="padding:.9rem 1.2rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:8px;font-size:.72rem;color:var(--muted);line-height:1.6;margin-bottom:1.4rem">
+    <strong style="color:var(--gray1)">Mentions légales — </strong>{{ rapport.mentions_legales }}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="text-align:center;padding:3rem 2rem;background:rgba(200,168,75,.04);border:1px solid rgba(200,168,75,.12);border-radius:14px">
+    <div style="font-size:2.5rem;margin-bottom:1rem">⏳</div>
+    <div style="font-size:1rem;color:var(--gold);font-weight:500;margin-bottom:.5rem">Bilan carbone en cours de préparation</div>
+    <p style="font-size:.85rem;color:var(--gray2);line-height:1.7">Le bilan carbone n'a pas encore été généré pour ce dossier.<br>Il sera disponible ici dès la finalisation de l'analyse.</p>
+  </div>
+  {% endif %}
 
   {% if has_factures %}
   <div class="card fu" style="padding:1.6rem;margin-bottom:1.4rem;margin-top:1.4rem">
