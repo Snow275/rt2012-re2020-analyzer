@@ -13,11 +13,13 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.core.paginator import Paginator
-# DRF supprimé — API en JSON natif Django
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 
 from .models import Document, DocumentFile, Analysis, Devis, FactureEnergie, Message
 from .forms import DocumentForm, ContactForm
-# serializers supprimé
+from .serializers import DocumentSerializer, AnalysisSerializer
 
 import PyPDF2
 import re
@@ -578,6 +580,12 @@ def analyze_document(document, data, resultat_complet=None):
 # ──────────────────────────────────────────────────────────────
 # VUES PUBLIQUES
 # ──────────────────────────────────────────────────────────────
+
+
+def maintenance(request):
+    """Page de maintenance — retourne 503."""
+    from django.template.response import TemplateResponse
+    return TemplateResponse(request, 'main/maintenance.html', status=503)
 
 def landing(request):
     """Page d'accueil publique."""
@@ -2883,58 +2891,62 @@ def analyser_document(request, doc_id):
 # API REST
 # ──────────────────────────────────────────────────────────────
 
-def _doc_to_dict(doc):
-    """Sérialise un Document en dict JSON-compatible."""
-    return {
-        'id':            doc.id,
-        'name':          doc.name,
-        'status':        doc.status,
-        'norme':         doc.norme,
-        'type_analyse':  doc.type_analyse,
-        'client_name':   doc.client_name,
-        'client_email':  doc.client_email,
-        'upload_date':   doc.upload_date.isoformat() if doc.upload_date else None,
-        'is_conform':    doc.is_conform,
-        'building_type': doc.building_type,
-        'surface_totale':doc.surface_totale,
-        'norme_label':   doc.norme or '—',
-    }
-
+@csrf_exempt
+@api_view(['GET', 'POST'])
 def api_document_list(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non autorisé'}, status=401)
-    docs = Document.objects.all().order_by('-upload_date')
-    return JsonResponse({'results': [_doc_to_dict(d) for d in docs]})
+    if request.method == 'GET':
+        documents  = Document.objects.all()
+        serializer = DocumentSerializer(documents, many=True)
+        return Response(serializer.data)
+    serializer = DocumentSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@csrf_exempt
+@api_view(['GET'])
 def api_document_detail(request, pk):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non autorisé'}, status=401)
-    doc = get_object_or_404(Document, pk=pk)
-    return JsonResponse(_doc_to_dict(doc))
+    document   = get_object_or_404(Document, pk=pk)
+    serializer = DocumentSerializer(document)
+    return Response(serializer.data)
 
+
+@csrf_exempt
+@api_view(['GET'])
 def api_results(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non autorisé'}, status=401)
-    docs = Document.objects.exclude(status='recu').order_by('-upload_date')
-    return JsonResponse({'results': [_doc_to_dict(d) for d in docs]})
+    documents  = Document.objects.all()
+    serializer = DocumentSerializer(documents, many=True)
+    return Response(serializer.data)
 
+
+@csrf_exempt
+@api_view(['GET'])
 def api_history(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non autorisé'}, status=401)
-    docs = Document.objects.all().order_by('-upload_date')
-    return JsonResponse({'results': [_doc_to_dict(d) for d in docs]})
+    documents  = Document.objects.all().order_by('-upload_date')
+    serializer = DocumentSerializer(documents, many=True)
+    return Response(serializer.data)
 
+
+@csrf_exempt
+@api_view(['GET'])
 def api_report(request, pk):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non autorisé'}, status=401)
-    doc = get_object_or_404(Document, pk=pk)
-    data = _doc_to_dict(doc)
-    if doc.rapport_ia_json:
-        try:
-            data['rapport_ia'] = json.loads(doc.rapport_ia_json)
-        except Exception:
-            pass
-    return JsonResponse(data)
+    document = get_object_or_404(Document, pk=pk)
+    context  = {
+        'document':     document,
+        're2020_limits': fetch_re2020_requirements(),
+        'rt2012_limits': fetch_rt2012_requirements(),
+    }
+    try:
+        from weasyprint import HTML as WeasyprintHTML
+        html_string = render_to_string('main/report_template.html', context)
+        pdf = WeasyprintHTML(string=html_string).write_pdf()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="report_{document.name}.pdf"'
+        return response
+    except ImportError:
+        return Response({'error': 'WeasyPrint non installé.'}, status=500)
 
 
 # ──────────────────────────────────────────────────────────────
