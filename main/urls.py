@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     # ── PUBLIC ──────────────────────────────────────────────────────────
     path('',                                    views.landing,            name='landing'),
+    path('maintenance/',                         views.maintenance,        name='maintenance'),
     path('deposer/',                            views.import_document,    name='import'),
     path('suivi/<str:token>/',                  views.tracking,           name='tracking'),
     path('suivi/<str:token>/rapport-ia/',       views.rapport_ia_client,  name='rapport_ia_client'),
