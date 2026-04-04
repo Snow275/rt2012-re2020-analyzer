@@ -1962,83 +1962,52 @@ footer {
   </div>
 </section>
 
-<!-- ████ AVIS CERTIFIÉS ████ -->
+<!-- ████ AVIS TRUSTPILOT ████ -->
 <section id="avis" style="padding:80px 0;background:#0d1e33">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px">
+  <div style="max-width:700px;margin:0 auto;padding:0 24px;text-align:center">
 
-    <!-- En-tête -->
-    <div style="text-align:center;margin-bottom:52px">
-      <p style="font-size:11px;text-transform:uppercase;letter-spacing:4px;color:#c8a84b;font-weight:600;margin-bottom:14px">
-        Avis clients
-      </p>
-      <h2 style="font-family:'Playfair Display',serif;font-size:36px;color:#fff;margin-bottom:20px;line-height:1.2">
-        Ce que disent nos clients
-      </h2>
+    <p style="font-size:11px;text-transform:uppercase;letter-spacing:4px;color:#c8a84b;font-weight:600;margin-bottom:14px">
+      Avis clients
+    </p>
+    <h2 style="font-family:'Playfair Display',serif;font-size:36px;color:#fff;margin-bottom:20px;line-height:1.2">
+      Ce que disent nos clients
+    </h2>
+    <p style="font-size:15px;color:rgba(255,255,255,.5);line-height:1.8;margin-bottom:40px">
+      Nos avis sont collectés et certifiés par Trustpilot — plateforme indépendante de confiance.
+    </p>
 
-      <!-- Note globale -->
-      {% if total > 0 %}
-      <div style="display:inline-flex;align-items:center;gap:12px;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2);border-radius:99px;padding:12px 26px">
-        <span style="font-size:22px;color:#c8a84b;letter-spacing:3px">★★★★★</span>
-        <span style="font-size:22px;font-weight:700;color:#fff;font-family:'Playfair Display',serif">{{ moyenne }}<span style="font-size:14px;color:rgba(255,255,255,.4)">/5</span></span>
-        <span style="width:1px;height:20px;background:rgba(255,255,255,.1);display:inline-block"></span>
-        <span style="font-size:13px;color:rgba(255,255,255,.45)">{{ total }} avis</span>
-        <span style="background:rgba(39,201,63,.12);color:#4ade80;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;letter-spacing:.5px;border:1px solid rgba(39,201,63,.2)">
-          ✓ CERTIFIÉS
-        </span>
-      </div>
-      {% endif %}
+    <!-- Widget Trustpilot -->
+    <div class="trustpilot-widget"
+         data-locale="fr-FR"
+         data-template-id="56278e9abfbbba0bdcd568bc"
+         data-businessunit-id="conformexpert.cc"
+         data-style-height="52px"
+         data-style-width="100%"
+         data-theme="dark">
+      <a href="https://fr.trustpilot.com/review/conformexpert.cc"
+         target="_blank"
+         rel="noopener">Trustpilot</a>
     </div>
 
-    <!-- Grille des avis -->
-    {% if avis_list %}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px">
-      {% for a in avis_list %}
-      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:22px 24px;display:flex;flex-direction:column;gap:14px;transition:border-color .2s"
-           onmouseover="this.style.borderColor='rgba(200,168,75,.25)'"
-           onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">
-
-        <!-- Étoiles + badge -->
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:18px;color:#c8a84b;letter-spacing:2px">{{ a.note_display }}</span>
-          <span style="font-size:10px;background:rgba(39,201,63,.1);color:#4ade80;border:1px solid rgba(39,201,63,.2);padding:2px 8px;border-radius:99px;font-weight:600;letter-spacing:.4px">
-            ✓ Certifié
-          </span>
-        </div>
-
-        <!-- Commentaire -->
-        <p style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.65;font-style:italic;flex:1;margin:0">
-          {% if a.commentaire %}"{{ a.commentaire }}"{% else %}<span style="opacity:.4">—</span>{% endif %}
-        </p>
-
-        <!-- Auteur + date -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:30px;height:30px;border-radius:50%;background:rgba(200,168,75,.15);border:1px solid rgba(200,168,75,.25);color:#c8a84b;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">
-              {{ a.client_nom|first|upper|default:"C" }}
-            </div>
-            <span style="font-size:13px;font-weight:500;color:rgba(255,255,255,.7)">
-              {{ a.nom_affichage }}
-            </span>
-          </div>
-          {% if a.soumis_le %}
-          <span style="font-size:11px;color:rgba(255,255,255,.25)">{{ a.soumis_le|date:"d/m/Y" }}</span>
-          {% endif %}
-        </div>
-
-      </div>
-      {% endfor %}
+    <!-- Bouton Laisser un avis -->
+    <div style="margin-top:40px">
+      <a href="https://fr.trustpilot.com/review/conformexpert.cc"
+         target="_blank"
+         rel="noopener"
+         style="display:inline-flex;align-items:center;gap:12px;background:#00b67a;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 32px;border-radius:6px;letter-spacing:.3px;transition:opacity .2s"
+         onmouseover="this.style.opacity='.88'"
+         onmouseout="this.style.opacity='1'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Laisser un avis sur Trustpilot
+      </a>
     </div>
-
-    {% else %}
-    <!-- Aucun avis encore -->
-    <div style="text-align:center;padding:60px 24px;color:rgba(255,255,255,.25)">
-      <div style="font-size:42px;margin-bottom:14px;opacity:.5">⭐</div>
-      <p style="font-size:15px">Les premiers avis apparaîtront ici dès qu'ils seront certifiés.</p>
-    </div>
-    {% endif %}
 
   </div>
 </section>
+
+<script type="text/javascript" src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async></script>
 
 <!-- ████ CTA FINAL ████ -->
 <div class="cta-section reveal">
