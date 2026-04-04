@@ -356,15 +356,15 @@ def refuser_devis(request, devis_id):
 
         _send_html_async(
             "❌ Devis refusé — ConformExpert",
-            "email_notification_admin.html",
+            "email_devis_refuse.html",
             {
-                "sujet":        "Devis refusé par le client",
                 "client":       devis.client_nom,
                 "projet":       devis.projet_nom,
                 "montant":      devis.montant,
                 "doc_id":       f"{devis.id:04d}",
                 "type_analyse": devis.document.type_analyse if devis.document else None,
                 "motif_refus":  motif,
+                "admin_url":    f"{SITE_URL}/dossier/{devis.document.id}/editer/" if devis.document else f"{SITE_URL}/devis/",
             },
             "contact@conformexpert.cc",
         )
