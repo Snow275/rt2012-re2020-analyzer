@@ -2017,7 +2017,7 @@ footer {
               {{ a.client_nom|first|upper|default:"C" }}
             </div>
             <span style="font-size:13px;font-weight:500;color:rgba(255,255,255,.7)">
-              {{ a.client_nom|default:"Client vérifié" }}
+              {{ a.nom_affichage }}
             </span>
           </div>
           {% if a.soumis_le %}
