@@ -289,6 +289,25 @@ def avis_publics(request):
     })
 
 
+@login_required
+def supprimer_avis(request, avis_id):
+    """
+    Supprime un avis depuis l'interface admin (bouton dans edit_document).
+    Accessible uniquement aux staff.
+    """
+    avis = get_object_or_404(Avis, id=avis_id)
+    doc_id = avis.document.id
+
+    if not request.user.is_staff:
+        messages.error(request, "Accès refusé.")
+        return redirect('edit_document', doc_id=doc_id)
+
+    if request.method == 'POST':
+        avis.delete()
+        messages.success(request, "Avis supprimé avec succès.")
+    return redirect('edit_document', doc_id=doc_id)
+
+
 # ──────────────────────────────────────────────────────────────
 # DEVIS — acceptation / refus publics
 # ──────────────────────────────────────────────────────────────
@@ -733,11 +752,12 @@ def landing(request):
         moyenne=Avg('note'),
         total=Count('id'),
     )
+    # Affichage limité à 3 sur la landing — la moyenne/total prend en compte TOUS les avis
     avis_list = (
         Avis.objects
         .filter(certifie=True)
         .select_related('document')
-        .order_by('-soumis_le')[:9]
+        .order_by('-soumis_le')[:3]
     )
     return render(request, 'main/landing.html', {
         'avis_list': avis_list,
