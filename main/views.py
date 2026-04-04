@@ -344,9 +344,15 @@ def accepter_devis(request, devis_id):
 def refuser_devis(request, devis_id):
     devis = get_object_or_404(Devis, id=devis_id)
 
-    if devis.statut != "refuse":
-        devis.statut = "refuse"
-        devis.save()
+    # Déjà refusé → afficher la page de confirmation avec le motif déjà saisi
+    if request.method == 'POST':
+        motif = request.POST.get('motif_refus', '').strip()
+
+        if devis.statut != 'refuse':
+            devis.statut = 'refuse'
+
+        devis.motif_refus = motif
+        devis.save(update_fields=['statut', 'motif_refus'])
 
         _send_html_async(
             "❌ Devis refusé — ConformExpert",
@@ -358,11 +364,34 @@ def refuser_devis(request, devis_id):
                 "montant":      devis.montant,
                 "doc_id":       f"{devis.id:04d}",
                 "type_analyse": devis.document.type_analyse if devis.document else None,
+                "motif_refus":  motif,
             },
             "contact@conformexpert.cc",
         )
 
-    return render(request, "main/devis_refuse.html", {"devis": devis})
+        return render(request, "main/devis_refuse.html", {"devis": devis, "confirme": True})
+
+    # GET → formulaire de saisie du motif
+    return render(request, "main/devis_refuse.html", {"devis": devis, "confirme": devis.statut == 'refuse'})
+
+
+@login_required
+def modifier_motif_refus(request, devis_id):
+    """
+    Vue admin : modifier le motif de refus d'un devis sans renvoyer d'email.
+    Accessible depuis l'onglet Communication du dossier.
+    """
+    devis = get_object_or_404(Devis, id=devis_id)
+
+    if request.method == 'POST':
+        devis.motif_refus = request.POST.get('motif_refus', '').strip()
+        devis.save(update_fields=['motif_refus'])
+        messages.success(request, 'Motif de refus mis à jour.')
+        if devis.document:
+            return redirect('edit_document', doc_id=devis.document.id)
+        return redirect('devis_list')
+
+    return redirect('devis_list')
 
 
 # ──────────────────────────────────────────────────────────────
