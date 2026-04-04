@@ -29,6 +29,11 @@
     margin:0 auto 1.8rem;
   }
   .icon svg { color:#C8A84B; }
+  .icon.icon--done {
+    background:rgba(39,201,63,.07);
+    border-color:rgba(39,201,63,.2);
+  }
+  .icon.icon--done svg { color:#27c93f; }
 
   .logo { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:2rem; }
   .logo span { color:#C8A84B; }
@@ -47,6 +52,47 @@
     line-height:1.6;
   }
 
+  /* Formulaire motif */
+  .field-label {
+    display:block;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#8896A4;
+    margin-bottom:.5rem;
+    text-align:left;
+  }
+  textarea {
+    width:100%;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:8px;
+    padding:.75rem 1rem;
+    font-size:.88rem;
+    color:#fff;
+    resize:vertical;
+    font-family:'DM Sans',sans-serif;
+    outline:none;
+    transition:border-color .15s;
+    min-height:100px;
+    margin-bottom:1.2rem;
+  }
+  textarea::placeholder { color:rgba(255,255,255,.2); }
+  textarea:focus { border-color:rgba(200,168,75,.35); }
+
+  .motif-display {
+    margin:1rem 0 1.5rem;
+    padding:.9rem 1.2rem;
+    background:rgba(255,255,255,.03);
+    border-left:3px solid rgba(200,168,75,.4);
+    border-radius:0 8px 8px 0;
+    font-size:.88rem;
+    color:#8896A4;
+    font-style:italic;
+    text-align:left;
+    line-height:1.6;
+  }
+
   .btn {
     display:inline-flex; align-items:center; gap:.5rem;
     background:transparent;
@@ -57,8 +103,27 @@
     font-size:.9rem; font-weight:500;
     text-decoration:none;
     transition:all .2s;
+    cursor:pointer;
+    font-family:'DM Sans',sans-serif;
   }
   .btn:hover { background:rgba(200,168,75,.08); border-color:rgba(200,168,75,.6); }
+
+  .btn-refuse {
+    display:block;
+    width:100%;
+    padding:.85rem;
+    background:rgba(239,83,80,.1);
+    color:#ef5350;
+    font-size:.9rem;
+    font-weight:500;
+    border:1.5px solid rgba(239,83,80,.3);
+    border-radius:5px;
+    cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+    transition:all .2s;
+    margin-bottom:1rem;
+  }
+  .btn-refuse:hover { background:rgba(239,83,80,.16); border-color:rgba(239,83,80,.5); }
 
   .footer-note { margin-top:2rem; font-size:.78rem; color:#3a5070; }
 </style>
@@ -68,18 +133,24 @@
 
   <div class="logo">Conform<span>Expert</span></div>
 
-  <div class="icon">
+  {% if confirme %}
+  <!-- ── REFUS CONFIRMÉ ── -->
+  <div class="icon icon--done">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-      <path d="M9 12h6M12 9v6M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+      <path d="M20 6 9 17l-5-5"/>
     </svg>
   </div>
 
-  <h1>Devis refusé</h1>
+  <h1>Refus enregistré</h1>
   <p class="sub">
     Votre décision a bien été enregistrée.
     {% if devis.client_nom %}Merci, <strong style="color:#fff">{{ devis.client_nom }}</strong>.{% endif %}<br>
     Nous espérons pouvoir vous accompagner dans le futur.
   </p>
+
+  {% if devis.motif_refus %}
+  <div class="motif-display">"{{ devis.motif_refus }}"</div>
+  {% endif %}
 
   <div class="info-box">
     Si vous avez changé d'avis ou souhaitez discuter d'une offre adaptée à votre projet,
@@ -90,6 +161,45 @@
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     Nous contacter
   </a>
+
+  {% else %}
+  <!-- ── FORMULAIRE DE REFUS ── -->
+  <div class="icon">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M9 12h6M12 9v6M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+    </svg>
+  </div>
+
+  <h1>Refuser le devis</h1>
+  <p class="sub">
+    Avant de confirmer, pouvez-vous nous indiquer la raison ?<br>
+    <span style="font-size:.85rem">Votre retour nous aide à améliorer notre offre.</span>
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <label class="field-label" for="motif_refus">
+      Motif du refus <span style="opacity:.5">(optionnel)</span>
+    </label>
+    <textarea name="motif_refus" id="motif_refus"
+      placeholder="Ex : budget trop élevé, délai trop long, j'ai trouvé une autre solution…">{{ devis.motif_refus|default:'' }}</textarea>
+
+    <button type="submit" class="btn-refuse">
+      Confirmer le refus →
+    </button>
+  </form>
+
+  <div class="info-box">
+    Si vous avez changé d'avis ou souhaitez discuter d'une offre adaptée,
+    n'hésitez pas à nous recontacter avant de confirmer.
+  </div>
+
+  <a href="https://conformexpert.cc/contact" class="btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Nous contacter
+  </a>
+
+  {% endif %}
 
   <p class="footer-note">
     <a href="https://conformexpert.cc" style="color:#3a5070;text-decoration:none">conformexpert.cc</a>
