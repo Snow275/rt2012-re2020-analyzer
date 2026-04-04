@@ -15,21 +15,21 @@ RT2012_AIRTIGHTNESS_MAX = {'maison': 0.6, 'collectif': 1.0, 'erp': 1.0}
 RT2012_ENR_MIN          = 1.0
 
 # ── FRANCE RE2020 ─────────────────────────────────────────
-RE2020_CEP_MAX             = {'maison': 100, 'collectif': 100, 'erp': 150}
+RE2020_CEP_MAX             = {'maison': 75,  'collectif': 100, 'erp': 150}
 RE2020_DH_MAX              = {'H1': 1000, 'H2': 1250, 'H3': 1500}
-RE2020_IC_ENERGIE_MAX      = {'maison': 160, 'collectif': 160, 'erp': 250}
-RE2020_IC_CONSTRUCTION_MAX = {'maison': 640, 'collectif': 740, 'erp': 840}
+RE2020_IC_ENERGIE_MAX      = {'maison': 130, 'collectif': 160, 'erp': 250}
+RE2020_IC_CONSTRUCTION_MAX = {'maison': 530, 'collectif': 740, 'erp': 840}
 
 # ── BELGIQUE PEB ──────────────────────────────────────────
-PEB_ESPEC_MAX      = {'maison': 100, 'collectif': 100, 'erp': 150}
+PEB_ESPEC_MAX      = {'maison': 85,  'collectif': 100, 'erp': 150}
 PEB_EW_MAX         = {'maison': 100, 'collectif': 100, 'erp': 100}
 PEB_U_MUR_MAX      = 0.24
-PEB_U_TOIT_MAX     = 0.20
+PEB_U_TOIT_MAX     = 0.24
 PEB_U_PLANCHER_MAX = 0.30
 
 # ── SUISSE MINERGIE ───────────────────────────────────────
 MINERGIE_QH_MAX   = {'maison': 60, 'collectif': 55, 'erp': 55}
-MINERGIE_QTOT_MAX = {'maison': 38, 'collectif': 38, 'erp': 45}
+MINERGIE_QTOT_MAX = {'maison': 35, 'collectif': 35, 'erp': 45}
 MINERGIE_N50_MAX  = 0.6
 
 # ── SUISSE SIA380 ─────────────────────────────────────────
@@ -39,21 +39,21 @@ SIA380_QH_MAX = {'maison': 90, 'collectif': 80, 'erp': 80}
 CNEB2020_EI_MAX           = {'maison': 150, 'collectif': 130, 'erp': 200}
 CNEB2020_U_MUR_MAX        = 0.21
 CNEB2020_U_TOIT_MAX       = 0.16
-CNEB2020_U_FENETRE_MAX    = 1.6
-CNEB2020_INFILTRATION_MAX = 0.25
+CNEB2020_U_FENETRE_MAX    = 1.4
+CNEB2020_INFILTRATION_MAX = 2.5
 
 # ── CANADA CNEB2015 ───────────────────────────────────────
 CNEB2015_EI_MAX           = {'maison': 170, 'collectif': 150, 'erp': 220}
 CNEB2015_U_MUR_MAX        = 0.24
 CNEB2015_U_TOIT_MAX       = 0.18
 CNEB2015_U_FENETRE_MAX    = 1.8
-CNEB2015_INFILTRATION_MAX = 0.30
+CNEB2015_INFILTRATION_MAX = 2.5
 
 # ── LUXEMBOURG LENOZ ──────────────────────────────────────
-LENOZ_EP_MAX      = {'maison': 90,  'collectif': 90,  'erp': 130}
+LENOZ_EP_MAX      = {'maison': 85,  'collectif': 90,  'erp': 130}
 LENOZ_EW_MAX      = {'maison': 100, 'collectif': 100, 'erp': 100}
 LENOZ_U_MUR_MAX   = 0.22
-LENOZ_U_TOIT_MAX  = 0.17
+LENOZ_U_TOIT_MAX  = 0.15
 
 # ══════════════════════════════════════════════════════════
 CRITERIA_GREATER_EQUAL = {'rt2012_enr'}
