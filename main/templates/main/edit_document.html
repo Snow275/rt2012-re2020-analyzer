@@ -1114,17 +1114,26 @@ select.f-input option { background: #0c1929; }
               <span style="font-size:.84rem;color:var(--white);font-weight:500">✓ Avis certifié reçu</span>
               <span style="font-size:1rem;color:#c8a84b;letter-spacing:2px">{{ avis.note_display }}</span>
             </div>
-            <div style="font-size:.74rem;color:var(--gray-1)">
+            <div style="font-size:.74rem;color:var(--gray-1);margin-bottom:.6rem">
               {{ avis.soumis_le|date:"d/m/Y" }}{% if avis.commentaire %} · "{{ avis.commentaire|truncatechars:80 }}"{% endif %}
             </div>
-            <form method="post" action="{% url 'supprimer_avis' avis.id %}" style="margin-top:.6rem"
-              onsubmit="return confirm('Supprimer définitivement cet avis ?')">
-              {% csrf_token %}
-              <button type="submit"
-                style="padding:.3rem .8rem;background:rgba(239,83,80,.08);border:1px solid rgba(239,83,80,.25);border-radius:5px;color:#ef5350;font-size:.72rem;cursor:pointer;font-family:inherit">
-                🗑 Supprimer l'avis
-              </button>
-            </form>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+              <form method="post" action="{% url 'envoyer_invitation_avis' document.id %}" style="margin:0">
+                {% csrf_token %}
+                <button type="submit" {% if not document.client_email %}disabled{% endif %}
+                  style="padding:.3rem .8rem;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.3);border-radius:5px;color:var(--gold);font-size:.72rem;cursor:pointer;font-family:inherit">
+                  📨 Renvoyer le lien
+                </button>
+              </form>
+              <form method="post" action="{% url 'supprimer_avis' avis.id %}" style="margin:0"
+                onsubmit="return confirm('Supprimer définitivement cet avis ?')">
+                {% csrf_token %}
+                <button type="submit"
+                  style="padding:.3rem .8rem;background:rgba(239,83,80,.08);border:1px solid rgba(239,83,80,.25);border-radius:5px;color:#ef5350;font-size:.72rem;cursor:pointer;font-family:inherit">
+                  🗑 Supprimer l'avis
+                </button>
+              </form>
+            </div>
           </div>
 
           {% elif avis and avis.email_envoye %}
