@@ -438,7 +438,44 @@ class Avis(models.Model):
         super().save(*args, **kwargs)
 
     @property
-    def note_display(self):
+    def nom_affichage(self):
+        """
+        Retourne le nom sous la forme : Prénom.N (🇫🇷 France)
+        Ex : client_nom = "Sophie Bernard" → "Sophie.B (🇫🇷 France)"
+        Si un seul mot → "Sophie (🇫🇷 France)"
+        Si vide → "Client vérifié"
+        """
+        nom = self.client_nom.strip() if self.client_nom else ''
+        if not nom:
+            return 'Client vérifié'
+
+        parties = nom.split()
+        if len(parties) >= 2:
+            prenom = parties[0].capitalize()
+            initiale = parties[1][0].upper()
+            nom_formate = f"{prenom}.{initiale}"
+        else:
+            nom_formate = parties[0].capitalize()
+
+        # Pays depuis le document lié
+        pays_label = ''
+        if self.document_id:
+            try:
+                pays_code = self.document.pays
+                PAYS_MAP = {
+                    'FR': '🇫🇷 France',
+                    'BE': '🇧🇪 Belgique',
+                    'CH': '🇨🇭 Suisse',
+                    'CA': '🇨🇦 Canada',
+                    'LU': '🇱🇺 Luxembourg',
+                }
+                pays_label = PAYS_MAP.get(pays_code, pays_code)
+            except Exception:
+                pass
+
+        if pays_label:
+            return f"{nom_formate} ({pays_label})"
+        return nom_formate
         """Retourne ★★★★☆ selon la note."""
         if not self.note:
             return '—'
