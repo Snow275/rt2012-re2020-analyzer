@@ -39,8 +39,9 @@ urlpatterns = [
     path('devis/nouveau/',                      views.devis_create,       name='devis_create'),
     path('devis/<int:devis_id>/editer/',        views.devis_edit,         name='devis_edit'),
     path('devis/<int:devis_id>/supprimer/',     views.devis_delete,       name='devis_delete'),
-    path('devis/accepter/<int:devis_id>/',      views.accepter_devis,     name='accepter_devis'),
-    path('devis/refuser/<int:devis_id>/',       views.refuser_devis,      name='refuser_devis'),
+    path('devis/accepter/<int:devis_id>/',      views.accepter_devis,         name='accepter_devis'),
+    path('devis/refuser/<int:devis_id>/',       views.refuser_devis,          name='refuser_devis'),
+    path('devis/<int:devis_id>/motif-refus/',   views.modifier_motif_refus,   name='modifier_motif_refus'),
 
     # ── FACTURES ÉNERGIE ─────────────────────────────────────────────────
     path('dossier/<int:doc_id>/factures/upload/',          views.upload_facture,           name='upload_facture'),
