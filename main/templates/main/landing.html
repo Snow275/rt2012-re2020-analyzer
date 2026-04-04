@@ -1491,6 +1491,14 @@ footer {
     <li style="margin-left:.5rem"><a href="{% url 'home' %}" style="font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gray-2)'">Dashboard</a></li>
     {% endif %}
   </ul>
+  <a href="https://fr.trustpilot.com/review/conformexpert.cc"
+     target="_blank" rel="noopener"
+     style="display:inline-flex;align-items:center;gap:6px;padding:.38rem .85rem;background:#00b67a;border-radius:4px;color:#fff;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-decoration:none;white-space:nowrap;transition:opacity .2s"
+     onmouseover="this.style.opacity='.85'"
+     onmouseout="this.style.opacity='1'">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Avis
+  </a>
   <div class="lang-toggle" id="langToggle">
     <button class="lang-btn active" id="btnFR" onclick="setLang('fr')">FR</button>
     <button class="lang-btn" id="btnEN" onclick="setLang('en')">EN</button>
@@ -1959,55 +1967,6 @@ footer {
         </div>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- ████ AVIS TRUSTPILOT ████ -->
-<section id="avis" style="padding:80px 0;background:#0d1e33">
-  <div style="max-width:700px;margin:0 auto;padding:0 24px;text-align:center">
-
-    <p style="font-size:11px;text-transform:uppercase;letter-spacing:4px;color:#c8a84b;font-weight:600;margin-bottom:14px">
-      Avis clients
-    </p>
-    <h2 style="font-family:'Playfair Display',serif;font-size:36px;color:#fff;margin-bottom:20px;line-height:1.2">
-      Ce que disent nos clients
-    </h2>
-    <p style="font-size:15px;color:rgba(255,255,255,.5);line-height:1.8;margin-bottom:40px">
-      Nos avis sont collectés et certifiés par Trustpilot — plateforme indépendante de confiance.
-    </p>
-
-    <!-- Widget Trustpilot -->
-    <!-- TrustBox script -->
-    <script type="text/javascript" src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async></script>
-    <!-- End TrustBox script -->
-
-    <!-- TrustBox widget - Review Collector -->
-    <div class="trustpilot-widget"
-         data-locale="fr-FR"
-         data-template-id="56278e9abfbbba0bdcd568bc"
-         data-businessunit-id="69d14e2cb0f07645559b3bd5"
-         data-style-height="52px"
-         data-style-width="100%"
-         data-token="3c127228-a478-4ae0-bfe6-074b9350b9ae">
-      <a href="https://fr.trustpilot.com/review/conformexpert.cc" target="_blank" rel="noopener">Trustpilot</a>
-    </div>
-    <!-- End TrustBox widget -->
-
-    <!-- Bouton Laisser un avis -->
-    <div style="margin-top:40px">
-      <a href="https://fr.trustpilot.com/review/conformexpert.cc"
-         target="_blank"
-         rel="noopener"
-         style="display:inline-flex;align-items:center;gap:12px;background:#00b67a;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 32px;border-radius:6px;letter-spacing:.3px;transition:opacity .2s"
-         onmouseover="this.style.opacity='.88'"
-         onmouseout="this.style.opacity='1'">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-        Laisser un avis sur Trustpilot
-      </a>
-    </div>
-
   </div>
 </section>
 
