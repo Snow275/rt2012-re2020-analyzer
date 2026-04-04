@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 20px">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
+
+      <!-- HEADER -->
+      <tr>
+        <td style="background:#0a1628;border-radius:12px 12px 0 0;padding:32px 40px;text-align:center">
+          <div style="font-family:'Georgia',serif;font-size:22px;color:#c8a84b;letter-spacing:2px">CONFORMEXPERT</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);letter-spacing:3px;text-transform:uppercase;margin-top:4px">Validation thermique &amp; bilan carbone</div>
+        </td>
+      </tr>
+
+      <!-- CORPS -->
+      <tr>
+        <td style="background:#fff;padding:40px">
+          <h1 style="margin:0 0 8px;font-size:22px;color:#0a1628">⭐ Votre avis compte</h1>
+          <p style="margin:0 0 28px;font-size:14px;color:#888">Dossier DOC-{{ doc_id }} · {{ doc_name }}</p>
+
+          <p style="font-size:15px;color:#333;line-height:1.7">
+            Bonjour{% if client_name %} <strong>{{ client_name }}</strong>{% endif %},
+          </p>
+          <p style="font-size:15px;color:#333;line-height:1.7">
+            Votre rapport d'analyse <strong>{{ doc_name }}</strong> vous a été remis.
+            Nous espérons qu'il a répondu pleinement à vos attentes.
+          </p>
+          <p style="font-size:15px;color:#333;line-height:1.7">
+            Pourriez-vous prendre <strong>30 secondes</strong> pour noter notre service ?
+            Votre retour nous aide à améliorer notre qualité et rassure les futurs clients.
+          </p>
+
+          <!-- ÉTOILES CLIQUABLES -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:32px 0">
+            <tr>
+              <td align="center">
+                <p style="font-size:13px;color:#888;margin:0 0 16px">Cliquez directement sur votre note :</p>
+                <table cellpadding="0" cellspacing="0">
+                  <tr>
+                    {% for i in notes %}
+                    <td style="padding:0 6px">
+                      <a href="{{ avis_url }}?note={{ i }}"
+                         style="display:inline-block;width:52px;height:52px;line-height:52px;text-align:center;font-size:28px;background:#fff8e8;border:2px solid #f0d080;border-radius:12px;text-decoration:none;color:#c8a84b">
+                        ★
+                      </a>
+                      <div style="font-size:10px;color:#aaa;text-align:center;margin-top:4px">{{ i }}/5</div>
+                    </td>
+                    {% endfor %}
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- CTA principal -->
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center" style="padding:0 0 28px">
+                <a href="{{ avis_url }}"
+                   style="display:inline-block;background:#0a1628;color:#c8a84b;text-decoration:none;font-weight:600;font-size:14px;padding:14px 36px;border-radius:8px;letter-spacing:.5px">
+                  Laisser mon avis →
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <div style="background:#f9f9f9;border-radius:8px;padding:16px 20px;margin-top:8px">
+            <p style="margin:0;font-size:12px;color:#999;line-height:1.6">
+              🔒 <strong>Avis certifié :</strong> ce lien est personnel et unique. Votre avis sera
+              affiché avec la mention <em>"Avis certifié ConformExpert"</em> sur notre site.
+              Vous ne pouvez noter qu'une seule fois.
+            </p>
+          </div>
+
+          <p style="font-size:12px;color:#bbb;margin-top:24px">
+            Lien direct (à conserver) :
+            <a href="{{ avis_url }}" style="color:#c8a84b;font-size:11px">{{ avis_url }}</a>
+          </p>
+        </td>
+      </tr>
+
+      <!-- FOOTER -->
+      <tr>
+        <td style="background:#0a1628;border-radius:0 0 12px 12px;padding:24px 40px;text-align:center">
+          <p style="margin:0;font-size:12px;color:rgba(255,255,255,.35)">ConformExpert — Tiers expert indépendant</p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
