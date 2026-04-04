@@ -15,10 +15,10 @@ RT2012_AIRTIGHTNESS_MAX = {'maison': 0.6, 'collectif': 1.0, 'erp': 1.0}
 RT2012_ENR_MIN          = 1.0
 
 # ── FRANCE RE2020 ─────────────────────────────────────────
-RE2020_CEP_MAX             = {'maison': 75,  'collectif': 100, 'erp': 150}
+RE2020_CEP_MAX             = {'maison': 75,  'collectif': 70,  'erp': 150}
 RE2020_DH_MAX              = {'H1': 1000, 'H2': 1250, 'H3': 1500}
-RE2020_IC_ENERGIE_MAX      = {'maison': 130, 'collectif': 160, 'erp': 250}
-RE2020_IC_CONSTRUCTION_MAX = {'maison': 530, 'collectif': 740, 'erp': 840}
+RE2020_IC_ENERGIE_MAX      = {'maison': 130, 'collectif': 260, 'erp': 250}
+RE2020_IC_CONSTRUCTION_MAX = {'maison': 530, 'collectif': 650, 'erp': 840}
 
 # ── BELGIQUE PEB ──────────────────────────────────────────
 PEB_ESPEC_MAX      = {'maison': 85,  'collectif': 100, 'erp': 150}
