@@ -1231,6 +1231,30 @@ select.f-input option { background: #0c1929; }
           <button type="submit" class="btn btn-gold">✉ Envoyer le devis</button>
         </div>
       </form>
+
+      {# ── Motif de refus si devis refusé ── #}
+      {% for d in document.devis.all %}
+      {% if d.statut == 'refuse' %}
+      <div style="margin-top:1.4rem;padding-top:1.4rem;border-top:1px solid rgba(255,255,255,.06)">
+        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#ef5350;margin-bottom:.6rem">
+          ❌ Devis refusé — Motif du client
+        </div>
+        <form method="post" action="{% url 'modifier_motif_refus' d.id %}">
+          {% csrf_token %}
+          <textarea name="motif_refus" rows="3"
+            style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(239,83,80,.2);border-radius:7px;padding:.7rem .9rem;color:var(--white);font-size:.82rem;font-family:inherit;resize:vertical;outline:none"
+            placeholder="Aucun motif renseigné par le client…">{{ d.motif_refus }}</textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:.6rem">
+            <button type="submit"
+              style="padding:.45rem 1rem;background:rgba(239,83,80,.08);border:1px solid rgba(239,83,80,.3);border-radius:6px;color:#ef5350;font-size:.78rem;cursor:pointer;font-family:inherit">
+              💾 Enregistrer le motif
+            </button>
+          </div>
+        </form>
+      </div>
+      {% endif %}
+      {% endfor %}
+
     </div>
   </div>
 
