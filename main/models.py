@@ -361,6 +361,7 @@ class Devis(models.Model):
     montant       = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     statut        = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
     notes         = models.TextField(blank=True, default='')
+    motif_refus   = models.TextField(blank=True, default='', verbose_name='Motif de refus')
     created_at    = models.DateTimeField(auto_now_add=True)
     updated_at    = models.DateTimeField(auto_now=True)
     document      = models.ForeignKey(Document, on_delete=models.SET_NULL, null=True, blank=True, related_name='devis')
