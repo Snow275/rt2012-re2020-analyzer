@@ -1,0 +1,88 @@
+<!-- ============================================================
+     WIDGET AVIS CERTIFIÉS — à inclure dans la landing page
+     {% include 'main/avis_widget.html' %}
+     ou copier-coller dans la section souhaitée de landing.html
+============================================================ -->
+
+{% load static %}
+
+<section id="avis" style="padding:80px 0;background:#f9f8f5">
+  <div style="max-width:1100px;margin:0 auto;padding:0 24px">
+
+    <!-- En-tête section -->
+    <div style="text-align:center;margin-bottom:48px">
+      <p style="font-size:12px;text-transform:uppercase;letter-spacing:3px;color:#c8a84b;font-weight:600;margin-bottom:12px">
+        Avis clients
+      </p>
+      <h2 style="font-family:'Georgia',serif;font-size:36px;color:#0a1628;margin-bottom:16px">
+        Ce que disent nos clients
+      </h2>
+      <!-- Note globale -->
+      {% if total > 0 %}
+      <div style="display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid #e8e0d0;border-radius:99px;padding:10px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+        <span style="font-size:22px;color:#c8a84b;letter-spacing:2px">
+          {% with moyenne_int=moyenne|floatformat:"0" %}
+            {% for i in "12345" %}★{% endfor %}
+          {% endwith %}
+        </span>
+        <span style="font-size:22px;font-weight:700;color:#0a1628">{{ moyenne }}/5</span>
+        <span style="font-size:13px;color:#888">sur {{ total }} avis certifiés</span>
+        <span style="background:#e8f5e0;color:#4a7a30;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;letter-spacing:.5px">
+          ✓ CERTIFIÉS
+        </span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Grille d'avis -->
+    {% if avis_list %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
+      {% for a in avis_list %}
+      <div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.05);display:flex;flex-direction:column;gap:12px">
+
+        <!-- Étoiles + badge certifié -->
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:20px;color:#c8a84b;letter-spacing:2px">{{ a.note_display }}</div>
+          <span style="font-size:10px;background:#f0fae8;color:#4a7a30;border:1px solid #b8e0a0;padding:2px 8px;border-radius:99px;font-weight:600;letter-spacing:.4px">
+            ✓ Certifié
+          </span>
+        </div>
+
+        <!-- Commentaire -->
+        {% if a.commentaire %}
+        <p style="font-size:14px;color:#444;line-height:1.65;font-style:italic;flex:1">
+          "{{ a.commentaire }}"
+        </p>
+        {% else %}
+        <p style="font-size:14px;color:#aaa;font-style:italic;flex:1">—</p>
+        {% endif %}
+
+        <!-- Auteur + date -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid #f0f0f0">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:32px;height:32px;border-radius:50%;background:#0a1628;color:#c8a84b;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">
+              {{ a.client_nom|first|upper|default:"C" }}
+            </div>
+            <span style="font-size:13px;font-weight:600;color:#333">
+              {{ a.client_nom|default:"Client vérifié" }}
+            </span>
+          </div>
+          {% if a.soumis_le %}
+          <span style="font-size:11px;color:#bbb">{{ a.soumis_le|date:"d/m/Y" }}</span>
+          {% endif %}
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- Aucun avis encore -->
+    <div style="text-align:center;padding:48px 24px;color:#aaa">
+      <div style="font-size:40px;margin-bottom:12px">⭐</div>
+      <p style="font-size:15px">Les premiers avis apparaîtront ici dès qu'ils seront certifiés.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
