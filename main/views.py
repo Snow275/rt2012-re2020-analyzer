@@ -17,7 +17,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Document, DocumentFile, Analysis, Devis, FactureEnergie, Message
+from .models import Document, DocumentFile, Analysis, Devis, FactureEnergie, Message, Avis
 from .forms import DocumentForm, ContactForm
 from .serializers import DocumentSerializer, AnalysisSerializer
 
@@ -148,6 +148,145 @@ def send_mail_analyse_terminee(document):
         },
         document.client_email,
     )
+
+
+# ──────────────────────────────────────────────────────────────
+# AVIS CLIENTS
+# ──────────────────────────────────────────────────────────────
+
+def send_mail_avis(document):
+    """
+    Crée (ou récupère) l'objet Avis du dossier et envoie
+    l'email d'invitation une seule fois.
+    Appelable manuellement (bouton admin) ou automatiquement
+    à la fin de send_mail_analyse_terminee().
+    """
+    if not document.client_email:
+        return
+
+    avis, _ = Avis.objects.get_or_create(document=document)
+
+    if avis.certifie or avis.email_envoye:
+        return  # déjà noté ou déjà envoyé → ne rien faire
+
+    _send_html_async(
+        f"[ConformExpert] Donnez votre avis sur votre analyse — {document.name}",
+        "email_avis.html",
+        {
+            'doc_id':      f"{document.id:04d}",
+            'doc_name':    document.name,
+            'client_name': document.client_name or '',
+            'avis_url':    f"{SITE_URL}/avis/{avis.token}/",
+        },
+        document.client_email,
+    )
+
+    avis.email_envoye = True
+    avis.save(update_fields=['email_envoye'])
+
+
+def noter_service(request, token):
+    """
+    Page publique /avis/<token>/
+    GET  → formulaire (avec note pré-sélectionnée si ?note=X)
+    POST → enregistre et marque certifié
+    """
+    avis   = get_object_or_404(Avis, token=token)
+    doc_id = f"{avis.document.id:04d}"
+
+    # Déjà noté → confirmation lecture seule
+    if avis.certifie:
+        return render(request, 'main/avis_noter.html', {
+            'avis':   avis,
+            'doc_id': doc_id,
+        })
+
+    erreur      = None
+    note_pre    = request.GET.get('note') or ''
+    commentaire = ''
+
+    if request.method == 'POST':
+        note_pre    = request.POST.get('note', '')
+        commentaire = request.POST.get('commentaire', '').strip()
+
+        try:
+            note = int(note_pre)
+        except (ValueError, TypeError):
+            note = 0
+
+        if note not in range(1, 6):
+            erreur = "Veuillez sélectionner une note entre 1 et 5 étoiles."
+        else:
+            avis.note        = note
+            avis.commentaire = commentaire[:1000]
+            avis.certifie    = True
+            avis.soumis_le   = timezone.now()
+            avis.save(update_fields=['note', 'commentaire', 'certifie', 'soumis_le'])
+
+            return render(request, 'main/avis_noter.html', {
+                'avis':   avis,
+                'doc_id': doc_id,
+            })
+
+    return render(request, 'main/avis_noter.html', {
+        'avis':            avis,
+        'doc_id':          doc_id,
+        'erreur':          erreur,
+        'note_pre':        note_pre,
+        'commentaire_pre': commentaire,
+    })
+
+
+@login_required
+def envoyer_invitation_avis(request, doc_id):
+    """
+    Appelée depuis le bouton ⭐ dans l'onglet Communication
+    de edit_document.html.
+    Force le renvoi (relance) en remettant email_envoye à False.
+    """
+    document = get_object_or_404(Document, id=doc_id)
+
+    if not document.client_email:
+        messages.error(request, "Aucun email client renseigné pour ce dossier.")
+        return redirect('edit_document', doc_id=doc_id)
+
+    avis, _ = Avis.objects.get_or_create(document=document)
+
+    if avis.certifie:
+        messages.warning(request, "Ce client a déjà laissé son avis — impossible de renvoyer.")
+        return redirect('edit_document', doc_id=doc_id)
+
+    # Forcer le renvoi même si email_envoye=True (relance)
+    avis.email_envoye = False
+    avis.save(update_fields=['email_envoye'])
+
+    send_mail_avis(document)
+    messages.success(request, f"Invitation à noter envoyée à {document.client_email}.")
+    return redirect('edit_document', doc_id=doc_id)
+
+
+def avis_publics(request):
+    """
+    Rendu du widget avis pour la landing page (vue standalone).
+    """
+    from django.db.models import Avg, Count
+
+    stats = Avis.objects.filter(certifie=True, note__isnull=False).aggregate(
+        moyenne=Avg('note'),
+        total=Count('id'),
+    )
+    avis_list = (
+        Avis.objects
+        .filter(certifie=True)
+        .select_related('document')
+        .order_by('-soumis_le')[:20]
+    )
+
+    return render(request, 'main/avis_widget.html', {
+        'avis_list': avis_list,
+        'moyenne':   round(stats['moyenne'] or 0, 1),
+        'total':     stats['total'],
+    })
 
 
 # ──────────────────────────────────────────────────────────────
@@ -589,7 +728,22 @@ def maintenance(request):
 
 def landing(request):
     """Page d'accueil publique."""
-    return render(request, 'main/landing.html')
+    from django.db.models import Avg, Count
+    stats = Avis.objects.filter(certifie=True, note__isnull=False).aggregate(
+        moyenne=Avg('note'),
+        total=Count('id'),
+    )
+    avis_list = (
+        Avis.objects
+        .filter(certifie=True)
+        .select_related('document')
+        .order_by('-soumis_le')[:9]
+    )
+    return render(request, 'main/landing.html', {
+        'avis_list': avis_list,
+        'moyenne':   round(stats['moyenne'] or 0, 1),
+        'total':     stats['total'],
+    })
 
 
 def contact(request):
