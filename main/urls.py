@@ -57,6 +57,7 @@ urlpatterns = [
     path('avis/<str:token>/',                    views.noter_service,           name='noter_service'),
     path('avis-publics/',                        views.avis_publics,            name='avis_publics'),
     path('dossier/<int:doc_id>/envoyer-avis/',   views.envoyer_invitation_avis, name='envoyer_invitation_avis'),
+    path('avis/<int:avis_id>/supprimer/',        views.supprimer_avis,          name='supprimer_avis'),
 
     # ── API ──────────────────────────────────────────────────────────────
     path('api/documents/',           views.api_document_list,   name='api_document_list'),
