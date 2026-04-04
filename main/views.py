@@ -800,23 +800,85 @@ def contact(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
+            email_envoye = False
             try:
-                send_mail(
-                    subject=f"[ConformExpert] Nouveau contact : {form.cleaned_data['name']}",
-                    message=(
-                        f"Nom : {form.cleaned_data['name']}\n"
-                        f"Email : {form.cleaned_data['email']}\n"
-                        f"Téléphone : {form.cleaned_data.get('phone', 'N/A')}\n"
-                        f"Profil : {form.cleaned_data.get('profile', 'N/A')}\n\n"
-                        f"Message :\n{form.cleaned_data['message']}"
-                    ),
+                import sendgrid
+                from sendgrid.helpers.mail import Mail
+
+                nom     = form.cleaned_data['name']
+                email   = form.cleaned_data['email']
+                phone   = form.cleaned_data.get('phone', 'N/A')
+                profile = form.cleaned_data.get('profile', 'N/A')
+                message = form.cleaned_data['message']
+
+                contenu_html = f"""
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+                  <div style="background:#0a1628;padding:24px 32px;border-radius:12px 12px 0 0;text-align:center">
+                    <div style="font-family:Georgia,serif;font-size:20px;color:#c8a84b;letter-spacing:2px">CONFORMEXPERT</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:3px;text-transform:uppercase;margin-top:4px">Nouveau message de contact</div>
+                  </div>
+                  <div style="background:#fff;padding:32px">
+                    <h2 style="margin:0 0 20px;font-size:17px;color:#0a1628">📩 Nouveau contact — {nom}</h2>
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-radius:8px;margin-bottom:24px">
+                      <tr><td style="padding:16px 20px">
+                        <table width="100%">
+                          <tr>
+                            <td style="font-size:12px;color:#888;padding:6px 0;border-bottom:1px solid #eee;width:35%">Nom</td>
+                            <td style="font-size:13px;color:#0a1628;font-weight:600;padding:6px 0;border-bottom:1px solid #eee">{nom}</td>
+                          </tr>
+                          <tr>
+                            <td style="font-size:12px;color:#888;padding:6px 0;border-bottom:1px solid #eee">Email</td>
+                            <td style="font-size:13px;padding:6px 0;border-bottom:1px solid #eee"><a href="mailto:{email}" style="color:#c8a84b">{email}</a></td>
+                          </tr>
+                          <tr>
+                            <td style="font-size:12px;color:#888;padding:6px 0;border-bottom:1px solid #eee">Téléphone</td>
+                            <td style="font-size:13px;color:#333;padding:6px 0;border-bottom:1px solid #eee">{phone}</td>
+                          </tr>
+                          <tr>
+                            <td style="font-size:12px;color:#888;padding:6px 0">Profil</td>
+                            <td style="font-size:13px;color:#333;padding:6px 0">{profile}</td>
+                          </tr>
+                        </table>
+                      </td></tr>
+                    </table>
+                    <div style="background:#f0f4ff;border-left:4px solid #c8a84b;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px">
+                      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:6px">Message</div>
+                      <div style="font-size:14px;color:#333;line-height:1.7">{message}</div>
+                    </div>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr><td align="center">
+                        <a href="mailto:{email}" style="display:inline-block;background:#0a1628;color:#c8a84b;text-decoration:none;font-weight:600;font-size:13px;padding:12px 28px;border-radius:8px">
+                          ↩ Répondre à {nom}
+                        </a>
+                      </td></tr>
+                    </table>
+                  </div>
+                  <div style="background:#0a1628;padding:16px 32px;border-radius:0 0 12px 12px;text-align:center">
+                    <p style="margin:0;font-size:11px;color:rgba(255,255,255,.3)">ConformExpert — Formulaire de contact</p>
+                  </div>
+                </div>
+                """
+
+                sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+                mail = Mail(
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[settings.CONTACT_EMAIL],
-                    fail_silently=True,
+                    to_emails=getattr(settings, 'CONTACT_EMAIL', 'contact@conformexpert.cc'),
+                    subject=f"[ConformExpert] Nouveau contact : {nom}",
+                    html_content=contenu_html,
                 )
-            except Exception:
-                pass
-            messages.success(request, 'Message envoyé. Nous vous répondons sous 48h.')
+                # Reply-To = email du client pour pouvoir répondre directement
+                mail.reply_to = email
+                response = sg.send(mail)
+                if response.status_code in (200, 201, 202):
+                    email_envoye = True
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Erreur envoi email contact SendGrid : {e}")
+
+            if email_envoye:
+                messages.success(request, 'Message envoyé. Nous vous répondons sous 48h.')
+            else:
+                messages.warning(request, 'Une erreur technique est survenue. Contactez-nous directement à contact@conformexpert.cc.')
             return redirect('contact')
     else:
         form = ContactForm()
@@ -3286,4 +3348,20 @@ def client_send_message(request, token):
                 msg.fichier = fichier
                 msg.fichier_nom = fichier.name
             msg.save()
+
+            # Notifier l'admin par email
+            _send_html_async(
+                f"💬 Nouveau message client — {document.name}",
+                "email_notification_admin.html",
+                {
+                    "sujet":     f"Message de {document.client_name or 'le client'} sur le dossier {document.name}",
+                    "client":    document.client_name or document.client_email or "Client",
+                    "projet":    document.name,
+                    "doc_id":    f"{document.id:04d}",
+                    "admin_url": f"{SITE_URL}/dossier/{document.id}/editer/#comm",
+                    "message_client": contenu if contenu else None,
+                },
+                getattr(settings, 'CONTACT_EMAIL', 'contact@conformexpert.cc'),
+            )
+
     return redirect('tracking', token=token)
