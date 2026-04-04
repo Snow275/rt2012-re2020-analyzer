@@ -396,3 +396,50 @@ class Message(models.Model):
 
     def __str__(self):
         return f"[{self.get_auteur_display()}] {self.document.name} — {self.created_at:%d/%m/%Y %H:%M}"
+
+
+class Avis(models.Model):
+    """
+    Avis certifié laissé par un client après réception de son rapport.
+    Le token garantit que seul le vrai destinataire de l'email peut noter.
+    Un seul avis par dossier (OneToOne).
+    """
+    NOTE_CHOICES = [(i, f"{i} étoile{'s' if i > 1 else ''}") for i in range(1, 6)]
+
+    document     = models.OneToOneField(
+        Document,
+        on_delete=models.CASCADE,
+        related_name='avis',
+    )
+    token        = models.CharField(max_length=64, unique=True, editable=False)
+    note         = models.PositiveSmallIntegerField(choices=NOTE_CHOICES, null=True, blank=True)
+    commentaire  = models.TextField(blank=True, default='')
+    client_nom   = models.CharField(max_length=255, blank=True, default='')
+    certifie     = models.BooleanField(default=False)   # True = noté via le lien email unique
+    email_envoye = models.BooleanField(default=False)
+    soumis_le    = models.DateTimeField(null=True, blank=True)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name        = 'Avis client'
+        verbose_name_plural = 'Avis clients'
+        ordering            = ['-soumis_le']
+
+    def __str__(self):
+        note = f"{self.note}★" if self.note else "non noté"
+        return f"Avis — {self.document.name} ({note})"
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            import secrets
+            self.token = secrets.token_urlsafe(32)
+        if not self.client_nom and self.document_id:
+            self.client_nom = self.document.client_name or ''
+        super().save(*args, **kwargs)
+
+    @property
+    def note_display(self):
+        """Retourne ★★★★☆ selon la note."""
+        if not self.note:
+            return '—'
+        return '★' * self.note + '☆' * (5 - self.note)
