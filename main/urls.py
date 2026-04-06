@@ -1,7 +1,14 @@
 from django.urls import path
+from django.views.generic import TemplateView
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.views.generic.base import RedirectView
 from . import views
 
 urlpatterns = [
+    # ── SEO ──────────────────────────────────────────────────────────────
+    path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
+    path('favicon.ico', RedirectView.as_view(url='/static/main/img/favicon.svg', permanent=True)),
+
     # ── PUBLIC ──────────────────────────────────────────────────────────
     path('',                                    views.landing,            name='landing'),
     path('maintenance/',                         views.maintenance,        name='maintenance'),
