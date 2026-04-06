@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /dossier/
+Disallow: /devis/
+Disallow: /login/
+Disallow: /api/
+
+Sitemap: https://conformexpert.cc/sitemap.xml
