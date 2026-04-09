@@ -7,7 +7,7 @@ from . import views
 urlpatterns = [
     # ── SEO ──────────────────────────────────────────────────────────────
     path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
-    path('sitemap.xml', TemplateView.as_view(template_name='sitemap.xml', content_type='application/xml')),
+    path('sitemap.xml', views.sitemap_xml, name='sitemap'),
     path('favicon.ico', RedirectView.as_view(url='/static/main/img/favicon.svg', permanent=True)),
 
     # ── PUBLIC ──────────────────────────────────────────────────────────
