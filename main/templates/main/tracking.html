@@ -49,7 +49,7 @@
 <script>
 const TRACKING_TR = {
   fr: {
-    "header.label":       "Validation ind\u00e9pendante \u00b7 ConformExpert",
+    "header.label":       "Validation ind\u00e9pendante \u00b7 ConformXpert",
     "header.received":    "Re\u00e7u le",
     "header.mission.carbone": "Pr\u00e9-analyse technique",
     "header.mission.complet": "Analyse compl\u00e8te",
@@ -94,7 +94,7 @@ const TRACKING_TR = {
     "result.keyvals":     "Valeurs cl\u00e9s",
     "result.summer":      "DH confort d\u2019\u00e9t\u00e9",
     "result.conso":       "Conso. \u00e9nergie primaire",
-    "result.desc":        "Le rapport complet contient l\u2019avis ind\u00e9pendant de ConformExpert, les anomalies d\u00e9tect\u00e9es et les recommandations d\u00e9taill\u00e9es.",
+    "result.desc":        "Le rapport complet contient l\u2019avis ind\u00e9pendant de ConformXpert, les anomalies d\u00e9tect\u00e9es et les recommandations d\u00e9taill\u00e9es.",
     "preview.title":      "Ce que contiendra le rapport",
     "preview.1":          "V\u00e9rification ind\u00e9pendante des valeurs d\u00e9clar\u00e9es",
     "preview.2":          "D\u00e9tection des anomalies et incoh\u00e9rences",
@@ -112,7 +112,7 @@ const TRACKING_TR = {
     "contact.btn":        "\u2709 Nous contacter",
     "trust.independent":  "Ind\u00e9pendant",
     "trust.deadline":     "D\u00e9lai garanti",
-    "trust.desc":         "ConformExpert est un tiers ind\u00e9pendant \u2014 notre analyse n\u2019est pas li\u00e9e au bureau d\u2019\u00e9tudes ayant produit le rapport thermique.",
+    "trust.desc":         "ConformXpert est un tiers ind\u00e9pendant \u2014 notre analyse n\u2019est pas li\u00e9e au bureau d\u2019\u00e9tudes ayant produit le rapport thermique.",
     "devis.title":        "Devis accept\u00e9 \u2014 la validation a d\u00e9marr\u00e9\u00a0!",
     "devis.desc":         "Un email de confirmation vous a \u00e9t\u00e9 envoy\u00e9. Revenez sur cette page pour suivre l\u2019avancement.",
     "mission.carbone":        "Pr\u00e9-analyse technique (Bilan carbone)",
@@ -120,7 +120,7 @@ const TRACKING_TR = {
     "mission.default":    "Validation thermique"
   },
   en: {
-    "header.label":       "Independent validation \u00b7 ConformExpert",
+    "header.label":       "Independent validation \u00b7 ConformXpert",
     "header.received":    "Received on",
     "header.mission.carbone": "Carbon assessment",
     "header.mission.validation": "Validation",
@@ -164,7 +164,7 @@ const TRACKING_TR = {
     "result.keyvals":     "Key values",
     "result.summer":      "Summer comfort (DH)",
     "result.conso":       "Primary energy consumption",
-    "result.desc":        "The full report contains ConformExpert\u2019s independent opinion, detected anomalies and detailed recommendations.",
+    "result.desc":        "The full report contains ConformXpert\u2019s independent opinion, detected anomalies and detailed recommendations.",
     "preview.title":      "What the report will contain",
     "preview.1":          "Independent verification of declared values",
     "preview.2":          "Detection of anomalies and inconsistencies",
@@ -182,7 +182,7 @@ const TRACKING_TR = {
     "contact.btn":        "\u2709 Contact us",
     "trust.independent":  "Independent",
     "trust.deadline":     "Guaranteed deadline",
-    "trust.desc":         "ConformExpert is an independent third party \u2014 our analysis is not linked to the firm that produced the thermal report.",
+    "trust.desc":         "ConformXpert is an independent third party \u2014 our analysis is not linked to the firm that produced the thermal report.",
     "devis.title":        "Quote accepted \u2014 validation has started!",
     "devis.desc":         "A confirmation email has been sent to you. Come back to this page to track progress.",
     "mission.carbone":    "Carbon assessment",
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
 {# ── Header #}
 <div class="page-header">
   <div class="ph-inner">
-    <span class="s-label" data-ti18n="header.label">Validation indépendante · ConformExpert</span>
+    <span class="s-label" data-ti18n="header.label">Validation indépendante · ConformXpert</span>
     <h1>{{ document.name }}</h1>
     <p style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-size:.85rem;color:var(--gray-1)">
       <span>DOC-{{ document.id|stringformat:"04d" }}</span>
@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
       {% if document.dpe_conso_ep %}<div class="info-row"><span class="info-label" data-ti18n="result.conso">Conso. EP</span><span class="info-val">{{ document.dpe_conso_ep }} kWh/m².an</span></div>{% endif %}
       {% endif %}
       <p style="font-size:.75rem;color:var(--gray-1);line-height:1.6;margin:.8rem 0 0" data-ti18n="result.desc">
-        Le rapport contient l'avis indépendant de ConformExpert, les émissions analysées et les leviers de réduction.
+        Le rapport contient l'avis indépendant de ConformXpert, les émissions analysées et les leviers de réduction.
       </p>
     </div>
     {% else %}
@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
 
 
   <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
-    <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:1rem" data-ti18n="contact.title">Messages ConformExpert</div>
+    <div style="font-size:.82rem;color:var(--white);font-weight:500;margin-bottom:1rem" data-ti18n="contact.title">Messages ConformXpert</div>
 
     <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;max-height:260px;overflow-y:auto" id="msgListClient">
       {% for msg in document.messages.all %}
@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', applyTrackingLang);
           background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-left:20%
         {% endif %}">
         <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--gray-1);margin-bottom:.3rem">
-          <span>{% if msg.auteur == 'admin' %}ConformExpert{% else %}Vous{% endif %}</span>
+          <span>{% if msg.auteur == 'admin' %}ConformXpert{% else %}Vous{% endif %}</span>
           <span>{{ msg.created_at|date:"d/m/Y à H:i" }}</span>
         </div>
         <div style="color:var(--gray-2)">{{ msg.contenu }}</div>
