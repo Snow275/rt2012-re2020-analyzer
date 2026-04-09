@@ -3,7 +3,6 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ⚠️  En production : mettre dans une variable d'environnement
 SECRET_KEY = os.environ.get('SECRET_KEY', 'changez-moi-en-production-utilisez-env-variable')
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
@@ -12,6 +11,8 @@ ALLOWED_HOSTS = [
     "web-production-f6c00.up.railway.app",
     "conformexpert.cc",
     "www.conformexpert.cc",
+    "conformxpert.com",        # ✅ nouveau domaine
+    "www.conformxpert.com",    # ✅ nouveau domaine www
     "localhost",
     "0.0.0.0",
     "127.0.0.1",
@@ -29,6 +30,8 @@ if _replit_domain:
 CSRF_TRUSTED_ORIGINS = [
     "https://conformexpert.cc",
     "https://www.conformexpert.cc",
+    "https://conformxpert.com",        # ✅ nouveau domaine
+    "https://www.conformxpert.com",    # ✅ nouveau domaine www
     "https://web-production-f6c00.up.railway.app",
     "http://localhost:5000",
     "https://*.replit.dev",
@@ -110,18 +113,16 @@ TIME_ZONE = 'Europe/Paris'
 USE_I18N = True
 USE_TZ = True
 
-# Fichiers statiques
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# ✅ MEDIA (uploads PDF) — manquait complètement
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email Configuration
+# Email — on garde le .cc, ton mail ne change pas
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
