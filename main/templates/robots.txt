@@ -6,4 +6,4 @@ Disallow: /devis/
 Disallow: /login/
 Disallow: /api/
 
-Sitemap: https://conformexpert.cc/sitemap.xml
+Sitemap: https://conformxpert.com/sitemap.xml
