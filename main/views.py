@@ -622,23 +622,13 @@ def maintenance(request):
 
 def sitemap_xml(request):
     from django.http import HttpResponse
-    import os
-    # Cherche dans static ou templates
-    for p in [
-        os.path.join(settings.BASE_DIR, 'main', 'static', 'main', 'sitemap.xml'),
-        os.path.join(settings.BASE_DIR, 'templates', 'sitemap.xml'),
-    ]:
-        if os.path.exists(p):
-            with open(p, 'r', encoding='utf-8') as f:
-                return HttpResponse(f.read(), content_type='application/xml')
-    # Fallback inline
     xml = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://conformexpert.cc/</loc><priority>1.0</priority></url>
-  <url><loc>https://conformexpert.cc/deposer/</loc><priority>0.9</priority></url>
-  <url><loc>https://conformexpert.cc/faq/</loc><priority>0.8</priority></url>
-  <url><loc>https://conformexpert.cc/contact/</loc><priority>0.7</priority></url>
-  <url><loc>https://conformexpert.cc/mentions-legales/</loc><priority>0.3</priority></url>
+  <url><loc>https://conformexpert.cc/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://conformexpert.cc/deposer/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://conformexpert.cc/faq/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://conformexpert.cc/contact/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://conformexpert.cc/mentions-legales/</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>"""
     return HttpResponse(xml, content_type='application/xml')
 
