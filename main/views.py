@@ -620,6 +620,15 @@ def maintenance(request):
     from django.template.response import TemplateResponse
     return TemplateResponse(request, 'main/maintenance.html', status=503)
 
+def sitemap_xml(request):
+    from django.http import HttpResponse
+    import os
+    path = os.path.join(settings.BASE_DIR, 'templates', 'sitemap.xml')
+    with open(path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    return HttpResponse(content, content_type='application/xml')
+
+
 def landing(request):
     """Page d'accueil publique."""
     return render(request, 'main/landing.html')
