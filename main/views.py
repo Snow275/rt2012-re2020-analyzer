@@ -1,5 +1,5 @@
 # ============================================================
-# views.py — ConformExpert
+# views.py — ConformXpert
 # ============================================================
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -36,7 +36,7 @@ from collections import defaultdict
 # CONSTANTES
 # ──────────────────────────────────────────────────────────────
 
-SITE_URL = "https://conformexpert.cc"
+SITE_URL = "https://conformxpert.com"
 
 
 # ──────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ def send_mail_reception(document):
     if not document.client_email:
         return
     _send_html_async(
-        f"[ConformExpert] Dossier bien reçu — {document.name}",
+        f"[ConformXpert] Dossier bien reçu — {document.name}",
         "email_reception.html",
         {
             'doc_id': f"{document.id:04d}",
@@ -96,7 +96,7 @@ def send_mail_validation_devis(document, devis=None):
     tva = round(montant_ht * 0.20, 2)
 
     _send_html_async(
-        f"[ConformExpert] Votre devis — {document.name}",
+        f"[ConformXpert] Votre devis — {document.name}",
         "email_devis.html",
         {
             'doc_id': f"{document.id:04d}",
@@ -118,7 +118,7 @@ def send_mail_analyse_commence(document):
     if not document.client_email:
         return
     _send_html_async(
-        "[ConformExpert] L'analyse de votre dossier a démarré",
+        "[ConformXpert] L'analyse de votre dossier a démarré",
         "email_analyse_commence.html",
         {
             'doc_id': f"{document.id:04d}",
@@ -134,7 +134,7 @@ def send_mail_analyse_terminee(document):
     if not document.client_email:
         return
     _send_html_async(
-        f"[ConformExpert] Votre rapport est disponible — {document.name}",
+        f"[ConformXpert] Votre rapport est disponible — {document.name}",
         "email_analyse_terminee.html",
         {
             'doc_id': f"{document.id:04d}",
@@ -149,7 +149,7 @@ def send_mail_analyse_terminee(document):
             ],
         },
         document.client_email,
-        bcc="conformexpert.cc+af5d0cc4e7@invite.trustpilot.com",
+        bcc="conformxpert.com+af5d0cc4e7@invite.trustpilot.com",
     )
 
 
@@ -169,7 +169,7 @@ def accepter_devis(request, devis_id):
             devis.document.save()
 
         _send_html_async(
-            "✅ Devis accepté — ConformExpert",
+            "✅ Devis accepté — ConformXpert",
             "email_notification_admin.html",
             {
                 "sujet":        "Devis accepté par le client",
@@ -180,7 +180,7 @@ def accepter_devis(request, devis_id):
                 "type_analyse": devis.document.type_analyse if devis.document else None,
                 "admin_url":    f"{SITE_URL}/dossier/{devis.document.id}/editer/" if devis.document else None,
             },
-            "contact@conformexpert.cc",
+            "contact@conformxpert.com",
         )
 
     return render(request, "main/devis_accepte.html", {"devis": devis})
@@ -200,7 +200,7 @@ def refuser_devis(request, devis_id):
         devis.save(update_fields=['statut', 'motif_refus'])
 
         _send_html_async(
-            "❌ Devis refusé — ConformExpert",
+            "❌ Devis refusé — ConformXpert",
             "email_notification_admin.html",
             {
                 "sujet":        "Devis refusé par le client",
@@ -212,7 +212,7 @@ def refuser_devis(request, devis_id):
                 "motif_refus":  motif,
                 "admin_url":    f"{SITE_URL}/dossier/{devis.document.id}/editer/" if devis.document else f"{SITE_URL}/devis/",
             },
-            "contact@conformexpert.cc",
+            "contact@conformxpert.com",
         )
 
         return render(request, "main/devis_refuse.html", {"devis": devis, "confirme": True})
@@ -624,11 +624,11 @@ def sitemap_xml(request):
     from django.http import HttpResponse
     xml = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://conformexpert.cc/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://conformexpert.cc/deposer/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://conformexpert.cc/faq/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://conformexpert.cc/contact/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://conformexpert.cc/mentions-legales/</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://conformxpert.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://conformxpert.com/deposer/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://conformxpert.com/faq/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://conformxpert.com/contact/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://conformxpert.com/mentions-legales/</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>"""
     return HttpResponse(xml, content_type='application/xml')
 
@@ -656,7 +656,7 @@ def contact(request):
                 contenu_html = f"""
                 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
                   <div style="background:#0a1628;padding:24px 32px;border-radius:12px 12px 0 0;text-align:center">
-                    <div style="font-family:Georgia,serif;font-size:20px;color:#c8a84b;letter-spacing:2px">CONFORMEXPERT</div>
+                    <div style="font-family:Georgia,serif;font-size:20px;color:#c8a84b;letter-spacing:2px">CONFORMXPERT</div>
                     <div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:3px;text-transform:uppercase;margin-top:4px">Nouveau message de contact</div>
                   </div>
                   <div style="background:#fff;padding:32px">
@@ -696,7 +696,7 @@ def contact(request):
                     </table>
                   </div>
                   <div style="background:#0a1628;padding:16px 32px;border-radius:0 0 12px 12px;text-align:center">
-                    <p style="margin:0;font-size:11px;color:rgba(255,255,255,.3)">ConformExpert — Formulaire de contact</p>
+                    <p style="margin:0;font-size:11px;color:rgba(255,255,255,.3)">ConformXpert — Formulaire de contact</p>
                   </div>
                 </div>
                 """
@@ -704,8 +704,8 @@ def contact(request):
                 sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
                 mail = Mail(
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    to_emails=getattr(settings, 'CONTACT_EMAIL', 'contact@conformexpert.cc'),
-                    subject=f"[ConformExpert] Nouveau contact : {nom}",
+                    to_emails=getattr(settings, 'CONTACT_EMAIL', 'contact@conformxpert.com'),
+                    subject=f"[ConformXpert] Nouveau contact : {nom}",
                     html_content=contenu_html,
                 )
                 # Reply-To = email du client pour pouvoir répondre directement
@@ -720,7 +720,7 @@ def contact(request):
             if email_envoye:
                 messages.success(request, 'Message envoyé. Nous vous répondons sous 48h.')
             else:
-                messages.warning(request, 'Une erreur technique est survenue. Contactez-nous directement à contact@conformexpert.cc.')
+                messages.warning(request, 'Une erreur technique est survenue. Contactez-nous directement à contact@conformxpert.com.')
             return redirect('contact')
     else:
         form = ContactForm()
@@ -734,9 +734,9 @@ def mentions_legales(request):
 def faq(request):
     faq_items = [
         {
-            "question": "ConformExpert peut-il contredire le rapport de mon bureau d'études ?",
+            "question": "ConformXpert peut-il contredire le rapport de mon bureau d'études ?",
             "answer": (
-                "Oui — c'est précisément notre rôle. ConformExpert est un tiers indépendant. "
+                "Oui — c'est précisément notre rôle. ConformXpert est un tiers indépendant. "
                 "Si nous détectons une valeur incohérente, un seuil non respecté ou une hypothèse discutable, "
                 "nous le signalons explicitement dans notre rapport de validation, avec le niveau de criticité correspondant. "
                 "Nous ne sommes liés à aucun bureau d'études."
@@ -769,7 +769,7 @@ def faq(request):
         {
             "question": "Intervenez-vous sur des projets hors de France ?",
             "answer": (
-                "Oui. ConformExpert traite les dossiers PEB (Belgique), CNEB (Canada) et LENOZ (Luxembourg) "
+                "Oui. ConformXpert traite les dossiers PEB (Belgique), CNEB (Canada) et LENOZ (Luxembourg) "
                 "en plus des normes françaises RT2012 et RE2020. Pour d'autres normes, contactez-nous pour évaluer la faisabilité."
             ),
         },
@@ -1113,7 +1113,7 @@ def history(request):
 @login_required(login_url='/login/')
 def export_csv_history(request):
     response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="dossiers_conformexpert.csv"'
+    response['Content-Disposition'] = 'attachment; filename="dossiers_conformxpert.csv"'
     response.write('\ufeff')
     writer = csv.writer(response, delimiter=';')
     writer.writerow(['Référence', 'Nom du dossier', 'Client', 'Email client', 'Type', 'Norme', 'Statut', 'Conformité', 'Date de dépôt'])
@@ -1550,7 +1550,7 @@ def download_rapport_word(request, doc_id):
 
     document = get_object_or_404(Document, id=doc_id)
     doc = DocxDocument()
-    doc.add_heading(f'Rapport ConformExpert — {document.name}', 0)
+    doc.add_heading(f'Rapport ConformXpert — {document.name}', 0)
     doc.add_paragraph(f'Référence : DOC-{document.id:04d}')
     doc.add_paragraph(f'Client : {document.client_name or "—"}')
     doc.add_paragraph(f'Date : {document.upload_date.strftime("%d/%m/%Y")}')
@@ -1811,7 +1811,7 @@ def download_report(request, document_id):
         c.rect(0, 0, PAGE_W, 1.8 * cm, fill=1, stroke=0)
         c.setFont('Helvetica', 8)
         c.setFillColor(colors.HexColor('#666677'))
-        c.drawString(ML, 0.65 * cm, "ConformExpert  ·  Analyse documentaire indépendante")
+        c.drawString(ML, 0.65 * cm, "ConformXpert  ·  Analyse documentaire indépendante")
         c.setFillColor(GOLD)
         txt_r = "Confidentiel  ·  Usage interne"
         tw2 = c.stringWidth(txt_r, 'Helvetica', 8)
@@ -1826,7 +1826,7 @@ def download_report(request, document_id):
         c.line(ML, MB - 0.5 * cm, PAGE_W - MR, MB - 0.5 * cm)
         c.setFont('Helvetica', 7.5)
         c.setFillColor(MUTED)
-        c.drawString(ML, MB - 1 * cm, f"ConformExpert  ·  Analyse indépendante {norme}  ·  {pays_label}")
+        c.drawString(ML, MB - 1 * cm, f"ConformXpert  ·  Analyse indépendante {norme}  ·  {pays_label}")
         page_num = str(doc_obj.page)
         tw = c.stringWidth(f"Page {page_num}", 'Helvetica', 7.5)
         c.drawString(PAGE_W - MR - tw, MB - 1 * cm, f"Page {page_num}")
@@ -2066,19 +2066,19 @@ def download_report(request, document_id):
          "documentaire indépendante. Il ne se substitue pas à une attestation officielle de conformité "
          "délivrée par un organisme accrédité."),
         ("Responsabilité",
-         "ConformExpert s'engage à fournir une analyse rigoureuse et objective des documents transmis. "
+         "ConformXpert s'engage à fournir une analyse rigoureuse et objective des documents transmis. "
          "La conformité finale du bâtiment relève de la responsabilité du maître d'ouvrage et des "
          "professionnels en charge de la construction."),
         ("Confidentialité",
          "Ce document est strictement confidentiel et destiné exclusivement au client mentionné en page "
-         "de couverture. Toute reproduction ou diffusion sans autorisation écrite de ConformExpert est interdite."),
+         "de couverture. Toute reproduction ou diffusion sans autorisation écrite de ConformXpert est interdite."),
         ("Réglementations",
          "RT2012 : Arrêté du 26 octobre 2010  |  RE2020 : Décret n°2021-1004 du 29 juillet 2021  |  "
          "PEB : Directive européenne 2010/31/UE  |  Minergie / SIA380 : Normes SIA Suisse  |  "
          "CNEB : Code national de l'énergie pour les bâtiments (Canada)  |  "
          "LENOZ : Règlement grand-ducal du 23 juillet 2016 (Luxembourg)"),
         ("Contact",
-         "ConformExpert  ·  contact@conformexpert.fr  ·  Délai garanti 10 jours ouvrés"),
+         "ConformXpert  ·  contact@conformxpert.fr  ·  Délai garanti 10 jours ouvrés"),
     ]
     for k, v in disc_items:
         disc_t = Table([[
@@ -2102,7 +2102,7 @@ def download_report(request, document_id):
         buffer, pagesize=A4,
         leftMargin=ML, rightMargin=MR,
         topMargin=MT, bottomMargin=MB,
-        title=f"Rapport ConformExpert - {document.name}",
+        title=f"Rapport ConformXpert - {document.name}",
     )
     doc_pdf.build(story, onFirstPage=draw_cover, onLaterPages=draw_page)
 
@@ -2174,7 +2174,7 @@ def _build_system_prompt(type_analyse, ref, document, infos_batiment, source_don
     seuils_str = _SEUILS_LABELS.get(norme, "Voir réglementation applicable")
 
     if type_analyse == 'carbone':
-        return f"""Tu es ConformExpert, un tiers expert indépendant spécialisé en bilan carbone immobilier.
+        return f"""Tu es ConformXpert, un tiers expert indépendant spécialisé en bilan carbone immobilier.
 Tu réalises des bilans carbone indépendants à partir des documents fournis (rapport thermique, DPE, factures énergie, attestation RE2020, FDES).
 Ton rôle est d'évaluer les émissions de CO2 du bâtiment et d'identifier les leviers de réduction.
 
@@ -2248,8 +2248,8 @@ Structure JSON attendue :
     "Audit énergétique réglementaire recommandé si copropriété > 50 lots",
     "Vérification FDES matériaux si RE2020 applicable"
   ],
-  "avis_independant": "Paragraphe conclusif exprimant l'avis de ConformExpert sur la performance carbone du bâtiment.",
-  "mentions_legales": "Ce rapport constitue un bilan carbone documentaire indépendant réalisé par ConformExpert. Il ne se substitue pas à un bilan carbone complet certifié ni à une attestation réglementaire officielle."
+  "avis_independant": "Paragraphe conclusif exprimant l'avis de ConformXpert sur la performance carbone du bâtiment.",
+  "mentions_legales": "Ce rapport constitue un bilan carbone documentaire indépendant réalisé par ConformXpert. Il ne se substitue pas à un bilan carbone complet certifié ni à une attestation réglementaire officielle."
 }}
 
 Base ton analyse sur les documents fournis.
@@ -2258,7 +2258,7 @@ Sois précis, factuel et indépendant."""
 
 
     else:  # 'energie' (défaut)
-        return f"""Tu es ConformExpert, un tiers expert indépendant spécialisé dans la validation de rapports thermiques réglementaires.
+        return f"""Tu es ConformXpert, un tiers expert indépendant spécialisé dans la validation de rapports thermiques réglementaires.
 Ton rôle n'est PAS de produire une étude thermique — le bureau d'études l'a déjà fait.
 Ton rôle est de vérifier, valider et commenter de manière indépendante le travail du bureau d'études.
 
@@ -2346,8 +2346,8 @@ Structure JSON attendue :
     "Vérification recommandée si des doutes subsistent"
   ],
   "contexte_reglementaire": "Rappel des exigences {norme} applicables à ce projet.",
-  "avis_independant": "Paragraphe conclusif exprimant clairement l'avis de ConformExpert sur la qualité et la fiabilité du rapport soumis.",
-  "mentions_legales": "Ce rapport constitue une analyse documentaire indépendante réalisée par ConformExpert. Il ne se substitue pas à une attestation officielle de conformité."
+  "avis_independant": "Paragraphe conclusif exprimant clairement l'avis de ConformXpert sur la qualité et la fiabilité du rapport soumis.",
+  "mentions_legales": "Ce rapport constitue une analyse documentaire indépendante réalisée par ConformXpert. Il ne se substitue pas à une attestation officielle de conformité."
 }}
 
 Si une valeur n'est pas disponible pour un critère, omets ce critère.
@@ -2524,7 +2524,7 @@ def generer_rapport_ia(request, doc_id):
             })
         headers_extra = {"anthropic-beta": "pdfs-2024-09-25"}
         user_content.append({"type": "text", "text": f"""
-Tu es ConformExpert, un tiers expert indépendant mandaté pour valider ce rapport thermique.
+Tu es ConformXpert, un tiers expert indépendant mandaté pour valider ce rapport thermique.
 
 Lis attentivement le(s) document(s) PDF joint(s) — il s'agit du rapport thermique produit par le bureau d'études.
 Ton rôle est de le valider de manière indépendante, pas de le reproduire.
@@ -3203,7 +3203,7 @@ def client_send_message(request, token):
                     "admin_url": f"{SITE_URL}/dossier/{document.id}/editer/#comm",
                     "message_client": contenu if contenu else None,
                 },
-                getattr(settings, 'CONTACT_EMAIL', 'contact@conformexpert.cc'),
+                getattr(settings, 'CONTACT_EMAIL', 'contact@conformxpert.com'),
             )
 
     return redirect('tracking', token=token)
