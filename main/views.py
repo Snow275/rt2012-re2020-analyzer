@@ -642,6 +642,27 @@ def contact(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
+            # ── Vérification reCAPTCHA v3 ──────────────────────────
+            import urllib.request as urllib_request
+            import urllib.parse
+            recaptcha_response = request.POST.get('g-recaptcha-response', '')
+            recaptcha_data = urllib.parse.urlencode({
+                'secret': '6LdyQbwsAAAAAHglJsxWFkcXPOLyktBFGb18QwFs',
+                'response': recaptcha_response,
+            }).encode()
+            recaptcha_req = urllib_request.Request(
+                'https://www.google.com/recaptcha/api/siteverify',
+                data=recaptcha_data,
+            )
+            try:
+                recaptcha_result = json.loads(urllib_request.urlopen(recaptcha_req).read().decode())
+            except Exception:
+                recaptcha_result = {}
+            if not recaptcha_result.get('success') or recaptcha_result.get('score', 0) < 0.5:
+                messages.error(request, 'Vérification de sécurité échouée. Veuillez réessayer.')
+                return render(request, 'main/contact.html', {'form': form})
+            # ───────────────────────────────────────────────────────
+
             email_envoye = False
             try:
                 import sendgrid
