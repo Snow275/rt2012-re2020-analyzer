@@ -203,6 +203,7 @@ document.addEventListener('DOMContentLoaded', applyContactLang);
             {{ form.message }}
             {% if form.message.errors %}<span class="form-error">{{ form.message.errors.0 }}</span>{% endif %}
           </div>
+          <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
           <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center" data-ci18n="form.submit">Envoyer le message →</button>
         </form>
       </div>
@@ -210,5 +211,19 @@ document.addEventListener('DOMContentLoaded', applyContactLang);
 
   </div>
 </div>
+
+<script src="https://www.google.com/recaptcha/api.js?render=6LdyQbwsAAAAALV2rVwnR33WOp-E7YZoatehlPId"></script>
+<script>
+  document.querySelector('form[method="post"]').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var form = this;
+    grecaptcha.ready(function() {
+      grecaptcha.execute('6LdyQbwsAAAAALV2rVwnR33WOp-E7YZoatehlPId', {action: 'contact'}).then(function(token) {
+        document.getElementById('g-recaptcha-response').value = token;
+        form.submit();
+      });
+    });
+  });
+</script>
 
 {% endblock %}
