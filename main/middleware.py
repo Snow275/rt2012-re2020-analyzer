@@ -45,3 +45,21 @@ class MaintenanceMiddleware:
             return settings.maintenance_mode
         except Exception:
             return False
+
+
+from django.http import HttpResponsePermanentRedirect
+
+class RedirectWwwMiddleware:
+    """Redirige www.conformxpert.com → conformxpert.com (301 permanent)."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        host = request.get_host().split(':')[0]
+        if host.startswith('www.'):
+            non_www = host[4:]
+            return HttpResponsePermanentRedirect(
+                f"https://{non_www}{request.get_full_path()}"
+            )
+        return self.get_response(request)
